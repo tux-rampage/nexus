@@ -1,0 +1,31 @@
+{
+	"name" : "rampage-php/nexus-saas-manager",
+	"description" : "A software to manage your PHP application deployments",
+	"type" : "application",
+	"authors" : [{
+			"name" : "Axel Helmert",
+			"email" : "staff@pro-unreal.de",
+			"role" : "lead"
+		}
+	],
+	"keywords" : [
+		"rampage",
+		"saas"
+	],
+	"homepage" : "https://github.com/tux-rampage/rampage-nexus",
+	"license" : [
+		"GPL-3.0+"
+	],
+	"require" : {
+		"zendframework/zendframework" : "~2.2"
+	},
+	"autoload" : {
+		"psr-0" : {
+			"rampage\\nexus\\core" : "application/core/rampage.nexus.core/src"
+		},
+		"files" : [
+			"dev-include.php"
+		]
+	},
+	"minimum-stability" : "stable"
+}

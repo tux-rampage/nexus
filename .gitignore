@@ -1,0 +1,6 @@
+/vendor
+/.settings
+/.buildpath
+/.project
+/dev-include.php
+/composer.lock
