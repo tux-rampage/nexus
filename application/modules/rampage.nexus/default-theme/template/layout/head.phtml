@@ -1,0 +1,34 @@
+<?php
+/**
+ * This is part of rampage-nexus
+ * Copyright (c) 2013 Axel Helmert
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author    Axel Helmert
+ * @copyright Copyright (c) 2013 Axel Helmert
+ * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
+ */
+
+namespace rampage\nexus;
+
+?>
+<?php echo $this->headtitle()->setSuffix(' ~ rampage:nexus') ?>
+<?php echo $this->headmeta('width=device-width, initial-scale=1.0', 'viewport') ?>
+<?php echo $this->headlink()
+    ->prependStyleSheet('//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css')
+    ->prependStyleSheet('//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css')
+    ->prependStylesheet('//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css')
+    ->appendStylesheet($this->resourceUrl('rampage.nexus::css/styles.css')) ?>
+<?php echo $this->headscript() ?>
