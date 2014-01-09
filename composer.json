@@ -19,12 +19,6 @@
         "rampage-php/framework" : "1.0.*"
     },
     "minimum-stability" : "dev",
-    "repositories" : [{
-            "type" : "git",
-            "url" : "/home/appdata/Zend/workspaces/DefaultWorkspace/rampage-php",
-            "name" : "local"
-        }
-    ],
     "config" : {
         "discard-changes": true
     }
