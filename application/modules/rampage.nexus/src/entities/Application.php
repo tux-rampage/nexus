@@ -23,7 +23,12 @@
 
 namespace rampage\nexus\entities;
 
-class Application
+use Doctrine\ORM\Mapping as orm;
+
+/**
+ * @orm\Entity
+ */
+class ApplicationEntity
 {
     const STATE_DEPLOYED = 'deployed';
     const STATE_PENDING = 'pending';
@@ -32,11 +37,20 @@ class Application
     const STATE_REMOVING = 'removing';
     const STATE_DEACTIVATING = 'deactivating';
 
+    /**
+     * @orm\Id @orm\Column(type="integer") @orm\GeneratedValue
+     * @var int
+     */
     protected $id = null;
 
     protected $name = null;
 
     protected $state = null;
+
+    /**
+     * @var string
+     */
+    protected $icon = null;
 
     /**
      * @return int

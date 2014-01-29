@@ -59,7 +59,7 @@ interface ApplicationPackageInterface
     /**
      * Returns the icon for the application
      *
-     * @return resource|\SplFileInfo|false
+     * @return resource|\SplFileInfo|string|false
      */
     public function getIcon();
 

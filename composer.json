@@ -1,25 +1,28 @@
 {
-    "name" : "rampage-php/nexus-deployment-manager",
-    "description" : "A software to manage your PHP application deployments",
-    "type" : "application",
-    "authors" : [{
-            "name" : "Axel Helmert",
-            "email" : "staff@pro-unreal.de",
-            "role" : "lead"
-        }
-    ],
-    "keywords" : [
-        "rampage",
-        "saas"
-    ],
-    "homepage" : "https://github.com/tux-rampage/rampage-nexus",
-    "license" : "GPL-3.0+",
-    "require" : {
-        "zendframework/zendframework" : "~2.2",
-        "rampage-php/framework" : "1.0.*"
-    },
-    "minimum-stability" : "dev",
-    "config" : {
-        "discard-changes": true
-    }
+  "name" : "rampage-php/nexus-deployment-manager",
+  "description" : "A software to manage your PHP application deployments",
+  "require" : {
+    "zendframework/zendframework" : "2.2.*",
+    "rampage-php/framework" : "1.0.*@dev",
+    "doctrine/orm" : "~2.4",
+    "doctrine/doctrine-orm-module" : "~0.8",
+    "doctrine/migrations" : "1.0.*@dev"
+  },
+  "repositories" : [ {
+    "type" : "git",
+    "url" : "/home/appdata/Zend/workspaces/DefaultWorkspace/rampage-php",
+    "name" : "local"
+  } ],
+  "authors" : [ {
+    "name" : "Axel Helmert",
+    "email" : "staff@pro-unreal.de",
+    "role" : "lead"
+  } ],
+  "keywords" : [ "rampage", "saas" ],
+  "config" : {
+    "discard-changes" : true
+  },
+  "type" : "application",
+  "license" : "GPL-3.0+",
+  "homepage" : "https://github.com/tux-rampage/rampage-nexus"
 }
