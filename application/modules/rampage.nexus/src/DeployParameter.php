@@ -61,6 +61,30 @@ class DeployParameter
     }
 
     /**
+     * @param string $name
+     * @param array $options
+     * @return DeployParameter
+     */
+    public static function factory($name, $options = array())
+    {
+        if (!is_array($options)) {
+            $options = array();
+        }
+
+        $label = isset($options['label'])? $options['label'] : null;
+        $param = new DeployParameter($name, $label);
+
+        $param->setIsRequired((isset($options['required']))? $options['required'] : false)
+            ->setOptions(isset($options['options'])? $options['options'] : array());
+
+        if (isset($options['type'])) {
+            $param->setType($options['type']);
+        }
+
+        return $param;
+    }
+
+    /**
      * @return string
      */
     public function getName()

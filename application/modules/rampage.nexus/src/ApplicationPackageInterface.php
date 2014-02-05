@@ -36,13 +36,6 @@ interface ApplicationPackageInterface
     public function getName();
 
     /**
-     * Returns the application label
-     *
-     * @return string
-     */
-    public function getLabel();
-
-    /**
      * Returns the version number of this package
      *
      * @return string
@@ -76,5 +69,5 @@ interface ApplicationPackageInterface
      * @param Application $application
      * @return self
      */
-    public function install(entities\Application $application);
+    public function install(entities\ApplicationInstance $application);
 }

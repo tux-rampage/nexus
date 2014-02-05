@@ -23,14 +23,24 @@
 
 namespace rampage\nexus;
 
-use SplFileInfo;
-use Phar;
 use ArrayObject;
+use SplFileInfo;
+use PharData;
+use RecursiveIterator;
+use RecursiveDirectoryIterator;
+
+use RuntimeException;
 
 class ComposerApplicationPackage implements ApplicationPackageInterface
 {
+    /**
+     * @var PharData
+     */
     protected $file = null;
 
+    /**
+     * @var array
+     */
     protected $config = null;
 
     /**
@@ -38,9 +48,11 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
      */
     public function __construct(SplFileInfo $packageFile)
     {
-        $this->file = new \PharData($packageFile->getFilename());
+        $this->file = new PharData($packageFile->getFilename());
+        $metaData = $this->file->getMetadata();
+        $composerFile = (isset($metaData['composerfile']))? $metaData['composerfile'] : 'composer.json';
 
-        $json = @json_decode($this->file['composer.json']->getContent(), true);
+        $json = @json_decode($this->file[$composerFile]->getContent(), true);
         $this->config = is_array($json)? new ArrayObject($json, ArrayObject::ARRAY_AS_PROPS) : false;
 
         if (!$this->config) {
@@ -53,16 +65,14 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
      */
     public function getIcon()
     {
-        // TODO Auto-generated method stub
+        if (!isset($this->config->extra['deployment']['icon'])) {
+            return false;
+        }
 
-    }
+        $icon = $this->config->extra['deployment']['icon'];
+        $file = ($icon && isset($this->file[$file]))? $this->file[$file] : false;
 
-    /**
-     * @see \rampage\nexus\ApplicationPackageInterface::getLabel()
-     */
-    public function getLabel()
-    {
-        // TODO Auto-generated method stub
+        return $file;
     }
 
     /**
@@ -86,7 +96,23 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
      */
     public function getParameters()
     {
-        // TODO Auto-generated method stub
+        if (!isset($this->config->extra['deployment']['parameters'])) {
+            return array();
+        }
+
+        $result = array();
+        $params = $this->config->extra['deployment']['parameters'];
+
+        if (!is_array($params)) {
+            return array();
+        }
+
+        foreach ($params as $name => $options) {
+            $param = DeployParameter::factory($name, $options);
+            $result[$name] = $param;
+        }
+
+        return $result;
     }
 
     /**
@@ -98,10 +124,34 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     }
 
     /**
+     * @return RecursiveDirectoryIterator
+     */
+    public function getApplicationFiles()
+    {
+        if (!isset($this->config->extra['deployment']['applicationDir'])) {
+            return $this->file;
+        }
+
+        $subDir = $this->config->extra['deployment']['applicationDir'];
+
+        if (!isset($this->file[$subDir])) {
+            throw new RuntimeException('Could not find application directory: ' . $subDir);
+        }
+
+        $dir = $this->file[$subDir];
+        if (!$dir->isDir()) {
+            throw new RuntimeException('Bad application directory: ' . $subDir . ' (not a directory)');
+        }
+
+        return new RecursiveDirectoryIterator($dir->getPathname());
+    }
+
+    /**
      * @see \rampage\nexus\ApplicationPackageInterface::install()
      */
-    public function install(entities\Application $application)
+    public function install(entities\ApplicationInstance $application)
     {
-        // TODO Auto-generated method stub
+        foreach ($this->getApplicationFiles() as $file) {
+        }
     }
 }
