@@ -29,5 +29,51 @@ namespace rampage\nexus;
  */
 interface DeployStrategyInterface
 {
-    public function begin();
+    /**
+     * Set the current application instance to perform the actions on
+     *
+     * @param entities\ApplicationInstance $instance
+     * @return self
+     */
+    public function setApplicationInstance(entities\ApplicationInstance $instance);
+
+    /**
+     * Returns the darget directory of the application
+     *
+     * @return string
+     */
+    public function getTargetDirectory();
+
+    /**
+     * Prepare staging the application
+     */
+    public function prepareStaging();
+
+    /**
+     * Complete staging the application
+     */
+    public function completeStaging();
+
+    /**
+     * Prepare removing the application
+     */
+    public function prepareRemoval();
+
+    /**
+     * Complete removing the application
+     *
+     * This method will do cleanup tasks like removing the directory,
+     * removing unused configs, deactivating the vhost (if applicable) and so on
+     */
+    public function completeRemoval();
+
+    /**
+     * Activate the application
+     */
+    public function activate();
+
+    /**
+     * Deactivate the application
+     */
+    public function deactivate();
 }

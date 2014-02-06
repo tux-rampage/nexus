@@ -23,8 +23,10 @@
 
 namespace rampage\nexus\entities;
 
-use Doctrine\ORM\Mapping as orm;
 use rampage\nexus\ApplicationPackageInterface;
+
+use Doctrine\ORM\Mapping as orm;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @orm\Entity
@@ -67,6 +69,32 @@ class ApplicationInstance
      * @var string
      */
     protected $applicationName = null;
+
+    /**
+     * @orm\ManyToMany(targetEntity="ConfigTemplate", cascade={"all"}, indexBy="role")
+     * @orm\JoinTable(
+     *      name="application_config_templates",
+     *      joinColumns={@orm\JoinColumn(name="application_id", referencedColumnName="id")}
+     *      inverseJoinColumns={@orm\JoinColumn(name="template_id", referencedColumnName="id", unique=true}
+     * )
+     * @var ArrayCollection|ConfigTemplate[]
+     */
+    protected $configTemplates = null;
+
+    /**
+     * @orm\OneToMany(targetEntity="UserParameter", cascade={"all"}, mappedBy="application", indexBy="name")
+     * @var ArrayCollection|UserParameter[]
+     */
+    protected $userParameters = null;
+
+    /**
+     * Construct
+     */
+    public function __construct()
+    {
+        $this->configTemplates = new ArrayCollection();
+        $this->userParameters = new ArrayCollection();
+    }
 
     /**
      * @return int
@@ -172,10 +200,72 @@ class ApplicationInstance
     }
 
     /**
-     * @return array
+     * @param ConfigTemplate $template
+     * @return \rampage\nexus\entities\ApplicationInstance
      */
-    public function getUserParameters()
+    public function setAddConfigTemplate(ConfigTemplate $template)
+    {
+        $role = $template->getRole();
+        $this->configTemplates[$role] = $template;
+
+        return $this;
+    }
+
+    /**
+     * @param string $role
+     * @return null|ConfigTemplate[]
+     */
+    public function getConfigTemplate($role)
+    {
+        if (isset($this->configTemplates[$role])) {
+            return $this->configTemplates[$role];
+        }
+
+        return null;
+    }
+
+    public function setUserParameters()
     {
 
+    }
+
+    /**
+     * @param string $params
+     * @return self
+     */
+    public function addUserParameters($params)
+    {
+        foreach ($params as $name => $value) {
+            if (isset($this->userParameters[$name])) {
+                $this->userParameters[$name]->setValue($value);
+                continue;
+            }
+
+            $parameter = new UserParameter($name, $value);
+            $parameter->setApplication($this);
+
+            $this->userParameters[$name] = $parameter;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param bool $asArray Return the parameters as array or as object collection
+     * @return array|UserParameter[]
+     */
+    public function getUserParameters($asArray = true)
+    {
+        if (!$asArray) {
+            return $this->userParameters;
+        }
+
+        $params = array();
+
+        foreach ($this->userParameters as $param) {
+            $params[$param->getName()] = $param->getValue();
+        }
+
+        return $params;
     }
 }
