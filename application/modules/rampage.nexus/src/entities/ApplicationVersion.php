@@ -24,6 +24,12 @@ class ApplicationVersion
     protected $id = null;
 
     /**
+     * @orm\Column(type="string", nullable=false)
+     * @var string
+     */
+    protected $version = null;
+
+    /**
      * @orm\ManyToOne(targetEntity="ApplicationInstance", inversedBy="versions")
      * @var ArrayCollection|ApplicationInstance
      */
@@ -49,18 +55,125 @@ class ApplicationVersion
     /**
      * Construct
      */
-    public function __construct(ApplicationInstance $application = null)
+    public function __construct($version = null)
     {
-        $this->application = $application;
+        $this->version = $version;
         $this->configTemplates = new ArrayCollection();
         $this->userParameters = new ArrayCollection();
     }
 
     /**
-     * @return ArrayCollection|ConfigTemplate[]
+     * @param ApplicationInstance $application
+     * @return self
+     */
+    public function setApplication(ApplicationInstance $application)
+    {
+        $this->application = $application;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getVersion()
+    {
+        return $this->version;
+    }
+
+	/**
+     * @param string $version
+     * @return self
+     */
+    public function setVersion($version)
+    {
+        $this->version = $version;
+        return $this;
+    }
+
+    /**
+     * @param ConfigTemplate $template
+     * @return \rampage\nexus\entities\ApplicationInstance
+     */
+    public function addConfigTemplate(ConfigTemplate $template)
+    {
+        $role = $template->getRole();
+        $this->configTemplates[$role] = $template;
+
+        return $this;
+    }
+
+    /**
+     * @param string $role
+     * @return null|ConfigTemplate[]
+     */
+    public function getConfigTemplate($role)
+    {
+        if (isset($this->configTemplates[$role])) {
+            return $this->configTemplates[$role];
+        }
+
+        return null;
+    }
+
+    /**
+     * @return ArrayCollection|ConfigTemplate
      */
     public function getConfigTemplates()
     {
         return $this->configTemplates;
+    }
+
+    /**
+     * Replace all user parameters
+     *
+     * @param array|Traversable $params
+     * @return \rampage\nexus\entities\ApplicationVersion
+     */
+    public function setUserParameters($params)
+    {
+        $this->userParameters->clear();
+        $this->addUserParameters($params);
+
+        return $this;
+    }
+
+    /**
+     * @param string $params
+     * @return self
+     */
+    public function addUserParameters($params)
+    {
+        foreach ($params as $name => $value) {
+            if (isset($this->userParameters[$name])) {
+                $this->userParameters[$name]->setValue($value);
+                continue;
+            }
+
+            $parameter = new UserParameter($name, $value);
+            $parameter->setApplication($this);
+
+            $this->userParameters[$name] = $parameter;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param bool $asArray Return the parameters as array or as object collection
+     * @return array|UserParameter[]
+     */
+    public function getUserParameters($asArray = true)
+    {
+        if (!$asArray) {
+            return $this->userParameters;
+        }
+
+        $params = array();
+
+        foreach ($this->userParameters as $param) {
+            $params[$param->getName()] = $param->getValue();
+        }
+
+        return $params;
     }
 }

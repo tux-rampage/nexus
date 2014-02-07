@@ -30,6 +30,8 @@ use RecursiveIterator;
 use RecursiveDirectoryIterator;
 
 use RuntimeException;
+use Zend\InputFilter\Input;
+use Zend\InputFilter\InputFilter;
 
 class ComposerApplicationPackage implements ApplicationPackageInterface
 {
@@ -42,6 +44,11 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
      * @var array
      */
     protected $config = null;
+
+    /**
+     * @var InputFilter
+     */
+    protected $paramInputFilter = null;
 
     /**
      * @param SplFileInfo $packageFile
@@ -126,24 +133,50 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     /**
      * @return RecursiveDirectoryIterator
      */
-    public function getApplicationFiles()
+    public function getApplicationDir()
     {
         if (!isset($this->config->extra['deployment']['applicationDir'])) {
-            return $this->file;
+            return null;
         }
 
-        $subDir = $this->config->extra['deployment']['applicationDir'];
+        $subDir = trim((string)$this->config->extra['deployment']['applicationDir'], '/');
 
-        if (!isset($this->file[$subDir])) {
+        if (!isset($this->file[$subDir]) || !$this->file[$subDir]->isDir()) {
             throw new RuntimeException('Could not find application directory: ' . $subDir);
         }
 
-        $dir = $this->file[$subDir];
-        if (!$dir->isDir()) {
-            throw new RuntimeException('Bad application directory: ' . $subDir . ' (not a directory)');
+        return $subDir;
+    }
+
+    /**
+     * @return \Zend\InputFilter\InputFilter
+     */
+    protected function getParamInputFilter()
+    {
+        if ($this->paramInputFilter) {
+            return $this->paramInputFilter;
         }
 
-        return new RecursiveDirectoryIterator($dir->getPathname());
+        $this->paramInputFilter = new InputFilter();
+        foreach ($this->getParameters() as $parameter) {
+            // TODO: Add filters
+        }
+
+        return $this->paramInputFilter;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \rampage\nexus\ApplicationPackageInterface::validateUserOptions()
+     * @param \rampage\nexus\entities\ApplicationInstance $application
+     */
+    public function validateUserOptions(entities\ApplicationInstance $application)
+    {
+        /* @var $application entities\ApplicationInstance */
+        $input = $application->getCurrentVersion()->getUserParameters(true);
+        $filter = $this->getParamInputFilter();
+
+        return $filter->setData($input)->isValid();
     }
 
     /**
@@ -151,7 +184,34 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
      */
     public function install(entities\ApplicationInstance $application)
     {
-        foreach ($this->getApplicationFiles() as $file) {
+        if (!$this->validateUserOptions($application)) {
+            $messages = $this->getParamInputFilter()->getMessages();
+            foreach ($messages as $field => $sub) {
+                $glue = "\n" . str_repeat(' ', strlen($messages) + 4);
+                $messages[$field] = '- ' . $field . ': ' . implode($glue, $sub);
+            }
+
+            throw new RuntimeException(sprintf(
+                'Invalid user parameters: %s',
+                "\n" . implode("\n", $this->getParamInputFilter()->getMessages())
+            ));
         }
+
+        $strategy = $application->getDeployStrategy();
+        $parameters = $this->getParamInputFilter()->getValues();
+
+        $strategy->setUserParameters($parameters);
+        $strategy->prepareStaging();
+
+        $target = $strategy->getTargetDirectory();
+
+        $this->file->extractTo($target, $this->getApplicationDir());
+        // TODO: Implement deployment
+
+        $strategy->completeStaging();
+        $strategy->activate();
+
+        $application->setState(entities\ApplicationInstance::STATE_DEPLOYED);
+        return $this;
     }
 }

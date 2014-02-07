@@ -38,6 +38,14 @@ interface DeployStrategyInterface
     public function setApplicationInstance(entities\ApplicationInstance $instance);
 
     /**
+     * Set the user parameters to use for deployment
+     *
+     * @param array|\ArrayAccess $parameters
+     * @retrun self
+     */
+    public function setUserParameters($parameters);
+
+    /**
      * Returns the darget directory of the application
      *
      * @return string

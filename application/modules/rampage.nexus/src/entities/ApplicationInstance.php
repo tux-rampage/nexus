@@ -71,21 +71,16 @@ class ApplicationInstance
     protected $applicationName = null;
 
     /**
-     * @orm\ManyToMany(targetEntity="ConfigTemplate", cascade={"all"}, indexBy="role")
-     * @orm\JoinTable(
-     *      name="application_config_templates",
-     *      joinColumns={@orm\JoinColumn(name="application_id", referencedColumnName="id")}
-     *      inverseJoinColumns={@orm\JoinColumn(name="template_id", referencedColumnName="id", unique=true}
-     * )
-     * @var ArrayCollection|ConfigTemplate[]
-     */
-    protected $configTemplates = null;
-
-    /**
-     * @orm\OneToMany(targetEntity="UserParameter", cascade={"all"}, mappedBy="application", indexBy="name")
+     * @orm\OneToMany(targetEntity="ApplicationVersion", cascade={"all"}, mappedBy="application", indexBy="version")
      * @var ArrayCollection|UserParameter[]
      */
-    protected $userParameters = null;
+    protected $versions = null;
+
+    /**
+     * @orm\ManyToOne(targetEntity="ApplicationVersion")
+     * @var ApplicationVersion
+     */
+    protected $currentVersion = null;
 
     /**
      * Construct
@@ -200,72 +195,84 @@ class ApplicationInstance
     }
 
     /**
-     * @param ConfigTemplate $template
-     * @return \rampage\nexus\entities\ApplicationInstance
+     * @return \rampage\nexus\DeployStrategyInterface
      */
-    public function setAddConfigTemplate(ConfigTemplate $template)
+    public function getDeployStrategy()
     {
-        $role = $template->getRole();
-        $this->configTemplates[$role] = $template;
-
-        return $this;
+        // TODO: Implement strategy interface
     }
 
     /**
-     * @param string $role
-     * @return null|ConfigTemplate[]
+     * @param ApplicationVersion $version
      */
-    public function getConfigTemplate($role)
+    public function addVersion(ApplicationVersion $version)
     {
-        if (isset($this->configTemplates[$role])) {
-            return $this->configTemplates[$role];
-        }
-
-        return null;
-    }
-
-    public function setUserParameters()
-    {
-
+        $version->setApplication($this);
+        $this->versions[$version->getVersion()] = $version;
     }
 
     /**
-     * @param string $params
+     * @return Ambigous <\Doctrine\Common\Collections\ArrayCollection, multitype:\rampage\nexus\entities\UserParameter >
+     */
+    public function getVersions()
+    {
+        return $this->versions;
+    }
+
+	/**
+     * @return \rampage\nexus\entities\ApplicationVersion
+     */
+    public function getCurrentVersion()
+    {
+        return $this->currentVersion;
+    }
+
+	/**
+     * @param \rampage\nexus\entities\ApplicationVersion $version
      * @return self
      */
-    public function addUserParameters($params)
+    public function setCurrentVersion(ApplicationVersion $version)
     {
-        foreach ($params as $name => $value) {
-            if (isset($this->userParameters[$name])) {
-                $this->userParameters[$name]->setValue($value);
-                continue;
-            }
-
-            $parameter = new UserParameter($name, $value);
-            $parameter->setApplication($this);
-
-            $this->userParameters[$name] = $parameter;
+        if (!isset($this->versions[$version->getVersion()])) {
+            $this->addVersion($version);
         }
 
+        $this->currentVersion = $version;
         return $this;
     }
 
     /**
-     * @param bool $asArray Return the parameters as array or as object collection
-     * @return array|UserParameter[]
+     * Create a new application version that should be used as current version
+     *
+     * @param string $version
+     * @param array|Traversable $params
+     * @param ConfigTemplate[] $templates
+     * @return ApplicationVersion
      */
-    public function getUserParameters($asArray = true)
+    public function newVersion($version, $params = array(), $templates = array())
     {
-        if (!$asArray) {
-            return $this->userParameters;
+        if (isset($this->versions[$version])) {
+            $instance = $this->versions[$version];
+        } else {
+            $instance = new ApplicationVersion($version);
         }
 
-        $params = array();
+        $current = $this->getCurrentVersion();
+        if ($current) {
+            $instance->setUserParameters($current->getUserParameters());
 
-        foreach ($this->userParameters as $param) {
-            $params[$param->getName()] = $param->getValue();
+            foreach ($current->getConfigTemplates() as $template) {
+                $instance->addConfigTemplate($template);
+            }
         }
 
-        return $params;
+        $instance->addUserParameters($params);
+
+        foreach ($templates as $template) {
+            $instance->addConfigTemplate($template);
+        }
+
+        $this->setCurrentVersion($instance);
+        return $instance;
     }
 }

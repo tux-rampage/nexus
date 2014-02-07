@@ -64,6 +64,12 @@ interface ApplicationPackageInterface
     public function getLicense();
 
     /**
+     * @param entities\ApplicationInstance $application
+     * @return bool
+     */
+    public function validateUserOptions(entities\ApplicationInstance $application);
+
+    /**
      * Install this application package for the given application
      *
      * @param Application $application

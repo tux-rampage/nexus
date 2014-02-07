@@ -44,10 +44,10 @@ class UserParameter
     protected $id = null;
 
     /**
-     * @orm\ManyToOne(targetEntity="ApplicationInstance", inversedBy="userParameters")
+     * @orm\ManyToOne(targetEntity="ApplicationVersion", inversedBy="userParameters")
      * @var ApplicationInstance
      */
-    protected $application = null;
+    protected $version = null;
 
     /**
      * @orm\Column(type="string", nullable=false)
