@@ -28,10 +28,11 @@ use SplFileInfo;
 use PharData;
 use RecursiveIterator;
 use RecursiveDirectoryIterator;
-
 use RuntimeException;
+
 use Zend\InputFilter\Input;
 use Zend\InputFilter\InputFilter;
+use Zend\Validator as validation;
 
 class ComposerApplicationPackage implements ApplicationPackageInterface
 {
@@ -68,15 +69,24 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     }
 
     /**
+     * @param string $name
+     * @return mixed
+     */
+    protected function getOption($name, $default = null)
+    {
+        if (!isset($this->config->extra['deployment'][$name])) {
+            return $default;
+        }
+
+        return $this->config->extra['deployment'][$name];
+    }
+
+    /**
      * @see \rampage\nexus\ApplicationPackageInterface::getIcon()
      */
     public function getIcon()
     {
-        if (!isset($this->config->extra['deployment']['icon'])) {
-            return false;
-        }
-
-        $icon = $this->config->extra['deployment']['icon'];
+        $icon = $this->getOption('icon', false);
         $file = ($icon && isset($this->file[$file]))? $this->file[$file] : false;
 
         return $file;
@@ -103,12 +113,8 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
      */
     public function getParameters()
     {
-        if (!isset($this->config->extra['deployment']['parameters'])) {
-            return array();
-        }
-
         $result = array();
-        $params = $this->config->extra['deployment']['parameters'];
+        $params = $this->getOption('parameters', array());
 
         if (!is_array($params)) {
             return array();
@@ -135,17 +141,42 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
      */
     public function getApplicationDir()
     {
-        if (!isset($this->config->extra['deployment']['applicationDir'])) {
+        $subDir = $this->getOption('applicationDir');
+        if ($subDir === null) {
             return null;
         }
 
-        $subDir = trim((string)$this->config->extra['deployment']['applicationDir'], '/');
+        $subDir = trim((string)$subDir, '/');
 
         if (!isset($this->file[$subDir]) || !$this->file[$subDir]->isDir()) {
             throw new RuntimeException('Could not find application directory: ' . $subDir);
         }
 
         return $subDir;
+    }
+
+    /**
+     * Document root (relative)
+     *
+     * @return string
+     */
+    public function getWebRoot()
+    {
+        $root = $this->getOption('webRoot');
+
+        if ($root !== null) {
+            $root = trim($root, '/');
+        }
+
+        return $root;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isStandalone()
+    {
+        return (bool)$this->getOption('standalone');
     }
 
     /**
@@ -159,7 +190,17 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
 
         $this->paramInputFilter = new InputFilter();
         foreach ($this->getParameters() as $parameter) {
-            // TODO: Add filters
+            $input = new Input($parameter->getName());
+
+            $input->setRequired($parameter->isRequired());
+
+            switch ($parameter->getType()) {
+                case DeployParameter::TYPE_SELECT:
+                    $input->getFilterChain()
+                        ->attach(new validation\InArray($parameter->getOptions()));
+
+                    break;
+            }
         }
 
         return $this->paramInputFilter;
@@ -197,16 +238,28 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
             ));
         }
 
+        $webRoot = $this->getWebRoot();
         $strategy = $application->getDeployStrategy();
         $parameters = $this->getParamInputFilter()->getValues();
 
         $strategy->setUserParameters($parameters);
+        $strategy->setWebRoot($webRoot);
         $strategy->prepareStaging();
 
         $target = $strategy->getTargetDirectory();
 
-        $this->file->extractTo($target, $this->getApplicationDir());
-        // TODO: Implement deployment
+        if ($this->isStandalone()) {
+            $pharName = $this->getOption('pharName');
+            if (!$pharName) {
+                $pharName = $this->file->getFilename();
+            }
+
+            mkdir($target . '/' . $webRoot);
+            $this->file->extractTo($target . '/' . $webRoot, $this->getApplicationDir());
+            rename($this->file->getPathname(), $target . '/' . $pharName);
+        } else {
+            $this->file->extractTo($target, $this->getApplicationDir());
+        }
 
         $strategy->completeStaging();
         $strategy->activate();

@@ -46,6 +46,15 @@ interface DeployStrategyInterface
     public function setUserParameters($parameters);
 
     /**
+     * Set the document root relative to the target directory
+     *
+     * @param string $dir
+     * @return self
+     */
+    public function setWebRoot($dir);
+
+
+    /**
      * Returns the darget directory of the application
      *
      * @return string

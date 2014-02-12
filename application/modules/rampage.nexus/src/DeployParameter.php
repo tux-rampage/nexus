@@ -25,6 +25,11 @@ namespace rampage\nexus;
 
 class DeployParameter
 {
+    const TYPE_TEXT = 'text';
+    const TYPE_SELECT = 'select';
+    const TYPE_PASSWORD = 'password';
+    const TYPE_CHECKBOX = 'checkbox';
+
     /**
      * @var string
      */
