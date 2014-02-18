@@ -199,7 +199,23 @@ class ApplicationInstance
      */
     public function getDeployStrategy()
     {
-        // TODO: Implement strategy interface
+        // TODO: Implement deploy strategy
+    }
+
+    /**
+     * @return \rampage\nexus\WebConfigInterface
+     */
+    public function getWebConfig()
+    {
+        // TODO: implement web config
+    }
+
+    /**
+     * @return bool
+     */
+    public function isConsoleApplication()
+    {
+        // TODO: console only flag
     }
 
     /**
