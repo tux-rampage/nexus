@@ -24,13 +24,34 @@
 namespace rampage\nexus;
 
 use RuntimeException;
+use LogicException;
 
 /**
  * FPM web configuration
  */
 class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
 {
+    /**
+     * @var string
+     */
     protected $serviceCmd = 'service nginx';
+
+    /**
+     * @var string[]
+     */
+    protected $paths = array(
+        'confdir' => '/etc/nginx/rampage-nexus/sites/%vhost%',
+        'serverconfig' => '/etc/nginx/rampage-nexus/vhosts/%vhost%_%port%.conf',
+        'rootconfig' => '%confdir%/conf.d/90-%appname%.conf',
+        'aliasconfig' => '%confdir%/conf.d/50-%appname%.conf'
+    );
+
+    /**
+     * @var entities\ApplicationInstance
+     */
+    protected $application = null;
+
+    protected $options = array();
 
     /**
      * @param string $action
@@ -56,6 +77,26 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
     }
 
     /**
+     * @param string $name
+     * @return string
+     */
+    protected function getPath($name)
+    {
+        $format = $this->paths[$name];
+        $params = array(
+            '%vhost%' => '__default__',
+            '%port%' => '80',
+            '%appname%' => $this->getApplication()->getName()
+        );
+
+        if ($name != 'confdir') {
+            $params['%confdir%'] = $this->getPath('confdir');
+        }
+
+        return str_replace(array_keys($params), array_values($params), $format);
+    }
+
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::activate()
      */
@@ -64,13 +105,26 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
         $this->serviceControl('reload');
     }
 
+    /**
+     * @return boolean
+     */
+    protected function hasVHostConfig()
+    {
+        $config = $this->getPath('serverconfig');
+        return file_exists($config);
+    }
+
 	/**
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::configure()
      */
     public function configure(DeployStrategyInterface $strategy)
     {
-        // TODO Auto-generated method stub
+        if (!$this->hasVHostConfig()) {
+            $this->createVirtualHost($this->getApplication()->getVirtualHost());
+        }
+
+        // TODO: Create application config
     }
 
 	/**
@@ -97,10 +151,22 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::setApplication()
      */
-    public function setApplication(\rampage\nexus\entities\ApplicationInstance $instance)
+    public function setApplication(entities\ApplicationInstance $application)
     {
-        // TODO Auto-generated method stub
+        $this->application = $application;
+        return $this;
+    }
 
+    /**
+     * @return entities\ApplicationInstance
+     */
+    protected function getApplication()
+    {
+        if (!$this->application) {
+            throw new LogicException('Missing application instance for web config.');
+        }
+
+        return $this->application;
     }
 
 	/**
@@ -113,7 +179,7 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
 
     }
 
-	/**
+    /**
      * {@inheritdoc}
      * @see Serializable::unserialize()
      */
@@ -127,7 +193,7 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
      * {@inheritdoc}
      * @see \rampage\nexus\VHostCapableInterface::createVirtualHost()
      */
-    public function createVirtualHost(\rampage\nexus\entities\VirtualHost $vhost)
+    public function createVirtualHost(entities\VirtualHost $vhost)
     {
         // TODO Auto-generated method stub
 
@@ -137,7 +203,7 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
      * {@inheritdoc}
      * @see \rampage\nexus\VHostCapableInterface::removeVirtualHost()
      */
-    public function removeVirtualHost(\rampage\nexus\entities\VirtualHost $vhost)
+    public function removeVirtualHost(entities\VirtualHost $vhost)
     {
         // TODO Auto-generated method stub
 

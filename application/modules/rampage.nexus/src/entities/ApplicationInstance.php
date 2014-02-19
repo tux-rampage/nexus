@@ -83,10 +83,24 @@ class ApplicationInstance
     protected $currentVersion = null;
 
     /**
+     * @orm\ManyToOne(targetEntity="VirtualHost")
+     * @orm\JoinColumn(name="vhost_id", referencedColumnName="id", nullable=true)
+     * @var VirtualHost
+     */
+    protected $vhost = null;
+
+    /**
+     * @orm\Column(type="boolean", nullable=false)
+     * @var bool
+     */
+    protected $isConsoleApp = false;
+
+    /**
      * Construct
      */
-    public function __construct()
+    public function __construct($isConsole = false)
     {
+        $this->isConsoleApp = $isConsole;
         $this->configTemplates = new ArrayCollection();
         $this->userParameters = new ArrayCollection();
     }
@@ -215,7 +229,29 @@ class ApplicationInstance
      */
     public function isConsoleApplication()
     {
-        // TODO: console only flag
+        return $this->isConsoleApp;
+    }
+
+    /**
+     * @param VirtualHost $host
+     * @return self
+     */
+    public function setVirtualHost(VirtualHost $host)
+    {
+        $this->vhost = $host;
+        return $this;
+    }
+
+    /**
+     * @return \rampage\nexus\entities\VirtualHost|null
+     */
+    public function getVirtualHost()
+    {
+        if ($this->isConsoleApplication()) {
+            return null;
+        }
+
+        return $this->vhost;
     }
 
     /**
