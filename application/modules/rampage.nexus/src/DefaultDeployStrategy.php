@@ -159,7 +159,7 @@ class DefaultDeployStrategy implements DeployStrategyInterface
      *
      * @return string
      */
-    protected function getWebRoot()
+    public function getWebRoot()
     {
         $root = $this->getTargetDirectory();
 
@@ -193,7 +193,7 @@ class DefaultDeployStrategy implements DeployStrategyInterface
         }
 
         $webConfig = $this->getWebConfig();
-        $webConfig->configure($this->getWebRoot());
+        $webConfig->configure($this);
         $webConfig->activate();
 
         return $this;

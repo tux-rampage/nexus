@@ -104,7 +104,7 @@ class ApplicationVersion
 
     /**
      * @param string $role
-     * @return null|ConfigTemplate[]
+     * @return null|ConfigTemplate
      */
     public function getConfigTemplate($role)
     {

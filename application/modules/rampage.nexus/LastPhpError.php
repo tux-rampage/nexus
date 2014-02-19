@@ -1,7 +1,7 @@
 <?php
 /**
- * This is part of rampage-nexus
- * Copyright (c) 2014 Axel Helmert
+ * This is part of rampage.php
+ * Copyright (c) 2013 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,42 +16,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
+ * @category  library
  * @author    Axel Helmert
- * @copyright Copyright (c) 2014 Axel Helmert
+ * @copyright Copyright (c) 2013 Axel Helmert
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
 namespace rampage\nexus;
 
-use Serializable;
-
-/**
- * Interface for web configuration instances
- */
-interface WebConfigInterface extends Serializable
+class LastPhpError
 {
     /**
-     * @param entities\ApplicationInstance $instance
+     * @var array
      */
-    public function setApplication(entities\ApplicationInstance $instance);
+    protected $info = null;
 
     /**
-     * Deactivate the current config for maintenance
+     * Construct
      */
-    public function maintenance();
+    public function __construct()
+    {
+        $this->info = error_get_last();
+    }
 
     /**
-     * @param string $documentRoot
+     * @return string
      */
-    public function configure(DeployStrategyInterface $strategy);
-
-    /**
-     * Activate the current config
-     */
-    public function activate();
-
-    /**
-     * Remove the current config
-     */
-    public function remove();
+    public function getMessage()
+    {
+        return (isset($this->info['message']))? $this->info['message'] : '';
+    }
 }

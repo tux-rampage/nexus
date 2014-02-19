@@ -53,13 +53,19 @@ interface DeployStrategyInterface
      */
     public function setWebRoot($dir);
 
-
     /**
      * Returns the darget directory of the application
      *
      * @return string
      */
     public function getTargetDirectory();
+
+    /**
+     * Returns the full qualified web root directory path
+     *
+     * @return string
+     */
+    public function getWebRoot();
 
     /**
      * Prepare staging the application

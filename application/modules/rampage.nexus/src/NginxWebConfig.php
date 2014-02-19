@@ -21,4 +21,127 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-// TODO
+namespace rampage\nexus;
+
+use RuntimeException;
+
+/**
+ * FPM web configuration
+ */
+class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
+{
+    protected $serviceCmd = 'service nginx';
+
+    /**
+     * @param string $action
+     * @throws RuntimeException
+     * @return self
+     */
+    protected function serviceControl($action)
+    {
+        $cmd = $this->serviceCmd . ' ' . escapeshellarg($action);
+        $result = 1;
+        $output = array();
+
+        exec($cmd, $output, $result);
+
+        if ($result != 0) {
+            throw new RuntimeException(sprintf(
+                'Failed to invoke service action "%s": %s',
+                $action, "\n" . implode("\n", $output)
+            ));
+        }
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \rampage\nexus\WebConfigInterface::activate()
+     */
+    public function activate()
+    {
+        $this->serviceControl('reload');
+    }
+
+	/**
+     * {@inheritdoc}
+     * @see \rampage\nexus\WebConfigInterface::configure()
+     */
+    public function configure(DeployStrategyInterface $strategy)
+    {
+        // TODO Auto-generated method stub
+    }
+
+	/**
+     * {@inheritdoc}
+     * @see \rampage\nexus\WebConfigInterface::maintenance()
+     */
+    public function maintenance()
+    {
+        // TODO Auto-generated method stub
+
+    }
+
+	/**
+     * {@inheritdoc}
+     * @see \rampage\nexus\WebConfigInterface::remove()
+     */
+    public function remove()
+    {
+        // TODO Auto-generated method stub
+
+    }
+
+	/**
+     * {@inheritdoc}
+     * @see \rampage\nexus\WebConfigInterface::setApplication()
+     */
+    public function setApplication(\rampage\nexus\entities\ApplicationInstance $instance)
+    {
+        // TODO Auto-generated method stub
+
+    }
+
+	/**
+     * {@inheritdoc}
+     * @see Serializable::serialize()
+     */
+    public function serialize()
+    {
+        // TODO Auto-generated method stub
+
+    }
+
+	/**
+     * {@inheritdoc}
+     * @see Serializable::unserialize()
+     */
+    public function unserialize($serialized)
+    {
+        // TODO Auto-generated method stub
+
+    }
+
+	/**
+     * {@inheritdoc}
+     * @see \rampage\nexus\VHostCapableInterface::createVirtualHost()
+     */
+    public function createVirtualHost(\rampage\nexus\entities\VirtualHost $vhost)
+    {
+        // TODO Auto-generated method stub
+
+    }
+
+	/**
+     * {@inheritdoc}
+     * @see \rampage\nexus\VHostCapableInterface::removeVirtualHost()
+     */
+    public function removeVirtualHost(\rampage\nexus\entities\VirtualHost $vhost)
+    {
+        // TODO Auto-generated method stub
+
+    }
+
+
+}

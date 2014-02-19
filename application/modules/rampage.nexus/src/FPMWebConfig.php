@@ -25,6 +25,9 @@ namespace rampage\nexus;
 
 use RuntimeException;
 
+/**
+ * FPM web configuration
+ */
 class FPMWebConfig implements WebConfigInterface
 {
     /**
@@ -33,14 +36,35 @@ class FPMWebConfig implements WebConfigInterface
     protected $serviceCommand = 'service php-fpm';
 
     /**
+     * @var string
+     */
+    protected $configFileFormat = '/etc/php5/fpm/pool.d/%pool%.conf';
+
+    /**
      * @var array
      */
-    protected $options = array();
+    protected $options = array(
+        'user' => 'www-data',
+        'listen' => '0.0.0.0:9000'
+    );
 
     /**
      * @var entities\ApplicationInstance
      */
     protected $application = null;
+
+    /**
+     * @var ConfigTemplateLocator
+     */
+    protected $templateLocator = null;
+
+    /**
+     * @param ConfigTemplateLocator $templateLocator
+     */
+    public function __construct(ConfigTemplateLocator $templateLocator = null)
+    {
+        $this->templateLocator = $templateLocator? : new ConfigTemplateLocator();
+    }
 
     /**
      * @param string $action
@@ -65,9 +89,22 @@ class FPMWebConfig implements WebConfigInterface
     /**
      * @return string
      */
-    protected function createPoolConfig()
+    protected function createPoolConfig($webRoot, $appRoot)
     {
-        // TODO: create pool config
+        $config = $this->templateLocator->resolve('fpm/pool');
+        $params = array(
+            'pool' => $this->application->getName(),
+            'docroot' => $webRoot,
+            'approot' => $appRoot
+        );
+
+        $params = array_merge($this->options, $params);
+
+        foreach ($params as $key => $value) {
+            $config = str_replace('${' . $key . '}', $value, $config);
+        }
+
+        return $config;
     }
 
     /**
@@ -75,7 +112,51 @@ class FPMWebConfig implements WebConfigInterface
      */
     protected function createMaintenanceConfig()
     {
-        // TODO: create maintenance config
+        $config = $this->templateLocator->resolve('fpm/maintenance');
+        $params = $this->options;
+
+        $params['pool'] = $this->application->getName();
+
+        foreach ($params as $key => $value) {
+            $config = str_replace('${' . $key . '}', $value, $config);
+        }
+
+        return $config;
+    }
+
+    /**
+     * @param string $content
+     * @throws RuntimeException
+     * @return self
+     */
+    public function savePoolConfig($content)
+    {
+        if (!file_put_contents($this->getConfigFile(), $content)) {
+            $error = new LastPhpError();
+            throw new RuntimeException(sprintf('Failed to save pool config "%s": %s', $this->getPoolName(), $error->getMessage()));
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getConfigFile()
+    {
+        $file = $this->configFileFormat;
+        $file = str_replace('%pool%', $this->getPoolName(), $file);
+
+        return $file;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getPoolName()
+    {
+        $name = $this->application->getName();
+        return $name;
     }
 
     /**
@@ -91,10 +172,12 @@ class FPMWebConfig implements WebConfigInterface
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::configure()
      */
-    public function configure($documentRoot)
+    public function configure(DeployStrategyInterface $strategy)
     {
-        // TODO Auto-generated method stub
+        $config = $this->createPoolConfig($strategy->getWebRoot(), $strategy->getTargetDirectory());
+        $this->savePoolConfig($config);
 
+        return $this;
     }
 
 	/**
@@ -103,8 +186,10 @@ class FPMWebConfig implements WebConfigInterface
      */
     public function maintenance()
     {
-        // TODO Auto-generated method stub
+        $this->savePoolConfig($this->createMaintenanceConfig());
         $this->serviceControl('reload');
+
+        return $this;
     }
 
 	/**
@@ -113,17 +198,39 @@ class FPMWebConfig implements WebConfigInterface
      */
     public function remove()
     {
-        // TODO Auto-generated method stub
+        unlink($this->getConfigFile());
         $this->serviceControl('reload');
+
+        return $this;
     }
 
 	/**
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::setApplication()
      */
-    public function setApplication(entities\ApplicationInstance $instance)
+    public function setApplication(entities\ApplicationInstance $application)
     {
-        $this->application = $instance;
+        $this->application = $application;
+        $this->templateLocator->setApplication($application);
+
+        return $this;
+    }
+
+    /**
+     * @param array $options
+     * @return \rampage\nexus\FPMWebConfig
+     */
+    public function setOptions(array $options)
+    {
+        foreach ($options as $key => $value) {
+
+            if (($key == 'listen') && preg_match('~^\d+$~', $value)) {
+                $value = '0.0.0.0:' . $value;
+            }
+
+            $this->options[$key] = $value;
+        }
+
         return $this;
     }
 
@@ -142,7 +249,7 @@ class FPMWebConfig implements WebConfigInterface
      */
     public function unserialize($serialized)
     {
-        $this->options = json_decode($serialized, true);
+        $this->setOptions(json_decode($serialized, true));
         return $this;
     }
 }
