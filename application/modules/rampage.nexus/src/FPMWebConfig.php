@@ -24,6 +24,7 @@
 namespace rampage\nexus;
 
 use RuntimeException;
+use Zend\Form\Annotation\AnnotationBuilder as AnnotationFormBuilder;
 
 /**
  * FPM web configuration
@@ -41,13 +42,9 @@ class FPMWebConfig implements WebConfigInterface
     protected $configFileFormat = '/etc/php5/fpm/pool.d/%pool%.conf';
 
     /**
-     * @var array
+     * @var options\FPMOptions
      */
-    protected $options = array(
-        'user' => 'www-data',
-        'listen' => '0.0.0.0:9000'
-    );
-
+    protected $options = null;
     /**
      * @var entities\ApplicationInstance
      */
@@ -64,6 +61,7 @@ class FPMWebConfig implements WebConfigInterface
     public function __construct(ConfigTemplateLocator $templateLocator = null)
     {
         $this->templateLocator = $templateLocator? : new ConfigTemplateLocator();
+        $this->options = new options\FPMOptions();
     }
 
     /**
@@ -98,7 +96,7 @@ class FPMWebConfig implements WebConfigInterface
             'approot' => $appRoot
         );
 
-        $params = array_merge($this->options, $params);
+        $params = array_merge($this->options->toArray(), $params);
 
         foreach ($params as $key => $value) {
             $config = str_replace('${' . $key . '}', $value, $config);
@@ -113,7 +111,7 @@ class FPMWebConfig implements WebConfigInterface
     protected function createMaintenanceConfig()
     {
         $config = $this->templateLocator->resolve('fpm/maintenance');
-        $params = $this->options;
+        $params = $this->options->toArray();
 
         $params['pool'] = $this->application->getName();
 
@@ -160,6 +158,17 @@ class FPMWebConfig implements WebConfigInterface
     }
 
     /**
+     * @see \rampage\nexus\WebConfigInterface::getOptionsForm()
+     */
+    public function getOptionsForm()
+    {
+        $builder = new AnnotationFormBuilder();
+        $form = $builder->createForm($this->options);
+
+        return $form;
+    }
+
+	/**
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::activate()
      */
@@ -222,34 +231,14 @@ class FPMWebConfig implements WebConfigInterface
      */
     public function setOptions(array $options)
     {
-        foreach ($options as $key => $value) {
+        $form =$this->getOptionsForm()
+            ->setData($options);
 
-            if (($key == 'listen') && preg_match('~^\d+$~', $value)) {
-                $value = '0.0.0.0:' . $value;
-            }
-
-            $this->options[$key] = $value;
+        if (!$form->isValid()) {
+            throw new \InvalidArgumentException('Invalid web config options');
         }
 
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     * @see Serializable::serialize()
-     */
-    public function serialize()
-    {
-        return json_encode($this->options);
-    }
-
-	/**
-     * {@inheritdoc}
-     * @see Serializable::unserialize()
-     */
-    public function unserialize($serialized)
-    {
-        $this->setOptions(json_decode($serialized, true));
+        $form->bind($this->options);
         return $this;
     }
 }

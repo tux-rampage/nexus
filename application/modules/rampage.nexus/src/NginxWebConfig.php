@@ -171,26 +171,6 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
 
 	/**
      * {@inheritdoc}
-     * @see Serializable::serialize()
-     */
-    public function serialize()
-    {
-        // TODO Auto-generated method stub
-
-    }
-
-    /**
-     * {@inheritdoc}
-     * @see Serializable::unserialize()
-     */
-    public function unserialize($serialized)
-    {
-        // TODO Auto-generated method stub
-
-    }
-
-	/**
-     * {@inheritdoc}
      * @see \rampage\nexus\VHostCapableInterface::createVirtualHost()
      */
     public function createVirtualHost(entities\VirtualHost $vhost)

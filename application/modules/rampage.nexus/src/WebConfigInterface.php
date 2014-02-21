@@ -28,12 +28,27 @@ use Serializable;
 /**
  * Interface for web configuration instances
  */
-interface WebConfigInterface extends Serializable
+interface WebConfigInterface
 {
     /**
      * @param entities\ApplicationInstance $instance
      */
     public function setApplication(entities\ApplicationInstance $instance);
+
+    /**
+     * Returns the form containing the options
+     *
+     * @return \Zend\Form\FormInterface
+     */
+    public function getOptionsForm();
+
+    /**
+     * Set options for this web config
+     *
+     * @param array $options
+     * @return self
+     */
+    public function setOptions(array $options);
 
     /**
      * Deactivate the current config for maintenance
