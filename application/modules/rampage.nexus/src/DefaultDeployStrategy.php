@@ -48,6 +48,11 @@ class DefaultDeployStrategy implements DeployStrategyInterface
     protected $application = null;
 
     /**
+     * @return WebConfigInterface
+     */
+    private $webConfig = null;
+
+    /**
      * @var string
      */
     protected $previousDir = null;
@@ -171,11 +176,20 @@ class DefaultDeployStrategy implements DeployStrategyInterface
     }
 
     /**
+     * @see \rampage\nexus\DeployStrategyInterface::setWebConfig()
+     */
+    public function setWebConfig(WebConfigInterface $config)
+    {
+        $this->webConfig = $config;
+        return $this;
+    }
+
+	/**
      * @return \rampage\nexus\WebConfigInterface
      */
     protected function getWebConfig()
     {
-        return $this->application->getWebConfig();
+        return $this->webConfig;
     }
 
     /**

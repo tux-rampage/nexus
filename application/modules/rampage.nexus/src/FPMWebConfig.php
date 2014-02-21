@@ -45,6 +45,12 @@ class FPMWebConfig implements WebConfigInterface
      * @var options\FPMOptions
      */
     protected $options = null;
+
+    /**
+     * @var \Zend\Form\Form
+     */
+    protected $optionsForm = null;
+
     /**
      * @var entities\ApplicationInstance
      */
@@ -162,10 +168,12 @@ class FPMWebConfig implements WebConfigInterface
      */
     public function getOptionsForm()
     {
-        $builder = new AnnotationFormBuilder();
-        $form = $builder->createForm($this->options);
+        if (!$this->optionsForm) {
+            $builder = new AnnotationFormBuilder();
+            $this->optionsForm = $builder->createForm($this->options);
+        }
 
-        return $form;
+        return $this->optionsForm;
     }
 
 	/**

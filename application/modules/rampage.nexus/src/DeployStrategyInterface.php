@@ -38,6 +38,12 @@ interface DeployStrategyInterface
     public function setApplicationInstance(entities\ApplicationInstance $instance);
 
     /**
+     * @param WebConfigInterface $config
+     * @return self
+     */
+    public function setWebConfig(WebConfigInterface $config);
+
+    /**
      * Set the user parameters to use for deployment
      *
      * @param array|\ArrayAccess $parameters

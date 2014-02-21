@@ -97,6 +97,23 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
     }
 
     /**
+     * @see \rampage\nexus\WebConfigInterface::getOptionsForm()
+     */
+    public function getOptionsForm()
+    {
+        // TODO Auto-generated method stub
+
+    }
+
+	/**
+     * @see \rampage\nexus\WebConfigInterface::setOptions()
+     */
+    public function setOptions(array $options)
+    {
+        // TODO Auto-generated method stub
+    }
+
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::activate()
      */
@@ -169,7 +186,7 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
         return $this->application;
     }
 
-	/**
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\VHostCapableInterface::createVirtualHost()
      */
@@ -188,6 +205,4 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
         // TODO Auto-generated method stub
 
     }
-
-
 }
