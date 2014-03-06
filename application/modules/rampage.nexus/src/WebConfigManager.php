@@ -28,6 +28,11 @@ use rampage\core\exception\InvalidServiceTypeException;
 
 class WebConfigManager extends AbstractPluginManager
 {
+    protected $invokableClasses = array(
+        'fpm' => 'rampage\nexus\FPMWebConfig',
+        'nginx' => 'rampage\nexus\NginxWebConfig'
+    );
+
     /**
      * @see \Zend\ServiceManager\AbstractPluginManager::__construct()
      */
