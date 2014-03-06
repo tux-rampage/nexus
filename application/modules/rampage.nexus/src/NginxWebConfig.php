@@ -40,8 +40,8 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
      * @var string[]
      */
     protected $paths = array(
-        'confdir' => '/etc/nginx/rampage-nexus/sites/%vhost%',
-        'serverconfig' => '/etc/nginx/rampage-nexus/vhosts/%vhost%_%port%.conf',
+        'confdir' => '/etc/rampage-nexus/nginx/sites/%vhost%',
+        'serverconfig' => '/etc/rampage-nexus/nginx/vhosts/%vhost%_%port%.conf',
         'rootconfig' => '%confdir%/conf.d/90-%appname%.conf',
         'aliasconfig' => '%confdir%/conf.d/50-%appname%.conf'
     );
@@ -51,6 +51,9 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
      */
     protected $application = null;
 
+    /**
+     * @var array
+     */
     protected $options = array();
 
     /**

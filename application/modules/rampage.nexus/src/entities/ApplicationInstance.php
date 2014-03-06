@@ -96,6 +96,12 @@ class ApplicationInstance
     protected $isConsoleApp = false;
 
     /**
+     * @orm\Column(type="string", nullable=false)
+     * @var string
+     */
+    protected $deployStrategy = 'default';
+
+    /**
      * Construct
      */
     public function __construct($isConsole = false)

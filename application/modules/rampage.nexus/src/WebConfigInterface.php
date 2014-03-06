@@ -69,4 +69,10 @@ interface WebConfigInterface
      * Remove the current config
      */
     public function remove();
+
+    /**
+     * @param array $options
+     * @param ConfigTemplateLocator $templateLocator
+     */
+    public static function factory(array $options, ConfigTemplateLocator $templateLocator = null);
 }

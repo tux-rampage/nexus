@@ -71,6 +71,22 @@ class FPMWebConfig implements WebConfigInterface
     }
 
     /**
+     * @param array $options
+     * @param ConfigTemplateLocator $templateLocator
+     * @return \rampage\nexus\FPMWebConfig
+     */
+    public static function factory(array $options, ConfigTemplateLocator $templateLocator = null)
+    {
+        $instance = new self($templateLocator);
+
+        if (isset($options['configFileFormat'])) {
+            $instance->configFileFormat = $options['configFileFormat'];
+        }
+
+        return $instance;
+    }
+
+    /**
      * @param string $action
      * @throws RuntimeException
      * @return \rampage\nexus\FPMWebConfig
