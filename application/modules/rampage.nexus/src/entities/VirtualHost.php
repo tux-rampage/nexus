@@ -65,10 +65,28 @@ class VirtualHost
     protected $port = 80;
 
     /**
-     * @orm\Column(type="integer", nullable=true)
-     * @var int
+     * @orm\Column(type="boolean", nullable=false)
+     * @var bool
      */
-    protected $sslPort = null;
+    protected $enableSsl = false;
+
+    /**
+     * @orm\Column(type="string", nullable=false)
+     * @var string
+     */
+    protected $sslCertFile = null;
+
+    /**
+     * @orm\Column(type="string", nullable=true)
+     * @var string
+     */
+    protected $sslKeyFile = null;
+
+    /**
+     * @orm\Column(type="string", nullable=true)
+     * @var string
+     */
+    protected $sslChainFile = null;
 
     /**
      * @return number
@@ -103,6 +121,14 @@ class VirtualHost
     }
 
     /**
+     * @return boolean
+     */
+    public function hasAliases()
+    {
+        return !empty($this->getAliases());
+    }
+
+    /**
      * @return number
      */
     public function getPort()
@@ -111,11 +137,35 @@ class VirtualHost
     }
 
     /**
-     * @return number
+     * @return string
      */
-    public function getSslPort()
+    public function getSslCertFile()
     {
-        return $this->sslPort;
+        return $this->sslCertFile;
+    }
+
+	/**
+     * @return string
+     */
+    public function getSslKeyFile()
+    {
+        return $this->sslKeyFile;
+    }
+
+	/**
+     * @return string
+     */
+    public function getSslChainFile()
+    {
+        return $this->sslChainFile;
+    }
+
+	/**
+     * @return bool
+     */
+    public function isSslEnabled()
+    {
+        return $this->enableSsl;
     }
 
     /**
@@ -158,12 +208,12 @@ class VirtualHost
     }
 
     /**
-     * @param number $port
+     * @param bool $flag
      * @return self
      */
-    public function setSslPort($port)
+    public function setEnableSsl($flag = true)
     {
-        $this->sslPort = $port;
+        $this->enableSsl = $flag;
         return $this;
     }
 }

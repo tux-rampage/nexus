@@ -28,16 +28,18 @@ use rampage\core\exception\InvalidServiceTypeException;
 
 class WebConfigManager extends AbstractPluginManager
 {
-    protected $invokableClasses = array(
-        'fpm' => 'rampage\nexus\FPMWebConfig',
-        'nginx' => 'rampage\nexus\NginxWebConfig'
-    );
+    protected $invokableClasses = array();
 
     /**
      * @see \Zend\ServiceManager\AbstractPluginManager::__construct()
      */
     public function __construct(ConfigInterface $configuration = null)
     {
+        $this->invokableClasses = array(
+            'fpm' => __NAMESPACE__ . '\FPMWebConfig',
+            'nginx' => __NAMESPACE__ . '\NginxWebConfig'
+        );
+
         parent::__construct($configuration);
         $this->autoAddInvokableClass = false;
     }
@@ -50,7 +52,7 @@ class WebConfigManager extends AbstractPluginManager
         $class = $this->invokableClasses[$canonicalName];
 
         if (!self::isSubclassOf($class, 'rampage\nexus\WebConfigInterface')) {
-            throw new InvalidServiceTypeException('');
+            throw new InvalidServiceTypeException(sprintf('The requested service class %s does not implement WebConfigInterface', $class));
         }
 
         return $class::factory($this->creationOptions, $this->templateLocator);
@@ -62,7 +64,10 @@ class WebConfigManager extends AbstractPluginManager
     public function validatePlugin($plugin)
     {
         if (!$plugin instanceof WebConfigInterface) {
-            throw new InvalidServiceTypeException('');
+            throw new InvalidServiceTypeException(sprintf(
+                'Expected service to implement WebConfigInterface, %s given',
+                is_object($plugin)? get_class($plugin) : gettype($plugin)
+            ));
         }
     }
 }

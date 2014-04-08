@@ -23,8 +23,12 @@
 
 namespace rampage\nexus;
 
+use Zend\Form\Annotation\AnnotationBuilder as AnnotationFormBuilder;
+
+use Traversable;
 use RuntimeException;
 use LogicException;
+use SplFileInfo;
 
 /**
  * FPM web configuration
@@ -52,9 +56,53 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
     protected $application = null;
 
     /**
-     * @var array
+     * @var options\NginxOptions
      */
-    protected $options = array();
+    protected $options = null;
+
+    /**
+     * @var \Zend\Form\Form
+     */
+    protected $optionsForm = null;
+
+    /**
+     * @var ConfigTemplateLocator
+     */
+    protected $configTemplateLocator = null;
+
+    /**
+     * @param ConfigTemplateLocator $locator
+     * @return \rampage\nexus\NginxWebConfig
+     */
+    public function __construct(ConfigTemplateLocator $locator)
+    {
+        $this->configTemplateLocator = $locator;
+        $this->options = new options\NginxOptions();
+
+        return $this;
+    }
+
+    /**
+     * @param array $options
+     * @param ConfigTemplateLocator $templateLocator
+     * @return \rampage\nexus\FPMWebConfig
+     */
+    public static function factory(array $options, ConfigTemplateLocator $templateLocator = null)
+    {
+        $instance = new self($templateLocator);
+
+        if (isset($options['paths']) && (is_array($options['paths']) || ($options['paths'] instanceof Traversable))) {
+            foreach ($options['paths'] as $type => $path) {
+                if (!isset($this->paths[$type])) {
+                    continue;
+                }
+
+                $this->paths[$type] = $path;
+            }
+        }
+
+        return $instance;
+    }
 
     /**
      * @param string $action
@@ -86,9 +134,11 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
     protected function getPath($name)
     {
         $format = $this->paths[$name];
+        $vhost = $this->getApplication()->getVirtualHost();
+
         $params = array(
-            '%vhost%' => '__default__',
-            '%port%' => '80',
+            '%vhost%' => $vhost->getServerName(),
+            '%port%' => $vhost->getPort(),
             '%appname%' => $this->getApplication()->getName()
         );
 
@@ -100,12 +150,41 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
     }
 
     /**
+     * @param entities\VirtualHost $vhost
+     * @return string
+     */
+    protected function createVhostConfig(entities\VirtualHost $vhost)
+    {
+        /* @var $vhost entities\VirtualHost */
+        $template = $vhost->isSslEnabled()? 'nginx/vhost-ssl' : 'nginx/vhost';
+        $config = $this->configTemplateLocator->resolve($template);
+        $names = $vhost->getAliases();
+
+        array_unshift($names, $vhost->getServerName());
+
+        $options = array(
+            'servernames' => implode(' ', $names),
+            'port' => $vhost->getPort(),
+            'sslcert' => $vhost->getSslCertFile(),
+            'sslkey' => $vhost->getSslKeyFile(),
+            'sslchain' => $vhost->getSslChainFile()
+        );
+
+        return $config->setVariables($options)->render();
+    }
+
+    /**
      * @see \rampage\nexus\WebConfigInterface::getOptionsForm()
      */
     public function getOptionsForm()
     {
-        // TODO Auto-generated method stub
+        if (!$this->optionsForm) {
+            $builder = new AnnotationFormBuilder();
+            $this->optionsForm = $builder->createForm($builder);
+            $this->optionsForm->bind($this->options);
+        }
 
+        return $this->optionsForm;
     }
 
 	/**
@@ -113,7 +192,14 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
      */
     public function setOptions(array $options)
     {
-        // TODO Auto-generated method stub
+        $form = $this->getOptionsForm();
+
+        if (!$form->setData($options)->isValid()) {
+            throw new RuntimeException('Invalid Options');
+        }
+
+        $form->bindValues();
+        return $this;
     }
 
     /**
@@ -195,8 +281,18 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
      */
     public function createVirtualHost(entities\VirtualHost $vhost)
     {
-        // TODO Auto-generated method stub
+        $path = new SplFileInfo($this->getPath('serverconfig'));
 
+        if ($path->isFile()) {
+            return $this;
+        }
+
+        $config = $this->createVhostConfig($vhost);
+        if (!file_put_contents($path->getPathname(), $config)) {
+            throw new RuntimeException(sprintf('Failed to write vhost config to %s', $path));
+        }
+
+        return $this;
     }
 
 	/**
@@ -205,7 +301,16 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
      */
     public function removeVirtualHost(entities\VirtualHost $vhost)
     {
-        // TODO Auto-generated method stub
+        $path = new SplFileInfo($this->getPath('serverconfig'));
 
+        if ($path->isFile()) {
+            return $this;
+        }
+
+        if (!unlink($path->getPathname())) {
+            throw new RuntimeException(sprintf('Failed to write vhost config to %s', $path));
+        }
+
+        return $this;
     }
 }

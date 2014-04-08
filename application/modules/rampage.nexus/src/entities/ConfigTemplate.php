@@ -26,6 +26,7 @@
 namespace rampage\nexus\entities;
 
 use Doctrine\ORM\Mapping as orm;
+use rampage\nexus\ConfigTemplate as ConfigTemplateRenderer;
 
 /**
  * @orm\Entity
@@ -105,7 +106,7 @@ class ConfigTemplate
      */
     public function getTemplate()
     {
-        return $this->template;
+        return new ConfigTemplateRenderer($this->template);
     }
 
     /**

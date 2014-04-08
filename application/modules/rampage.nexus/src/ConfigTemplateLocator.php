@@ -47,7 +47,7 @@ class ConfigTemplateLocator
 
     /**
      * @param string $name
-     * @return string
+     * @return ConfigTemplate
      */
     public function resolve($name)
     {
@@ -65,7 +65,7 @@ class ConfigTemplateLocator
             $file = new SplFileInfo($path . '/' . $name . '.conf');
 
             if ($file->isFile() && $file->isReadable()) {
-                return file_get_contents($file->getPathname());
+                return new ConfigTemplate(file_get_contents($file->getPathname()));
             }
         }
 

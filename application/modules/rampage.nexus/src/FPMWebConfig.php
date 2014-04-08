@@ -119,12 +119,7 @@ class FPMWebConfig implements WebConfigInterface
         );
 
         $params = array_merge($this->options->toArray(), $params);
-
-        foreach ($params as $key => $value) {
-            $config = str_replace('${' . $key . '}', $value, $config);
-        }
-
-        return $config;
+        return $config->setVariables($params)->render();
     }
 
     /**
@@ -137,11 +132,7 @@ class FPMWebConfig implements WebConfigInterface
 
         $params['pool'] = $this->application->getName();
 
-        foreach ($params as $key => $value) {
-            $config = str_replace('${' . $key . '}', $value, $config);
-        }
-
-        return $config;
+        return $config->setVariables($params)->render();
     }
 
     /**
