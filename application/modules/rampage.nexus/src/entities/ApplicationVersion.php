@@ -11,9 +11,12 @@ namespace rampage\nexus\entities;
 
 use Doctrine\ORM\Mapping as orm;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\Event\PostFlushEventArgs;
+use Doctrine\Common\Persistence\Event\LifecycleEventArgs;
 
 /**
  * @orm\Entity
+ * @orm\HasLifecycleCallbacks
  */
 class ApplicationVersion
 {
@@ -31,7 +34,8 @@ class ApplicationVersion
 
     /**
      * @orm\ManyToOne(targetEntity="ApplicationInstance", inversedBy="versions")
-     * @var ArrayCollection|ApplicationInstance
+     * @orm\JoinColumn(name="application_id", referencedColumnName="id", nullable=false)
+     * @var ApplicationInstance
      */
     protected $application = null;
 
@@ -53,6 +57,11 @@ class ApplicationVersion
     protected $userParameters = null;
 
     /**
+     * @var array
+     */
+    private $prePersistAggregates = null;
+
+    /**
      * Construct
      */
     public function __construct($version = null)
@@ -60,6 +69,51 @@ class ApplicationVersion
         $this->version = $version;
         $this->configTemplates = new ArrayCollection();
         $this->userParameters = new ArrayCollection();
+    }
+
+    /**
+     * @orm\PrePersist
+     */
+    public function prePersist(LifecycleEventArgs $event)
+    {
+        if ($this->prePersistAggregates || $this->id) {
+            return;
+        }
+
+        // Keep aggregates for new persisted items
+        $this->prePersistAggregates = array($this->configTemplates, $this->userParameters);
+    }
+
+    /**
+     * @orm\PostFlush
+     */
+    public function postFlush(PostFlushEventArgs $event)
+    {
+        if (!$this->prePersistAggregates || !$this->id) {
+            return;
+        }
+
+        list($this->configTemplates, $this->userParameters) = $this->prePersistAggregates;
+        $this->prePersistAggregates = null;
+
+        // Flush this instance again WITH aggregates
+        $event->getEntityManager()->flush($this);
+    }
+
+    /**
+     * @return number
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @return \rampage\nexus\entities\ApplicationInstance
+     */
+    public function getApplication()
+    {
+        return $this->application;
     }
 
     /**

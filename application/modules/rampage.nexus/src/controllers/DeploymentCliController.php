@@ -1,5 +1,6 @@
 <?php
 /**
+ * This is part of rampage-nexus
  * Copyright (c) 2014 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,32 +21,27 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\services;
+namespace rampage\nexus\controllers;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\Mvc\Controller\AbstractActionController;
 
-use Zend\Config\Config;
-use Zend\Config\Reader\Ini as IniConfigReader;
-
-use SplFileInfo;
-
-/**
- * System Config Factory
- */
-class SystemConfigFactory implements FactoryInterface
+class DeploymentCliController extends AbstractActionController
 {
-    /**
-     * {@inheritdoc}
-     * @see \Zend\ServiceManager\FactoryInterface::createService()
-     */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function stageAction()
     {
-        $pathManager = $serviceLocator->get('PathManager');
-        $file = $pathManager->get('etc', 'deployment.conf');
-        $reader = new IniConfigReader();
-        $config = new Config($reader->fromFile($file->getPathname()));
 
-        return $config;
+    }
+
+    public function activateAction()
+    {
+
+    }
+
+    public function deactivateAction()
+    {
+    }
+
+    public function unstageAction()
+    {
     }
 }

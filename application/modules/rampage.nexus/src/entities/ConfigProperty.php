@@ -25,8 +25,13 @@ namespace rampage\nexus;
 
 class ConfigProperty
 {
+    const TYPE_STRING = 'string';
+    const TYPE_INT = 'integer';
+    const TYPE_BOOL = 'boolean';
+    const TYPE_FLOAT = 'double';
+
     /**
-     * @orm\Column(type="string", nullable=false) @orm\Id
+     * @orm\Id @orm\Column(type="string", nullable=false)
      * @var string
      */
     protected $name = null;
@@ -36,6 +41,11 @@ class ConfigProperty
      * @var string
      */
     protected $value = null;
+
+    /**
+     * @var mixed
+     */
+    protected $phpValue = null;
 
     /**
      * @orm\Column(type="string", nullable=false)
@@ -54,6 +64,46 @@ class ConfigProperty
     }
 
     /**
+     * @return self
+     */
+    protected function serializeValue()
+    {
+        if ($this->type == self::TYPE_BOOL) {
+            $this->value = ($this->phpValue)? 'true' : 'false';
+            return $this;
+        }
+
+        $this->value = (string)$this->phpValue;
+        return $this;
+    }
+
+    /**
+     * @return self
+     */
+    protected function unserializeValue()
+    {
+        switch ($this->type) {
+            case self::TYPE_INT:
+                $this->phpValue = (int)$this->value;
+
+            case self::TYPE_BOOL:
+                $this->phpValue = ($this->value == 'false')? false : true;
+                break;
+
+            case self::TYPE_FLOAT:
+                $this->phpValue = (float)$this->value;
+                break;
+
+            case self::TYPE_STRING:
+            default:
+                $this->phpValue = (string)$this->value;
+                break;
+        }
+
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getName()
@@ -66,7 +116,11 @@ class ConfigProperty
      */
     public function getValue()
     {
-        // TODO
+        if ($this->phpValue === null) {
+            $this->unserializeValue();
+        }
+
+        return $this->phpValue;
     }
 
     /**
@@ -75,7 +129,11 @@ class ConfigProperty
      */
     public function setValue($value)
     {
-        // TODO
+        if (!is_scalar($value)) {
+            throw new \UnexpectedValueException(sprintf('The config value must be a scalar value, %s given', gettype($value)));
+        }
+
+        $this->type = gettype($value);
         $this->value = $value;
         return $this;
     }

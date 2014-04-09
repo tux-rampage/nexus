@@ -22,9 +22,9 @@
 
 namespace rampage\nexus\services;
 
+use rampage\nexus\WebConfigManager;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-use rampage\nexus\FPMWebConfig;
 
 class WebConfigFactory implements FactoryInterface
 {
@@ -34,15 +34,9 @@ class WebConfigFactory implements FactoryInterface
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
         $config = $serviceLocator->get('SystemConfig');
-        $locator = $serviceLocator->get('ConfigTemplateLocator');
+        $manager = $serviceLocator->get(WebConfigManager::class);
         $type = $config->server->webconfig? : 'nginx';
 
-        switch ($type) {
-            case 'fpm':
-                $instance = FPMWebConfig::factory($config->web->{$type}? : array(), $locator);
-                break;
-        }
-
-        return $instance;
+        return $manager->get($type, $config->web->{$type}? : array());
     }
 }

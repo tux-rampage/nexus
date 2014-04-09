@@ -40,7 +40,7 @@ class DeployStrategyManager extends AbstractPluginManager
             $self = $this;
 
             $this->setFactory('default', function(ServiceLocatorInterface $serviceLocator) use ($self) {
-                return $self->getServiceLocator()->get('DefaultDeployStrategy');
+                return $self->getServiceLocator()->get('DeployStrategy');
             });
         }
     }

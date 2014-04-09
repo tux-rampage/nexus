@@ -26,9 +26,10 @@ use Zend\ServiceManager\AbstractPluginManager;
 use Zend\ServiceManager\ConfigInterface;
 use rampage\core\exception\InvalidServiceTypeException;
 
-class WebConfigManager extends AbstractPluginManager
+
+class WebConfigManager extends AbstractPluginManager implements ConfigTemplateLocatorAwareInterface
 {
-    protected $invokableClasses = array();
+    use traits\ConfigTemplateLocatorAwareTrait;
 
     /**
      * @see \Zend\ServiceManager\AbstractPluginManager::__construct()
@@ -41,7 +42,7 @@ class WebConfigManager extends AbstractPluginManager
         );
 
         parent::__construct($configuration);
-        $this->autoAddInvokableClass = false;
+        $this->autoAddInvokableClass = true;
     }
 
 	/**
@@ -51,11 +52,11 @@ class WebConfigManager extends AbstractPluginManager
     {
         $class = $this->invokableClasses[$canonicalName];
 
-        if (!self::isSubclassOf($class, 'rampage\nexus\WebConfigInterface')) {
-            throw new InvalidServiceTypeException(sprintf('The requested service class %s does not implement WebConfigInterface', $class));
+        if (!self::isSubclassOf($class, WebConfigInterface::class)) {
+            throw new InvalidServiceTypeException(sprintf('The requested service class %s does not implement %s', $class, WebConfigInterface::class));
         }
 
-        return $class::factory($this->creationOptions, $this->templateLocator);
+        return $class::factory($this->creationOptions, $this->configTemplateLocator);
     }
 
 	/**
@@ -65,7 +66,8 @@ class WebConfigManager extends AbstractPluginManager
     {
         if (!$plugin instanceof WebConfigInterface) {
             throw new InvalidServiceTypeException(sprintf(
-                'Expected service to implement WebConfigInterface, %s given',
+                'Expected service to implement %s, %s given',
+                WebConfigInterface::class,
                 is_object($plugin)? get_class($plugin) : gettype($plugin)
             ));
         }

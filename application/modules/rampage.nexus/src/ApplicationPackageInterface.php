@@ -31,6 +31,15 @@ use SplFileInfo;
 interface ApplicationPackageInterface
 {
     /**
+     * Returns the common name of this package type
+     *
+     * Like zpk, composer, etc ...
+     *
+     * @return string
+     */
+    public function getTypeName();
+
+    /**
      * Returns the application name
      */
     public function getName();

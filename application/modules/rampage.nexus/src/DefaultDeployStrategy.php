@@ -23,6 +23,8 @@
 
 namespace rampage\nexus;
 
+use Zend\Log\LoggerAwareInterface;
+
 use FilesystemIterator;
 use RuntimeException;
 use Exception;
@@ -30,8 +32,10 @@ use Exception;
 /**
  * The default deployment strategy implementation
  */
-class DefaultDeployStrategy implements DeployStrategyInterface
+class DefaultDeployStrategy implements DeployStrategyInterface, LoggerAwareInterface
 {
+    use traits\LoggerAwareTrait;
+
     /**
      * @var string
      */
@@ -106,8 +110,8 @@ class DefaultDeployStrategy implements DeployStrategyInterface
      */
     private function lastErrorMessage()
     {
-        $last = error_get_last();
-        return (isset($last['message']))? $last['message'] : '';
+        $error = new LastPhpError();
+        return $error->getMessage();
     }
 
     /**
@@ -221,7 +225,7 @@ class DefaultDeployStrategy implements DeployStrategyInterface
         try {
             $this->deltree($this->formatDir());
         } catch (Exception $e) {
-            // TODO: Implement logging
+            $this->getLogger()->err($e);
         }
 
         return $this;
@@ -233,7 +237,6 @@ class DefaultDeployStrategy implements DeployStrategyInterface
     public function completeStaging()
     {
         // TODO Manage persistent resources
-
         return $this;
     }
 

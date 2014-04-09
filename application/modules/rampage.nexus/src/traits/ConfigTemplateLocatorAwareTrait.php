@@ -1,5 +1,6 @@
 <?php
 /**
+ * This is part of rampage-nexus
  * Copyright (c) 2014 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,22 +21,28 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\services;
+namespace rampage\nexus\traits;
 
-use rampage\nexus\DefaultDeployStrategy;
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use rampage\nexus\ConfigTemplateLocator;
 
-class DefaultDeployStrategyFactory implements FactoryInterface
+
+/**
+ * Implements config template locator awareness
+ */
+trait ConfigTemplateLocatorAwareTrait
 {
     /**
-     * @see \Zend\ServiceManager\FactoryInterface::createService()
+     * @var ConfigTemplateLocator
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
-    {
-        $strategy = new DefaultDeployStrategy();
-        $strategy->setWebConfig($serviceLocator->get('WebConfig'));
+    protected $configTemplateLocator = null;
 
-        return $strategy;
+    /**
+     * @param ConfigTemplateLocator $locator
+     * @return self
+     */
+    public function setConfigTemplateLocator(ConfigTemplateLocator $locator)
+    {
+        $this->configTemplateLocator = $locator;
+        return $this;
     }
 }

@@ -69,6 +69,15 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     }
 
     /**
+     * {@inheritdoc}
+     * @see \rampage\nexus\ApplicationPackageInterface::getTypeName()
+     */
+    public function getTypeName()
+    {
+        return 'composer';
+    }
+
+	/**
      * @param string $name
      * @return mixed
      */

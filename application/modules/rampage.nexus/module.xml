@@ -19,23 +19,6 @@
         </route>
     </router>
 
-    <servicemanager>
-        <services>
-            <service name="DefaultDeployStrategy" class="rampage\nexus\DefaultDeployStrategy">
-                <factory class="rampage\nexus\services\DefaultDeployStrategyFactory"></factory>
-            </service>
-
-            <service name="WebConfig">
-                <factory class="rampage\nexus\services\WebConfigFactory" />
-                <di>
-                    <provides class="rampage\nexus\WebConfigInterface" />
-                </di>
-            </service>
-
-            <service name="ConfigTemplateLocator" class="rampage\nexus\ConfigTemplateLocator" />
-        </services>
-    </servicemanager>
-
     <!-- This is for convenience, you might also refer to a controller with its full class name -->
     <plugins>
         <pluginmanager type="controllers">

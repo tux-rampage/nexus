@@ -1,5 +1,6 @@
 <?php
 /**
+ * This is part of rampage-nexus
  * Copyright (c) 2014 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,32 +21,44 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\services;
+namespace rampage\nexus\api;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
-
-use Zend\Config\Config;
-use Zend\Config\Reader\Ini as IniConfigReader;
-
-use SplFileInfo;
+use rampage\nexus\entities\ApplicationInstance;
 
 /**
- * System Config Factory
+ * Server API
  */
-class SystemConfigFactory implements FactoryInterface
+class ServerApiInterface
 {
     /**
-     * {@inheritdoc}
-     * @see \Zend\ServiceManager\FactoryInterface::createService()
+     * Deploy the given application's current version
+     *
+     * @param ApplicationInstance $instance
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
-    {
-        $pathManager = $serviceLocator->get('PathManager');
-        $file = $pathManager->get('etc', 'deployment.conf');
-        $reader = new IniConfigReader();
-        $config = new Config($reader->fromFile($file->getPathname()));
+    public function deploy(ApplicationInstance $instance);
 
-        return $config;
-    }
+    /**
+     * Remove the application from the given server
+     *
+     * @param ApplicationInstance $aplication
+     */
+    public function remove(ApplicationInstance $aplication);
+
+    /**
+     * Fetch the deployment status
+     *
+     * @param ApplicationInstance $application
+     * @return string
+     */
+    public function status(ApplicationInstance $application);
+
+    /**
+     * Detatch server from this master
+     */
+    public function attach();
+
+    /**
+     * Attach server to this master
+     */
+    public function detach();
 }

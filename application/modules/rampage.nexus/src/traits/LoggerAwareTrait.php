@@ -1,5 +1,6 @@
 <?php
 /**
+ * This is part of rampage-nexus
  * Copyright (c) 2014 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,32 +21,42 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\services;
+namespace rampage\nexus\traits;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use rampage\core\Logger;
+use Zend\Log\LoggerInterface;
+use Zend\Log\Writer\Null as NullLogWriter;
 
-use Zend\Config\Config;
-use Zend\Config\Reader\Ini as IniConfigReader;
 
-use SplFileInfo;
-
-/**
- * System Config Factory
- */
-class SystemConfigFactory implements FactoryInterface
+trait LoggerAwareTrait
 {
     /**
-     * {@inheritdoc}
-     * @see \Zend\ServiceManager\FactoryInterface::createService()
+     * @var \Zend\Logger\LoggerInterface
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
-    {
-        $pathManager = $serviceLocator->get('PathManager');
-        $file = $pathManager->get('etc', 'deployment.conf');
-        $reader = new IniConfigReader();
-        $config = new Config($reader->fromFile($file->getPathname()));
+    protected $logger = null;
 
-        return $config;
+	/**
+     * {@inheritdoc}
+     * @see \Zend\Log\LoggerAwareInterface::setLogger()
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+        return $this;
+    }
+
+    /**
+     * @return \Zend\Logger\LoggerInterface
+     */
+    protected function getLogger()
+    {
+        if (!$this->logger) {
+            $logger = new Logger();
+            $logger->addWriter(new NullLogWriter());
+
+            $this->setLogger($logger);
+        }
+
+        return $this->logger;
     }
 }

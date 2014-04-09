@@ -1,7 +1,7 @@
 <?php
 /**
- * This is part of rampage.php
- * Copyright (c) 2013 Axel Helmert
+ * This is part of rampage-nexus
+ * Copyright (c) 2014 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,34 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @category  library
  * @author    Axel Helmert
- * @copyright Copyright (c) 2013 Axel Helmert
+ * @copyright Copyright (c) 2014 Axel Helmert
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus;
-
-class LastPhpError
-{
-    /**
-     * @var array
-     */
-    protected $info = null;
-
-    /**
-     * Construct
-     */
-    public function __construct()
-    {
-        $this->info = error_get_last();
-    }
-
-    /**
-     * @return string
-     */
-    public function getMessage()
-    {
-        return (isset($this->info['message']))? $this->info['message'] : '';
-    }
-}

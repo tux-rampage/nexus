@@ -24,15 +24,20 @@
 namespace rampage\nexus\entities;
 
 use rampage\nexus\ApplicationPackageInterface;
+use rampage\nexus\traits\DeployStrategyManagerAwareTrait;
 
 use Doctrine\ORM\Mapping as orm;
 use Doctrine\Common\Collections\ArrayCollection;
+
+use LogicException;
 
 /**
  * @orm\Entity
  */
 class ApplicationInstance
 {
+    use DeployStrategyManagerAwareTrait;
+
     const STATE_DEPLOYED = 'deployed';
     const STATE_PENDING = 'pending';
     const STATE_STAGING = 'staging';
@@ -71,13 +76,20 @@ class ApplicationInstance
     protected $applicationName = null;
 
     /**
+     * @orm\Column(type="string", nullable=false)
+     * @var string
+     */
+    protected $packageType = null;
+
+    /**
      * @orm\OneToMany(targetEntity="ApplicationVersion", cascade={"all"}, mappedBy="application", indexBy="version")
-     * @var ArrayCollection|UserParameter[]
+     * @var ArrayCollection|ApplicationVersion[]
      */
     protected $versions = null;
 
     /**
-     * @orm\ManyToOne(targetEntity="ApplicationVersion")
+     * @orm\OneToOne(targetEntity="ApplicationVersion")
+     * @orm\JoinColumn(name="current_version_id", referencedColumnName="id", nullable=true)
      * @var ApplicationVersion
      */
     protected $currentVersion = null;
@@ -124,6 +136,11 @@ class ApplicationInstance
      */
     public function updateFromApplicationPackage(ApplicationPackageInterface $package)
     {
+        if ($this->id && (($this->applicationName != $package->getName()) || ($this->packageType != $package->getTypeName()))) {
+            throw new LogicException('Application name mismatch.');
+        }
+
+        $this->packageType = $package->getTypeName();
         $this->applicationName = $package->getName();
         $icon = $package->getIcon();
 
@@ -138,14 +155,13 @@ class ApplicationInstance
      */
     public function setIcon($icon)
     {
-        if (($icon === null) || ($icon === false)) {
-            $this->icon = null;
-            return $this;
-        }
-
         if (is_resource($this->icon)) {
             fclose($this->icon);
             $this->icon = null;
+        }
+
+        if (($icon === null) || ($icon === false)) {
+            return $this;
         }
 
         if (is_resource($icon)) {
@@ -173,6 +189,14 @@ class ApplicationInstance
     }
 
     /**
+     * @return resource
+     */
+    public function getIcon()
+    {
+        return $this->icon;
+    }
+
+    /**
      * @return string
      */
     public function getName()
@@ -186,6 +210,14 @@ class ApplicationInstance
     public function getApplicationName()
     {
         return $this->applicationName;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPackageType()
+    {
+        return $this->packageType;
     }
 
     /**
@@ -219,7 +251,7 @@ class ApplicationInstance
      */
     public function getDeployStrategy()
     {
-        // TODO: Implement deploy strategy
+        return $this->deployStrategyManager->get($this->deployStrategy);
     }
 
     /**
@@ -250,6 +282,19 @@ class ApplicationInstance
         }
 
         return $this->vhost;
+    }
+
+    /**
+     * @param string $version
+     * @return ApplicationVersion|null
+     */
+    public function getVersion($version)
+    {
+        if (!isset($this->versions[$version])) {
+            return null;
+        }
+
+        return $this->versions[$version];
     }
 
     /**
