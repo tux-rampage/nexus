@@ -24,10 +24,15 @@ namespace rampage\nexus\api;
 
 use rampage\nexus\entities\Server;
 use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\traits\HttpClientAwareTrait;
 use Zend\Http\Request as HttpRequest;
+use Zend\Stdlib\Parameters;
+
 
 class RampageServerApi implements ServerApiInterface
 {
+    use HttpClientAwareTrait;
+
     protected function createRequest($url, $path)
     {
         $request = new HttpRequest();
@@ -37,8 +42,19 @@ class RampageServerApi implements ServerApiInterface
         $basePath = rtrim($uri->getPath(), '/');
 
         $uri->setPath($basePath . '/' . ltrim($path, '/'));
-
         return $request;
+    }
+
+    /**
+     * @param string $path
+     * @param array $params
+     */
+    protected function fetch(Server $server, $path, $params = array())
+    {
+        $request = $this->createRequest($server->getUrl(), $path);
+        $request->setQuery(new Parameters($params));
+
+        $response = $this->getHttpClient()->send($request);
     }
 
     /**
@@ -46,7 +62,7 @@ class RampageServerApi implements ServerApiInterface
      */
     public function getServerName(Server $server)
     {
-        // TODO Auto-generated method stub
+        // TODO
 
     }
 
