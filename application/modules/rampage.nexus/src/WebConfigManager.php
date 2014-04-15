@@ -45,7 +45,7 @@ class WebConfigManager extends AbstractPluginManager implements ConfigTemplateLo
         $this->autoAddInvokableClass = true;
     }
 
-	/**
+    /**
      * @see \Zend\ServiceManager\AbstractPluginManager::createFromInvokable()
      */
     protected function createFromInvokable($canonicalName, $requestedName)
@@ -59,7 +59,7 @@ class WebConfigManager extends AbstractPluginManager implements ConfigTemplateLo
         return $class::factory($this->creationOptions, $this->configTemplateLocator);
     }
 
-	/**
+    /**
      * @see \Zend\ServiceManager\AbstractPluginManager::validatePlugin()
      */
     public function validatePlugin($plugin)

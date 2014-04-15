@@ -79,7 +79,7 @@ class UserParameter
         return $this->id;
     }
 
-	/**
+   /**
      * @return string
      */
     public function getName()
@@ -87,7 +87,7 @@ class UserParameter
         return $this->name;
     }
 
-	/**
+   /**
      * @param ApplicationInstance $application
      * @return self
      */

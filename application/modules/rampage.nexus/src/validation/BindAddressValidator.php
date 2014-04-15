@@ -83,6 +83,4 @@ class BindAddressValidator extends AbstractValidator
 
         return $result;
     }
-
-
 }

@@ -1,6 +1,5 @@
 <?php
 /**
- * This is part of application_name
  * Copyright (c) 2014 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,61 +25,60 @@ namespace rampage\nexus\entities;
 use Doctrine\ORM\Mapping as orm;
 use Doctrine\Common\Collections\ArrayCollection;
 
-
 /**
  * @orm\Entity
- * @orm\Table(
- *     name="server",
- *     uniqueConstraints={
- *         @orm\UniqueConstraint(name="UINQ_SERVERNAME", columns={"name"})
- *     }
- * )
  */
-class Server
+class Cluster
 {
     /**
+     * @orm\Id @orm\Column(type="integer") @orm\GeneratedValue
      * @var int
      */
     protected $id = null;
 
     /**
+     * @orm\Column(type="string", nullable=false)
      * @var string
      */
     protected $name = null;
 
     /**
-     * @var string
+     * @orm\ManyToMany(targetEntity="Server")
+     * @orm\JoinTable(name="cluster_servers",
+     *      joinColumns={
+     *          @orm\JoinColumn(name="cluster_id", referencedColumnName="id", nullable=false)
+     *      },
+     *      inverseJoinColumns={
+     *          @orm\JoinColumn(name="server_id", referencedColumnName="id", nullable=false)
+     *      }
+     * )
+     * @var ArrayCollection|Server[]
      */
-    protected $type = null;
+    protected $servers = null;
 
     /**
-     * @var string
+     * @orm\OneToMany(targetEntity="ApplicationInstance", mappedBy="cluster")
+     * @var ArrayCollection|ApplicationInstance[]
      */
-    protected $url = null;
-
-    /**
-     * @orm\ManyToMany(targetEntity="Cluster", mappedBy="servers")
-     * @var ArrayCollection|Cluster[]
-     */
-    protected $clusters = null;
+    protected $applications = null;
 
     /**
      * Construct
      */
     public function __construct()
     {
-        $this->clusters = new ArrayCollection();
+        $this->servers = new ArrayCollection();
     }
 
     /**
-     * @return int
+     * @return number
      */
     public function getId()
     {
         return $this->id;
     }
 
-    /**
+  /**
      * @return string
      */
     public function getName()
@@ -88,25 +86,16 @@ class Server
         return $this->name;
     }
 
-    /**
-     * @return string
+  /**
+     * @return Server[]
      */
-    public function getType()
+    public function getServers()
     {
-        return $this->type;
-    }
-
-    /**
-     * @return string
-     */
-    public function getUrl()
-    {
-        return $this->url;
+        return $this->servers;
     }
 
     /**
      * @param string $name
-     * @return self
      */
     public function setName($name)
     {
@@ -115,30 +104,14 @@ class Server
     }
 
     /**
-     * @param string $type
-     * @return self
+     * @param Server $server
+     * @return \rampage\nexus\entities\Cluster
      */
-    public function setType($type)
+    public function addServer(Server $server)
     {
-        $this->type = (string)$type;
-        return $this;
-    }
+        $server->setCluster($this);
+        $this->servers->add($server);
 
-    /**
-     * @param string $url
-     * @return self
-     */
-    public function setUrl($url)
-    {
-        $this->url = (string)$url;
         return $this;
-    }
-
-    /**
-     * @return Cluster[]
-     */
-    public function getClusters()
-    {
-        return $this->clusters;
     }
 }

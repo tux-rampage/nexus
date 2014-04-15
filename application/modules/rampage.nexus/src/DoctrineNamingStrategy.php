@@ -55,7 +55,4 @@ class DoctrineNamingStrategy extends UnderscoreNamingStrategy
 
         return parent::joinTableName($sourceEntity, $targetEntity, $propertyName);
     }
-
-
-
 }

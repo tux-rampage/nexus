@@ -144,7 +144,7 @@ class VirtualHost
         return $this->sslCertFile;
     }
 
-	/**
+    /**
      * @return string
      */
     public function getSslKeyFile()
@@ -152,7 +152,7 @@ class VirtualHost
         return $this->sslKeyFile;
     }
 
-	/**
+    /**
      * @return string
      */
     public function getSslChainFile()
@@ -160,7 +160,7 @@ class VirtualHost
         return $this->sslChainFile;
     }
 
-	/**
+    /**
      * @return bool
      */
     public function isSslEnabled()

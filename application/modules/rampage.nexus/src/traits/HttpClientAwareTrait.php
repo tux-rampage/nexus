@@ -1,6 +1,5 @@
 <?php
 /**
- * This is part of rampage-nexus
  * Copyright (c) 2014 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,40 +22,42 @@
 
 namespace rampage\nexus\traits;
 
-use rampage\core\Logger;
-use Zend\Log\LoggerInterface;
-use Zend\Log\Writer\Null as NullLogWriter;
+use Zend\Http\Client as HttpClient;
+use Zend\Http\Client\Adapter\Curl as CurlHttpAdapter;
 
-
-trait LoggerAwareTrait
+trait HttpClientAwareTrait
 {
     /**
-     * @var \Zend\Logger\LoggerInterface
+     * @var HttpClient
      */
-    protected $logger = null;
+    private $httpClient = null;
 
     /**
-     * {@inheritdoc}
-     * @see \Zend\Log\LoggerAwareInterface::setLogger()
+     * @return HttpClient
      */
-    public function setLogger(LoggerInterface $logger)
+    protected function getHttpClient()
     {
-        $this->logger = $logger;
-        return $this;
+        if (!$this->httpClient) {
+            if (method_exists($this, 'createHttpClient')) {
+                $client = $this->createHttpClient();
+            } else {
+                $client = new HttpClient();
+                $client->setAdapter(new CurlHttpAdapter());
+            }
+
+            $this->setHttpClient($client);
+        }
+
+        return $this->httpClient;
     }
 
     /**
-     * @return \Zend\Logger\LoggerInterface
+     * @param HttpClient $httpClient
+     * @return self
      */
-    protected function getLogger()
+    public function setHttpClient(HttpClient $httpClient)
     {
-        if (!$this->logger) {
-            $logger = new Logger();
-            $logger->addWriter(new NullLogWriter());
-
-            $this->setLogger($logger);
-        }
-
-        return $this->logger;
+        $this->httpClient = $httpClient;
+        return $this;
     }
 }

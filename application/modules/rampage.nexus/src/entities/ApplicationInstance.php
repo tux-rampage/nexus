@@ -30,6 +30,7 @@ use Doctrine\ORM\Mapping as orm;
 use Doctrine\Common\Collections\ArrayCollection;
 
 use LogicException;
+use rampage\nexus\PackageStorage;
 
 /**
  * @orm\Entity
@@ -39,11 +40,13 @@ class ApplicationInstance
     use DeployStrategyManagerAwareTrait;
 
     const STATE_DEPLOYED = 'deployed';
+    const STATE_ERROR = 'deployed';
     const STATE_PENDING = 'pending';
     const STATE_STAGING = 'staging';
     const STATE_ACTIVATING = 'activating';
     const STATE_REMOVING = 'removing';
     const STATE_DEACTIVATING = 'deactivating';
+    const STATE_UNKNOWN = 'unknown';
 
     /**
      * @orm\Id @orm\Column(type="integer") @orm\GeneratedValue
@@ -114,6 +117,17 @@ class ApplicationInstance
     protected $deployStrategy = 'default';
 
     /**
+     * @orm\ManyToOne(targetEntity="Cluster")
+     * @var unknown
+     */
+    protected $cluster = null;
+
+    /**
+     * @var PackageStorage
+     */
+    protected $packageStorage = null;
+
+    /**
      * Construct
      */
     public function __construct($isConsole = false)
@@ -129,6 +143,37 @@ class ApplicationInstance
     public function getId()
     {
         return $this->id;
+    }
+
+    /**
+     * @param PackageStorage $storage
+     * @return self
+     */
+    public function setPackageStorage(PackageStorage $storage)
+    {
+        $this->packageStorage = $storage;
+        return $this;
+    }
+
+    /**
+     * @return PackageStorage
+     */
+    public function getPackageStorage()
+    {
+        return $this->packageStorage;
+    }
+
+    /**
+     * @throws LogicException
+     * @return \rampage\io\WrappedFileInfo
+     */
+    public function getCurrentApplicationPackageFile()
+    {
+        if (!$this->packageStorage) {
+            throw new LogicException('Cannot resolve package without package storage');
+        }
+
+        return $this->packageStorage->getPackageFile($this->getCurrentVersion());
     }
 
     /**
@@ -314,7 +359,7 @@ class ApplicationInstance
         return $this->versions;
     }
 
-	/**
+    /**
      * @return \rampage\nexus\entities\ApplicationVersion
      */
     public function getCurrentVersion()
@@ -322,7 +367,7 @@ class ApplicationInstance
         return $this->currentVersion;
     }
 
-	/**
+    /**
      * @param \rampage\nexus\entities\ApplicationVersion $version
      * @return self
      */

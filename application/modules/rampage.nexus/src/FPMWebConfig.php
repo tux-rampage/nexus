@@ -183,7 +183,7 @@ class FPMWebConfig implements WebConfigInterface
         return $this->optionsForm;
     }
 
-	/**
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::activate()
      */
@@ -192,7 +192,7 @@ class FPMWebConfig implements WebConfigInterface
         $this->serviceControl('reload');
     }
 
-	/**
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::configure()
      */
@@ -204,7 +204,7 @@ class FPMWebConfig implements WebConfigInterface
         return $this;
     }
 
-	/**
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::maintenance()
      */
@@ -216,7 +216,7 @@ class FPMWebConfig implements WebConfigInterface
         return $this;
     }
 
-	/**
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::remove()
      */
@@ -228,7 +228,7 @@ class FPMWebConfig implements WebConfigInterface
         return $this;
     }
 
-	/**
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::setApplication()
      */

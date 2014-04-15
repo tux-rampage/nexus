@@ -24,25 +24,37 @@
 namespace rampage\nexus\api;
 
 use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\entities\Server;
 
 /**
  * Server API
  */
-class ServerApiInterface
+interface ServerApiInterface
 {
+    /**
+     * @return string
+     */
+    public function getServerName(Server $server);
+
+    /**
+     * @param Server $server
+     * @return bool
+     */
+    public function isClusterSupported(Server $server);
+
     /**
      * Deploy the given application's current version
      *
      * @param ApplicationInstance $instance
      */
-    public function deploy(ApplicationInstance $instance);
+    public function deploy(Server $server, ApplicationInstance $instance);
 
     /**
      * Remove the application from the given server
      *
      * @param ApplicationInstance $aplication
      */
-    public function remove(ApplicationInstance $aplication);
+    public function remove(Server $server, ApplicationInstance $application);
 
     /**
      * Fetch the deployment status
@@ -50,15 +62,15 @@ class ServerApiInterface
      * @param ApplicationInstance $application
      * @return string
      */
-    public function status(ApplicationInstance $application);
+    public function status(Server $server, ApplicationInstance $application);
 
     /**
      * Detatch server from this master
      */
-    public function attach();
+    public function attach(Server $server);
 
     /**
      * Attach server to this master
      */
-    public function detach();
+    public function detach(Server $server);
 }

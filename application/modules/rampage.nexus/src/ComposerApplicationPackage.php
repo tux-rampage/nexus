@@ -77,7 +77,7 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
         return 'composer';
     }
 
-	/**
+    /**
      * @param string $name
      * @return mixed
      */

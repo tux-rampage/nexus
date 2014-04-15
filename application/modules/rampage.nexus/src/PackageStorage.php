@@ -95,7 +95,7 @@ class PackageStorage extends WritableLocalFilesystem
         return parent::offsetSet($offset, $value);
     }
 
-	/**
+    /**
      * {@inheritdoc}
      * @see \rampage\io\LocalFilesystem::offsetGet()
      */

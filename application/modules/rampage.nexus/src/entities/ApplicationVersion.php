@@ -134,7 +134,7 @@ class ApplicationVersion
         return $this->version;
     }
 
-	/**
+    /**
      * @param string $version
      * @return self
      */

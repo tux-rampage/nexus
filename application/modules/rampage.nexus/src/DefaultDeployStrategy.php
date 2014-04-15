@@ -188,7 +188,7 @@ class DefaultDeployStrategy implements DeployStrategyInterface, LoggerAwareInter
         return $this;
     }
 
-	/**
+    /**
      * @return \rampage\nexus\WebConfigInterface
      */
     protected function getWebConfig()

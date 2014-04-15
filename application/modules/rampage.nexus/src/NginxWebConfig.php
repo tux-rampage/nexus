@@ -187,7 +187,7 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
         return $this->optionsForm;
     }
 
-	/**
+    /**
      * @see \rampage\nexus\WebConfigInterface::setOptions()
      */
     public function setOptions(array $options)
@@ -220,7 +220,7 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
         return file_exists($config);
     }
 
-	/**
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::configure()
      */
@@ -233,7 +233,7 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
         // TODO: Create application config
     }
 
-	/**
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::maintenance()
      */
@@ -243,7 +243,7 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
 
     }
 
-	/**
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::remove()
      */
@@ -253,7 +253,7 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
 
     }
 
-	/**
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::setApplication()
      */
@@ -295,7 +295,7 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
         return $this;
     }
 
-	/**
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\VHostCapableInterface::removeVirtualHost()
      */

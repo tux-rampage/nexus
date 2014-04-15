@@ -20,29 +20,30 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus;
+namespace rampage\nexus\api;
 
 use rampage\core\AbstractPluginManager;
-use rampage\core\exception\InvalidPluginException;
-use Zend\ServiceManager\ConfigInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\ServiceManager\ConfigInterface as ServiceConfigInterface;
 
-class DeployStrategyManager extends AbstractPluginManager
+/**
+ * @method \rampage\nexus\api\ServerApiInterface get($name, $options = array(), $usePeeringServiceManagers = true)
+ */
+class ServerApiManager extends AbstractPluginManager
 {
     /**
      * @see \Zend\ServiceManager\AbstractPluginManager::__construct()
      */
-    public function __construct(ConfigInterface $config = null)
+    public function __construct(ServiceConfigInterface $configuration = null)
     {
-        parent::__construct($config);
+        $this->invokableClasses = array(
+            'rampage' => RampageServerApi::class,
+            'zendserver' => ZendServerApi::class,
+        );
 
-        if (!$this->has('default')) {
-            $self = $this;
+        $this->shareByDefault = false;
+        $this->autoAddInvokableClass = true;
 
-            $this->setFactory('default', function(ServiceLocatorInterface $serviceLocator) use ($self) {
-                return $self->getServiceLocator()->get('DeployStrategy');
-            });
-        }
+        parent::__construct($configuration);
     }
 
     /**
@@ -50,11 +51,8 @@ class DeployStrategyManager extends AbstractPluginManager
      */
     public function validatePlugin($plugin)
     {
-        if (!$plugin instanceof DeployStrategyInterface) {
-            throw new InvalidPluginException(sprintf(
-                'The plugin strategy mus implement rampage\nexus\DeployStrategyInterface, %s given',
-                is_object($plugin)? get_class($plugin) : gettype($plugin)
-            ));
+        if (!$plugin instanceof ServerApiInterface) {
+            throw new \UnexpectedValueException('Invalid server API');
         }
     }
 }
