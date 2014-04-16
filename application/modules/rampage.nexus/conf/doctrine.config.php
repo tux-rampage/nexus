@@ -20,15 +20,55 @@
  * @license http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 namespace rampage\nexus;
-
 use Doctrine\DBAL\Driver\PDOSqlite\Driver as DefaultDBDriver;
-
+use Doctrine\Common\Persistence\Mapping\Driver\AnnotationDriver;
+use Doctrine\ORM;
+use Doctrine\ORM\Mapping\UnderscoreNamingStrategy;
 return [
+
     'connection' => [
+
         'orm_default' => [
+
             'driverClass' => DefaultDBDriver::class,
             'params' => [
+
                 'path' => RAMPAGE_PREFIX . '/var/db/deployment.db'
+            ]
+        ]
+    ],
+
+    'configuration' => [
+        // Configuration for service `doctrine.configuration.orm_default` service
+        'orm_default' => [
+            'metadata_cache' => 'rampagenexus',
+            'query_cache' => 'rampagenexus',
+            'result_cache' => 'rampagenexus',
+            'hydration_cache' => 'rampagenexus',
+
+            'generate_proxies' => true,
+            'proxy_dir' => APPLICATION_DIR . '/_generated/orm.proxies/default',
+            'proxy_namespace' => 'orm\proxies',
+            'naming_strategy' => UnderscoreNamingStrategy::class
+        ]
+    ],
+
+    'driver' => [
+
+        'rampage_nexus_entities' => [
+
+            'class' => AnnotationDriver::class,
+            'cache' => 'rampagenexus',
+            'paths' => [
+                __DIR__ . '/../src/entities'
+            ]
+        ],
+
+        'orm_default' => [
+
+            'drivers' => [
+
+                __NAMESPACE__ . '\entities' => 'rampage_nexus_entities'
             ]
         ]
     ]
