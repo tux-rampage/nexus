@@ -13,9 +13,20 @@
     -->
 
     <router>
-        <route name="root" type="literal">
-            <literal route="/" controller="index" action="index">
-            </literal>
+        <route name="root" type="literal" mayterminate="true">
+            <literal route="/" controller="index" action="index" />
+        </route>
+        <route name="cluster" type="literal" mayterminate="true">
+            <literal route="/clusters" controller="cluster" action="index" />
+            <routes>
+                <route name="info" type="segment">
+                    <segment route="/info/:clusterId" action="info">
+                        <constraints>
+                            <item key="clusterId">~^\d+$~</item>
+                        </constraints>
+                    </segment>
+                </route>
+            </routes>
         </route>
     </router>
 

@@ -25,13 +25,18 @@ namespace rampage\nexus\api;
 use rampage\nexus\entities\Server;
 use rampage\nexus\entities\ApplicationInstance;
 use rampage\nexus\traits\HttpClientAwareTrait;
+
 use Zend\Http\Request as HttpRequest;
+use Zend\Uri\Http as HttpUri;
 use Zend\Stdlib\Parameters;
+use Zend\Json\Json;
 
 
 class RampageServerApi implements ServerApiInterface
 {
     use HttpClientAwareTrait;
+
+    const API_VERSION = '1.0';
 
     protected function createRequest($url, $path)
     {
@@ -41,7 +46,7 @@ class RampageServerApi implements ServerApiInterface
         $uri = $request->getUri();
         $basePath = rtrim($uri->getPath(), '/');
 
-        $uri->setPath($basePath . '/' . ltrim($path, '/'));
+        $uri->setPath(sprintf('%s/rest/%s/%s', $basePath, self::API_VERSION, ltrim($path, '/')));
         return $request;
     }
 
@@ -49,12 +54,17 @@ class RampageServerApi implements ServerApiInterface
      * @param string $path
      * @param array $params
      */
-    protected function fetch(Server $server, $path, $params = array())
+    protected function fetchJson(Server $server, $path, $params = array())
     {
         $request = $this->createRequest($server->getUrl(), $path);
         $request->setQuery(new Parameters($params));
 
         $response = $this->getHttpClient()->send($request);
+        if (!$response->isSuccess()) {
+            throw new \RuntimeException('Failed to execute API request: ' . $path);
+        }
+
+        return Json::decode($response->getBody(), Json::TYPE_OBJECT);
     }
 
     /**
@@ -62,8 +72,14 @@ class RampageServerApi implements ServerApiInterface
      */
     public function getServerName(Server $server)
     {
-        // TODO
+        $info = $this->fetchJson($server, '/server/info');
 
+        if (!isset($info->servername) || !$info->servername) {
+            $uri = new HttpUri($server->getUrl());
+            $info->servername = $uri->getHost();
+        }
+
+        return $info->servername;
     }
 
     /**

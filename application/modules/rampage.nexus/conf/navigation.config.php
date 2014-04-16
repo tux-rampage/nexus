@@ -1,7 +1,6 @@
 <?php
 /**
- * This is part of rampage-nexus
- * Copyright (c) 2013 Axel Helmert
+ * Copyright (c) 2014 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,27 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @author    Axel Helmert
- * @copyright Copyright (c) 2013 Axel Helmert
+ * @copyright Copyright (c) 2014 Axel Helmert
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-use Zend\View\Helper\Doctype;
-
-?>
-<?php echo $this->doctype(Doctype::XHTML5) ?>
-<html>
-    <head>
-        <?php echo $this->partial('layout/head') ?>
-    </head>
-
-    <body>
-        <?php echo $this->partial('layout/menu') ?>
-
-        <section class="content-wrapper">
-            <?php echo $this->content ?>
-        </section>
-
-        <?php echo $this->footer ?>
-        <?php echo $this->partial('layout/bottom-scripts') ?>
-    </body>
-</html>
+return [
+    'default' => [
+        'cluster' => ['label' => 'Clusters', 'route' => 'cluster'],
+    ]
+];

@@ -27,6 +27,7 @@ use rampage\nexus\entities\ApplicationInstance;
 use rampage\nexus\entities\VirtualHost;
 
 use Doctrine\ORM\EntityManager;
+use rampage\nexus\entities\Cluster;
 
 
 class DeploymentRepository
@@ -69,6 +70,14 @@ class DeploymentRepository
     public function find($class, $id)
     {
         return $this->getEntityRepository($class)->find($id);
+    }
+
+    /**
+     * @return Cluster[]
+     */
+    public function findClusters()
+    {
+        return $this->getEntityRepository(Cluster::class)->findAll();
     }
 
     /**

@@ -5,6 +5,12 @@ if (version_compare(PHP_VERSION, '5.5', '<')) {
     exit(1); // Force exit if the triggered error does not cause a fail
 }
 
+if (Phar::running()) {
+    define('RAMPAGE_PREFIX', '/opt/rampage');
+} else {
+    define('RAMPAGE_PREFIX', dirname(__DIR__));
+}
+
 define('APPLICATION_DIR', __DIR__ . '/');
 require_once __DIR__ . '/../vendor/autoload.php';
 

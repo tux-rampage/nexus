@@ -24,11 +24,11 @@
 namespace rampage\nexus;
 
 ?>
-<?php echo $this->headtitle()->setSuffix(' ~ rampage:nexus') ?>
+<?php echo $this->headtitle()->setPostfix(' ~ rampage:nexus') ?>
 <?php echo $this->headmeta('width=device-width, initial-scale=1.0', 'viewport') ?>
 <?php echo $this->headlink()
-    ->prependStyleSheet('//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css')
-    ->prependStyleSheet('//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css')
+    ->prependStylesheet('//code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css')
+    ->prependStylesheet('//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css')
     ->prependStylesheet('//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css')
     ->appendStylesheet($this->resourceUrl('rampage.nexus::css/styles.css')) ?>
 <?php echo $this->headscript() ?>

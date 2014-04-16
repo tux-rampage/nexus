@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<package xmlns="http://www.zend.com/server/deployment-descriptor/1.0" version="1.0">
+    <name>rampage-nexus</name>
+    <summary>Nexus</summary>
+    <description>The Nexus</description>
+    <version>
+        <release>1.0.0</release>
+    </version>
+    <appdir>application</appdir>
+    <docroot>application/public</docroot>
+    <dependencies>
+    <required>
+      <php>
+        <min>5.5</min>
+      </php>
+    </required>
+  </dependencies>
+</package>

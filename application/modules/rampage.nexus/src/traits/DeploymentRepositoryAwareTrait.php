@@ -20,36 +20,39 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\services;
+namespace rampage\nexus\traits;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
-
-use Zend\Config\Config;
-use Zend\Config\Reader\Ini as IniConfigReader;
-
-use SplFileInfo;
+use rampage\nexus\orm\DeploymentRepository;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
 
 /**
- * System Config Factory
+ * Deployment repo awareness
  */
-class SystemConfigFactory implements FactoryInterface
+trait DeploymentRepositoryAwareTrait
 {
     /**
-     * {@inheritdoc}
-     * @see \Zend\ServiceManager\FactoryInterface::createService()
+     * @var DeploymentRepository
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
-    {
-        $pathManager = $serviceLocator->get('PathManager');
-        $global = $serviceLocator->get('config');
-        $file = new SplFileInfo($pathManager->get('etc', 'rampage-nexus.conf'));
-        $config = new Config($global['system_config']);
+    private $deploymentRepository = null;
 
-        if ($file->isReadable() && $file->isFile()) {
-            $config->merge(new Config((new IniConfigReader())->fromFile($file->getPathname())));
+    /**
+     * @param DeploymentRepository $repository
+     */
+    public function setDeploymentRepository(DeploymentRepository $repository)
+    {
+        $this->deploymentRepository = $repository;
+        return $this;
+    }
+
+    /**
+     * @return DeploymentRepository
+     */
+    protected function getDeploymentRepository()
+    {
+        if (!$this->deploymentRepository && ($this instanceof ServiceLocatorAwareInterface)) {
+            $this->setDeploymentRepository($this->getServiceLocator()->get(DeploymentRepository::class));
         }
 
-        return $config;
+        return $this->deploymentRepository;
     }
 }
