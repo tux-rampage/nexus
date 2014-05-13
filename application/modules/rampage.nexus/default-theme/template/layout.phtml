@@ -31,10 +31,16 @@ use Zend\View\Helper\Doctype;
     </head>
 
     <body>
-        <?php echo $this->partial('layout/menu') ?>
+        <?php echo $this->partial('layout/header') ?>
 
-        <section class="content-wrapper">
-            <?php echo $this->content ?>
+        <section class="container-fluid">
+            <div class="row">
+                <?php echo $this->partial('layout/menu') ?>
+
+                <section class="content-container col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2">
+                    <?php echo $this->content ?>
+                </div>
+            </div>
         </section>
 
         <?php echo $this->footer ?>
