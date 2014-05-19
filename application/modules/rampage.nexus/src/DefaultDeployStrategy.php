@@ -264,6 +264,14 @@ class DefaultDeployStrategy implements DeployStrategyInterface, LoggerAwareInter
     }
 
     /**
+     * @return string
+     */
+    public function getBaseDir()
+    {
+        return $this->formatDir();
+    }
+
+    /**
      * @see \rampage\nexus\DeployStrategyInterface::prepareRemoval()
      */
     public function prepareRemoval()

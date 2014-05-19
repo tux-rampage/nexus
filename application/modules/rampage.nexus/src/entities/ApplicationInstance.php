@@ -24,16 +24,20 @@
 namespace rampage\nexus\entities;
 
 use rampage\nexus\ApplicationPackageInterface;
+use rampage\nexus\PackageStorage;
 use rampage\nexus\traits\DeployStrategyManagerAwareTrait;
-
 use Doctrine\ORM\Mapping as orm;
 use Doctrine\Common\Collections\ArrayCollection;
 
+use Zend\Form\Annotation as form;
+use Zend\Uri\Http as HttpUri;
+
 use LogicException;
-use rampage\nexus\PackageStorage;
+
 
 /**
  * @orm\Entity
+ * @form\Hydrator("Zend\Stdlib\Hydrator\Reflection")
  */
 class ApplicationInstance
 {
@@ -126,6 +130,12 @@ class ApplicationInstance
      * @var PackageStorage
      */
     protected $packageStorage = null;
+
+    /**
+     * @orm\Column(type="string", nullable=false)
+     * @var string
+     */
+    protected $baseUrl = null;
 
     /**
      * Construct
@@ -271,6 +281,24 @@ class ApplicationInstance
     public function getState()
     {
         return $this->state;
+    }
+
+    /**
+     * @return HttpUri
+     */
+    public function getBaseUrl()
+    {
+        return new HttpUri($this->baseUrl);
+    }
+
+    /**
+     * @param string $baseUrl
+     * @return self
+     */
+    public function setBaseUrl($baseUrl)
+    {
+        $this->baseUrl = $baseUrl;
+        return $this;
     }
 
     /**

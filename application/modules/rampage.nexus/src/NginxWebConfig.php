@@ -41,6 +41,11 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
     protected $serviceCmd = 'service nginx';
 
     /**
+     * @var string
+     */
+    protected $fpmSocket = 'unix:/var/run/php-fpm.sock';
+
+    /**
      * @var string[]
      */
     protected $paths = array(
@@ -163,11 +168,13 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
         array_unshift($names, $vhost->getServerName());
 
         $options = array(
+            'servername' => $vhost->getServerName(),
             'servernames' => implode(' ', $names),
             'port' => $vhost->getPort(),
             'sslcert' => $vhost->getSslCertFile(),
             'sslkey' => $vhost->getSslKeyFile(),
-            'sslchain' => $vhost->getSslChainFile()
+            'sslchain' => $vhost->getSslChainFile(),
+            'confdir' => $this->getPath('confdir'),
         );
 
         return $config->setVariables($options)->render();
@@ -221,16 +228,56 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
     }
 
     /**
+     * @return string
+     */
+    protected function getAlias()
+    {
+        $baseUrl = $this->getApplication()->getBaseUrl();
+        $alias = trim($baseUrl->getPath(), '/');
+
+        if ($alias != '') {
+            $alias = "/$alias/";
+        }
+
+        return $alias;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getLocationConfigFile()
+    {
+        return $this->getPath(($this->getAlias() == '')? 'rootconfig' : 'aliasconfig');
+    }
+
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\WebConfigInterface::configure()
      */
     public function configure(DeployStrategyInterface $strategy)
     {
-        if (!$this->hasVHostConfig()) {
-            $this->createVirtualHost($this->getApplication()->getVirtualHost());
+        $alias = $this->getAlias();
+        $template = ($alias == '')? 'nginx/root-location' : 'nginx/alias-location';
+        $config = $this->configTemplateLocator->resolve($template);
+        $fpmConfig = $this->configTemplateLocator->resolve('nginx/fpm');
+
+        $options = array(
+            'location' => $alias? : '/',
+            'fpmsocket' => $this->fpmSocket,
+            'dir' => $strategy->getWebRoot(),
+            'alias' => $alias
+        );
+
+
+        $options['fpmconfig'] = $fpmConfig->setVariables($options)->render();
+        $configData = $config->setVariables($options)->render();
+        $file = $this->getLocationConfigFile();
+
+        if (!file_put_contents($file, $configData)) {
+            throw new RuntimeException(sprintf('Failed to write config file: %s', $file));
         }
 
-        // TODO: Create application config
+        return $this;
     }
 
     /**
@@ -239,8 +286,24 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
      */
     public function maintenance()
     {
-        // TODO Auto-generated method stub
+        $alias = $this->getAlias();
+        $file = $this->getPath(($alias != '')? 'rootconfig' : 'aliasconfig');
 
+        $variables = array(
+            'location' => $alias? : '/',
+        );
+
+        $config = $this->configTemplateLocator->resolve('nginx/maintenance');
+        $data = $config->setVariables($variables)->render();
+        $file = $this->getLocationConfigFile();
+
+        if (!file_put_contents($file, $data)) {
+            throw new RuntimeException(sprintf('Failed to write config file: %s', $file));
+        }
+
+        $this->serviceControl('reload');
+
+        return $this;
     }
 
     /**
@@ -249,8 +312,12 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
      */
     public function remove()
     {
-        // TODO Auto-generated method stub
+        if (!unlink($this->getLocationConfigFile())) {
+            throw new RuntimeException('Failed to remove config file');
+        }
 
+        $this->serviceControl('reload');
+        return $this;
     }
 
     /**

@@ -67,6 +67,15 @@ interface DeployStrategyInterface
     public function getTargetDirectory();
 
     /**
+     * Returns the base dir of this application
+     *
+     * This might be useful for chroot
+     *
+     * @return bool
+     */
+    public function getBaseDir();
+
+    /**
      * Returns the full qualified web root directory path
      *
      * @return string

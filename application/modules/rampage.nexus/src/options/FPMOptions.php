@@ -36,9 +36,9 @@ class FPMOptions
     /**
      * @form\Type("text")
      * @form\Required(true)
-     * @form\Validator({name="rampage\nexus\validation\BindAddress"})
-     * @form\Filter({name="StringTrim"})
-     * @form\Options({label="Socket or Port"})
+     * @form\Validator({"name":"rampage\nexus\validation\BindAddress"})
+     * @form\Filter({"name":"StringTrim"})
+     * @form\Options({"label":"Socket or Port"})
      * @var string
      */
     public $listen = '0.0.0.0:9000';
@@ -46,11 +46,20 @@ class FPMOptions
     /**
      * @form\Type("text")
      * @form\Required(false)
-     * @form\Filter({name="StringTrim"})
-     * @form\Options({label="Username"})
+     * @form\Filter({"name" : "StringTrim"})
+     * @form\Options({"label" : "Username"})
      * @var string
      */
     public $user = 'www-data';
+
+    /**
+     * @form\Type("checkbox")
+     * @form\Required(false)
+     * @form\Filter({"name": "Boolean", options: { "type" : { "string", "false", "integer" }}})
+     * @form\Options({"label" : "Chroot to base directory"})
+     * @var boolean
+     */
+    public $chroot = false;
 
     /**
      * @return array

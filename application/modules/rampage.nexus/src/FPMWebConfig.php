@@ -109,13 +109,15 @@ class FPMWebConfig implements WebConfigInterface
     /**
      * @return string
      */
-    protected function createPoolConfig($webRoot, $appRoot)
+    protected function createPoolConfig($webRoot, $appRoot, $baseDir)
     {
         $config = $this->templateLocator->resolve('fpm/pool');
         $params = array(
             'pool' => $this->application->getName(),
             'docroot' => $webRoot,
-            'approot' => $appRoot
+            'approot' => $appRoot,
+            'basedir' => $baseDir,
+            'chroot' => $this->options->chroot? $baseDir : '',
         );
 
         $params = array_merge($this->options->toArray(), $params);
@@ -198,7 +200,7 @@ class FPMWebConfig implements WebConfigInterface
      */
     public function configure(DeployStrategyInterface $strategy)
     {
-        $config = $this->createPoolConfig($strategy->getWebRoot(), $strategy->getTargetDirectory());
+        $config = $this->createPoolConfig($strategy->getWebRoot(), $strategy->getTargetDirectory(), $strategy->getBaseDir());
         $this->savePoolConfig($config);
 
         return $this;

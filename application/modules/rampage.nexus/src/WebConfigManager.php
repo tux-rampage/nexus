@@ -37,8 +37,8 @@ class WebConfigManager extends AbstractPluginManager implements ConfigTemplateLo
     public function __construct(ConfigInterface $configuration = null)
     {
         $this->invokableClasses = array(
-            'fpm' => __NAMESPACE__ . '\FPMWebConfig',
-            'nginx' => __NAMESPACE__ . '\NginxWebConfig'
+            'fpm' => FPMWebConfig::class,
+            'nginx' => NginxWebConfig::class,
         );
 
         parent::__construct($configuration);
