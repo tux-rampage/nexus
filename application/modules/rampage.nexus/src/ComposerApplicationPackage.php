@@ -54,11 +54,11 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     /**
      * @param SplFileInfo $packageFile
      */
-    public function __construct(SplFileInfo $packageFile)
+    public function load(SplFileInfo $packageFile)
     {
         $this->file = new PharData($packageFile->getFilename());
         $metaData = $this->file->getMetadata();
-        $composerFile = (isset($metaData['composerfile']))? $metaData['composerfile'] : 'composer.json';
+        $composerFile = (isset($metaData['deployment-config']))? $metaData['deployment-config'] : 'composer.json';
 
         $json = @json_decode($this->file[$composerFile]->getContent(), true);
         $this->config = is_array($json)? new ArrayObject($json, ArrayObject::ARRAY_AS_PROPS) : false;
@@ -66,6 +66,30 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
         if (!$this->config) {
             throw new \RuntimeException('Failed to load composer.json from package');
         }
+
+        return $this;
+    }
+
+    /**
+     * @param SplFileInfo $package
+     * @return bool
+     */
+    public function supports(SplFileInfo $packageFile)
+    {
+        try {
+            $this->file = new PharData($packageFile->getFilename());
+            $metaData = $this->file->getMetadata();
+            $composerFile = (isset($metaData['deployment-config']))? $metaData['deployment-config'] : 'composer.json';
+            $json = @json_decode($this->file[$composerFile]->getContent(), false);
+
+            if (!is_object($json)) {
+                return false;
+            }
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

@@ -26,9 +26,11 @@ namespace rampage\nexus\entities;
 use rampage\nexus\ApplicationPackageInterface;
 use rampage\nexus\PackageStorage;
 use rampage\nexus\traits\DeployStrategyManagerAwareTrait;
+
 use Doctrine\ORM\Mapping as orm;
 use Doctrine\Common\Collections\ArrayCollection;
 
+use Zend\EventManager\EventManagerAwareTrait;
 use Zend\Form\Annotation as form;
 use Zend\Uri\Http as HttpUri;
 
@@ -42,6 +44,7 @@ use LogicException;
 class ApplicationInstance
 {
     use DeployStrategyManagerAwareTrait;
+    use EventManagerAwareTrait;
 
     const STATE_DEPLOYED = 'deployed';
     const STATE_ERROR = 'deployed';

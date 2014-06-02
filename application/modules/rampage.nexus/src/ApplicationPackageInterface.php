@@ -31,6 +31,23 @@ use SplFileInfo;
 interface ApplicationPackageInterface
 {
     /**
+     * Check if this installer supports the given package
+     *
+     * @param SplFileInfo $package
+     * @return boolean
+     */
+    public function supports(SplFileInfo $package);
+
+    /**
+     * Load the given package from file
+     *
+     * @param SplFileInfo $package
+     * @throws Exception
+     * @return self
+     */
+    public function load(SplFileInfo $package);
+
+    /**
      * Returns the common name of this package type
      *
      * Like zpk, composer, etc ...
@@ -85,4 +102,11 @@ interface ApplicationPackageInterface
      * @return self
      */
     public function install(entities\ApplicationInstance $application);
+
+    /**
+     * Remove this application
+     *
+     * @param entities\ApplicationInstance $application
+     */
+    public function remove(entities\ApplicationInstance $application);
 }
