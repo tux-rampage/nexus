@@ -1,3 +1,3 @@
-<?php return array (
-    'rampage.nexus',
-);
+<?php
+
+return [ 'rampage.nexus' ];

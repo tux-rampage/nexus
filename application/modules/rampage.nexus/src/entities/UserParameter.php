@@ -38,19 +38,13 @@ use rampage\nexus\entities\ApplicationInstance;
 class UserParameter
 {
     /**
-     * @orm\Id @orm\Column(type="integer") @orm\GeneratedValue
-     * @var int
-     */
-    protected $id = null;
-
-    /**
-     * @orm\ManyToOne(targetEntity="ApplicationVersion", inversedBy="userParameters")
+     * @orm\Id @orm\ManyToOne(targetEntity="ApplicationVersion", inversedBy="userParameters")
      * @var ApplicationInstance
      */
     protected $version = null;
 
     /**
-     * @orm\Column(type="string", nullable=false)
+     * @orm\Id @orm\Column(type="string", nullable=false)
      * @var string
      */
     protected $name = null;
@@ -71,14 +65,6 @@ class UserParameter
         $this->setValue($value);
     }
 
-    /**
-     * @return number
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
-
    /**
      * @return string
      */
@@ -88,12 +74,12 @@ class UserParameter
     }
 
    /**
-     * @param ApplicationInstance $application
+     * @param ApplicationVersion $version
      * @return self
      */
-    public function setApplication(ApplicationInstance $application)
+    public function setApplicationVersion(ApplicationVersion $version)
     {
-        $this->application = $application;
+        $this->version = $version;
         return $this;
     }
 

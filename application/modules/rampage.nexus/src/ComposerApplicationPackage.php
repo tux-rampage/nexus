@@ -52,19 +52,23 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     protected $paramInputFilter = null;
 
     /**
-     * @param SplFileInfo $packageFile
+     * @param SplFileInfo $archive
      */
-    public function load(SplFileInfo $packageFile)
+    public function load(SplFileInfo $archive)
     {
-        $this->file = new PharData($packageFile->getFilename());
+        $this->file = new PharData($archive->getFilename());
         $metaData = $this->file->getMetadata();
-        $composerFile = (isset($metaData['deployment-config']))? $metaData['deployment-config'] : 'composer.json';
+        $composerFile = 'composer.json';
+
+        if (isset($metaData['deployment-config'])) {
+            $composerFile = $metaData['deployment-config'];
+        }
 
         $json = @json_decode($this->file[$composerFile]->getContent(), true);
         $this->config = is_array($json)? new ArrayObject($json, ArrayObject::ARRAY_AS_PROPS) : false;
 
         if (!$this->config) {
-            throw new \RuntimeException('Failed to load composer.json from package');
+            throw new \RuntimeException('Failed to load deployment definition from package');
         }
 
         return $this;
@@ -74,10 +78,10 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
      * @param SplFileInfo $package
      * @return bool
      */
-    public function supports(SplFileInfo $packageFile)
+    public function supports(SplFileInfo $archive)
     {
         try {
-            $this->file = new PharData($packageFile->getFilename());
+            $this->file = new PharData($archive->getFilename());
             $metaData = $this->file->getMetadata();
             $composerFile = (isset($metaData['deployment-config']))? $metaData['deployment-config'] : 'composer.json';
             $json = @json_decode($this->file[$composerFile]->getContent(), false);
@@ -120,7 +124,7 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     public function getIcon()
     {
         $icon = $this->getOption('icon', false);
-        $file = ($icon && isset($this->file[$file]))? $this->file[$file] : false;
+        $file = ($icon && isset($this->file[$icon]))? $this->file[$icon] : false;
 
         return $file;
     }
@@ -299,5 +303,14 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
 
         $application->setState(entities\ApplicationInstance::STATE_DEPLOYED);
         return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \rampage\nexus\ApplicationPackageInterface::remove()
+     */
+    public function remove(entities\ApplicationInstance $application)
+    {
+        // TODO: Remove application
     }
 }

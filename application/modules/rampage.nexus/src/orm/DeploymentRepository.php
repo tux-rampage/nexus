@@ -23,11 +23,14 @@
 
 namespace rampage\nexus\orm;
 
+use rampage\nexus\DeploymentConfig;
+
 use rampage\nexus\entities\ApplicationInstance;
 use rampage\nexus\entities\VirtualHost;
+use rampage\nexus\entities\Cluster;
+use rampage\nexus\entities\ConfigTemplate;
 
 use Doctrine\ORM\EntityManager;
-use rampage\nexus\entities\Cluster;
 
 
 class DeploymentRepository
@@ -38,11 +41,17 @@ class DeploymentRepository
     protected $entityManager = null;
 
     /**
+     * @var DeploymentConfig
+     */
+    protected $config = null;
+
+    /**
      * @param EntityManager $entityManager
      */
-    public function __construct(EntityManager $entityManager)
+    public function __construct(EntityManager $entityManager, DeploymentConfig $config)
     {
         $this->entityManager = $entityManager;
+        $this->config = $config;
     }
 
     /**
@@ -65,7 +74,7 @@ class DeploymentRepository
     /**
      * @param string $class
      * @param mixed $id
-     * @return ApplicationInstance|VirtualHost
+     * @return ApplicationInstance|VirtualHost|ConfigTemplate
      */
     public function find($class, $id)
     {
@@ -86,6 +95,41 @@ class DeploymentRepository
      */
     public function findApplicationByName($name)
     {
-        return $this->getEntityRepository()->findOneBy(array('name' => $name));
+        return $this->getEntityRepository(ApplicationInstance::class)->findOneBy(array('name' => $name));
+    }
+
+    /**
+     * @param int $id
+     * @return rampage\nexus\entities\ApplicationInstance|null
+     */
+    public function findApplicationById($id)
+    {
+        return $this->find(ApplicationInstance::class, $id);
+    }
+
+    /**
+     * @param null|object|array $entity
+     * @return self
+     */
+    public function flush($entity = null)
+    {
+        $this->entityManager->flush($entity);
+        return $this;
+    }
+
+    /**
+     * @param object $object
+     * @param bool $flush
+     * @return self
+     */
+    public function persist($object, $flush = false)
+    {
+        $this->entityManager->persist($object);
+
+        if ($flush) {
+            $this->flush($object);
+        }
+
+        return $this;
     }
 }

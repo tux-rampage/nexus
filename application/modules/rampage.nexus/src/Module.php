@@ -1,9 +1,6 @@
 <?php
 namespace rampage\nexus;
 
-use rampage\core\AbstractModule;
-use rampage\core\ModuleManifest;
-
 use Zend\Config\Factory as ConfigFactory;
 
 use Zend\ModuleManager\ModuleManager;
@@ -11,12 +8,13 @@ use Zend\ModuleManager\ModuleManagerInterface;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
 use Zend\ModuleManager\Feature\ServiceProviderInterface;
 use Zend\ModuleManager\Feature\InitProviderInterface;
+
 use rampage\core\modules\EventListenerProviderInterface;
 
 /**
  * Module entry
  */
-class Module extends AbstractModule implements ConfigProviderInterface,
+class Module implements ConfigProviderInterface,
     ServiceProviderInterface,
     InitProviderInterface,
     EventListenerProviderInterface
@@ -30,14 +28,6 @@ class Module extends AbstractModule implements ConfigProviderInterface,
      * @var \Zend\ServiceManager\ServiceManager
      */
     protected $serviceManager = null;
-
-    /**
-     * Constructor
-     */
-    public function __construct()
-    {
-        parent::__construct(new ModuleManifest(dirname(__DIR__)));
-    }
 
     /**
      * @return string
@@ -64,10 +54,7 @@ class Module extends AbstractModule implements ConfigProviderInterface,
      */
     public function getConfig()
     {
-        $config = $this->fetchConfigArray();
-        $config['navigation'] = include __DIR__ . '/../conf/navigation.config.php';
-
-        return $config;
+        return include __DIR__ . '/../conf/module.config.php';
     }
 
     /**

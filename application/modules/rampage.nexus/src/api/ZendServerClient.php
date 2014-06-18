@@ -235,6 +235,39 @@ class ZendServerClient
     }
 
     /**
+     * @param string $baseUrl
+     * @param string $defaultServer
+     * @param string $userAppName
+     * @param array $userParams
+     * @param \SplFileInfo $packageFile
+     */
+    public function applicationDeploy($baseUrl, $defaultServer, $userAppName, array $userParams, $packageFile)
+    {
+        $request = $this->createRequest(__FUNCTION__);
+        $params = new Parameters(array(
+            'appPackage' => fopen($packageFile->getPathname(), 'r'),
+            'baseUrl' => $baseUrl,
+            'defaultServer' => $defaultServer,
+            'createVhost' => true,
+            'userAppName' => $userAppName,
+            'userParams' => $userParams
+        ));
+
+        $request->getFiles();
+        $request->setMethod(HttpRequest::METHOD_POST)
+            ->setPost($params);
+
+        $this->signRequest($request);
+        $result = $this->getHttpClient()->send($request);
+
+        if (!$result->isSuccess()) {
+            throw new RuntimeException('Failed to execute ZendServer API call: ' . __FUNCTION__);
+        }
+
+        return simplexml_load_string($result->getBody(), SimpleXmlElement::class);
+    }
+
+    /**
      * @param string $name
      * @return SimpleXmlElement|false
      */

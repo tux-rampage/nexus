@@ -5,7 +5,7 @@ return [
         'default_theme' => 'rampage.nexus'
     ],
 
-    'system_config' => [
+    'deployment' => [
         'server' => [
             'type' => 'standalone'
         ],

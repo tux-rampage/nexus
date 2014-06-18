@@ -24,6 +24,7 @@
 namespace rampage\nexus\entities;
 
 use Doctrine\ORM\Mapping as orm;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * Virtual host definition
@@ -87,6 +88,23 @@ class VirtualHost
      * @var string
      */
     protected $sslChainFile = null;
+
+    /**
+     * @orm\ManyToMany(targetEntity="ConfigTemplate", cascade={"all"}, indexBy="role")
+     * @orm\JoinTable(
+     *      name="vhost_config_templates",
+     *      joinColumns={@orm\JoinColumn(name="vhost_id", referencedColumnName="id")},
+     *      inverseJoinColumns={@orm\JoinColumn(name="template_id", referencedColumnName="id", unique=true}
+     * )
+     * @var ArrayCollection|ConfigTemplate[]
+     */
+    protected $configTemplates = null;
+
+
+    public function __construct()
+    {
+        $this->configTemplates = new ArrayCollection();
+    }
 
     /**
      * @return number
@@ -215,5 +233,13 @@ class VirtualHost
     {
         $this->enableSsl = $flag;
         return $this;
+    }
+
+    /**
+     * @return ArrayCollection|entities\ConfigTemplate[]
+     */
+    public function getConfigTemplates()
+    {
+        return $this->configTemplates;
     }
 }

@@ -33,19 +33,19 @@ interface ApplicationPackageInterface
     /**
      * Check if this installer supports the given package
      *
-     * @param SplFileInfo $package
+     * @param SplFileInfo $archive
      * @return boolean
      */
-    public function supports(SplFileInfo $package);
+    public function supports(SplFileInfo $archive);
 
     /**
      * Load the given package from file
      *
-     * @param SplFileInfo $package
+     * @param SplFileInfo $archive
      * @throws Exception
      * @return self
      */
-    public function load(SplFileInfo $package);
+    public function load(SplFileInfo $archive);
 
     /**
      * Returns the common name of this package type

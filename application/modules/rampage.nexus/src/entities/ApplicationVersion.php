@@ -204,7 +204,7 @@ class ApplicationVersion
             }
 
             $parameter = new UserParameter($name, $value);
-            $parameter->setApplication($this);
+            $parameter->setApplicationVersion($this);
 
             $this->userParameters[$name] = $parameter;
         }

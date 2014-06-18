@@ -33,7 +33,7 @@ class WebConfigFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $config = $serviceLocator->get('SystemConfig');
+        $config = $serviceLocator->get('DeploymentConfig');
         $manager = $serviceLocator->get(WebConfigManager::class);
         $type = $config->server->webconfig? : 'nginx';
 

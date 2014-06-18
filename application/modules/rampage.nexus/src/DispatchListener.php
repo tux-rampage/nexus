@@ -58,9 +58,9 @@ class DispatchListener implements ListenerAggregateInterface, ServiceLocatorAwar
      */
     public function checkServerType(MvcEvent $event)
     {
-        $config = $this->serviceLocator->get('SystemConfig');
+        $config = $this->serviceLocator->get('DeploymentConfig');
 
-        if ($config->server->type != 'node') {
+        if (!$config->isNode()) {
             return;
         }
 

@@ -101,12 +101,14 @@ class ZendServerApi implements ServerApiInterface
      */
     public function attach(Server $server)
     {
-        $this->client->setUri($server);
-        if ($this->client->clusterGetServersCount() < 1) {
-            throw new \RuntimeException('Only ZendServer clusters may be added');
-        }
-
+        $this->removeAllApplications();
         return $this;
+    }
+
+    public function deployNew(Server $server, ApplicationInstance $instance)
+    {
+        $this->client->setUri($server->getUrl());
+        $this->client->deployApplication();
     }
 
     /**
@@ -115,11 +117,12 @@ class ZendServerApi implements ServerApiInterface
     public function deploy(Server $server, ApplicationInstance $instance)
     {
         $this->client->setUri($server->getUrl());
+        $appId = $this->client->findDeployedApplicationId($instance->getName());
 
-        if (!$appId = $this->client->findDeployedApplicationId($instance->getName())) {
+        if (!$appId) {
             $this->deployNew($server, $instance);
         } else {
-            $this->update($server, $instance);
+            $this->update($server, $appId, $instance);
         }
     }
 
@@ -128,6 +131,7 @@ class ZendServerApi implements ServerApiInterface
      */
     public function detach(Server $server)
     {
+        $this->removeAllApplications();
         return $this;
     }
 

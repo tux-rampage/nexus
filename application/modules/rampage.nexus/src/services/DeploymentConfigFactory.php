@@ -33,7 +33,7 @@ use SplFileInfo;
 /**
  * System Config Factory
  */
-class SystemConfigFactory implements FactoryInterface
+class DeploymentConfigFactory implements FactoryInterface
 {
     /**
      * {@inheritdoc}
@@ -44,7 +44,7 @@ class SystemConfigFactory implements FactoryInterface
         $pathManager = $serviceLocator->get('PathManager');
         $global = $serviceLocator->get('config');
         $file = new SplFileInfo($pathManager->get('etc', 'rampage-nexus.conf'));
-        $config = new Config($global['system_config']);
+        $config = new Config($global['deployment_config']);
 
         if ($file->isReadable() && $file->isFile()) {
             $config->merge(new Config((new IniConfigReader())->fromFile($file->getPathname())));

@@ -14,11 +14,12 @@ use Zend\Navigation\Service\DefaultNavigationFactory;
 return array(
     'factories' => array(
         'WebConfig' => services\WebConfigFactory::class,
-        'SystemConfig' => services\SystemConfigFactory::class,
+        'DeploymentConfig' => services\DeploymentConfigFactory::class,
         'navigation' => DefaultNavigationFactory::class,
     ),
     'aliases' => array(
         DeployStrategyInterface::class => 'DeployStrategy',
         WebConfigInterface::class => 'WebConfig',
+        DeploymentConfig::class => 'DeploymentConfig',
     )
 );

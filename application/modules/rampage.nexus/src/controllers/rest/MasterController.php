@@ -29,6 +29,7 @@ use rampage\nexus\entities\ApplicationInstance;
 use rampage\nexus\PackageStorage;
 use Zend\Http\Response\Stream as StreamHttpResponse;
 use Zend\View\Model\JsonModel;
+use rampage\nexus\hydration\ApplicationInstanceHydrator;
 
 
 class MasterController extends AbstractActionController implements RestControllerInterface
@@ -80,7 +81,7 @@ class MasterController extends AbstractActionController implements RestControlle
     /**
      * @return \Zend\View\Model\JsonModel
      */
-    public function fetchDeployParameters()
+    public function fetchApplicationInfoAction()
     {
         $applicationId = $this->params('applicationId');
         $application = $this->getRepository()->find(ApplicationInstance::class, $applicationId);
@@ -89,7 +90,9 @@ class MasterController extends AbstractActionController implements RestControlle
             return $this->notFoundAction();
         }
 
-        $params = $application->getCurrentVersion()->getUserParameters(true);
-        return new JsonModel($params);
+        $hydrator = new ApplicationInstanceHydrator($this->getRepository());
+        $data = $hydrator->extract($application);
+
+        return new JsonModel($data);
     }
 }

@@ -23,25 +23,119 @@
 
 namespace rampage\nexus\controllers;
 
+use rampage\nexus\DeployStrategyManager;
+use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\orm\DeploymentRepository;
+
+use Zend\Console\Adapter\AdapterInterface as ConsoleAdapterInterface;
 use Zend\Mvc\Controller\AbstractActionController;
+use Zend\Mvc\MvcEvent;
+
+use RuntimeException;
+use rampage\nexus\DeploymentConfig;
+use rampage\nexus\ApplicationPackageManager;
+use rampage\nexus\DeploymentNode;
+
 
 class DeploymentCliController extends AbstractActionController
 {
-    public function stageAction()
+    /**
+     * @var ApplicationInstance
+     */
+    protected $application = null;
+
+    /**
+     * @throws \DomainException
+     */
+    public function assertDeployNode()
     {
+        $config = $this->getServiceLocator()->get('DeploymentConfig');
+
+        if (!$config->isNode() && !$config->isStandalone()) {
+            throw new \DomainException('Only nodes may perform local deployments.');
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \Zend\Mvc\Controller\AbstractController::attachDefaultListeners()
+     */
+    protected function attachDefaultListeners()
+    {
+        parent::attachDefaultListeners();
+        $this->getEventManager()->attach(MvcEvent::EVENT_DISPATCH, array($this, 'assertDeployNode'), 1000);
+    }
+
+    /**
+     * @return DeploymentConfig
+     */
+    public function getConfig()
+    {
+        return $this->getServiceLocator()->get('DeploymentConfig');
+    }
+
+    /**
+     * @return ApplicationPackageManager
+     */
+    public function getApplicationPackageManager()
+    {
+        return $this->getServiceLocator()->get(ApplicationPackageManager::class);
+    }
+
+    /**
+     * @return DeploymentNode
+     */
+    public function getDeploymentNode()
+    {
+        return $this->getServiceLocator()->get(DeploymentNode::class);
+    }
+
+    /**
+     * @return boolean
+     */
+    protected function initApplication($prepare = true)
+    {
+        $appId = $this->params('application');
+        if (!$appId) {
+            return false;
+        }
+
+        /* @var $repository DeploymentRepository */
+        $strategyManager = $this->getServiceLocator()->get(DeployStrategyManager::class);
+        $repository = $this->getServiceLocator()->get(DeploymentRepository::class);
+
+        if ($prepare) {
+            $this->application = $this->getDeploymentNode()->prepareApplicationInstance($appId);
+        } else {
+            $this->application = $repository->findApplicationById($appId);
+        }
+
+        if (!$this->application) {
+            return false;
+        }
+
+        $this->application->setDeployStrategyManager($strategyManager);
+        return true;
+    }
+
+    /**
+     * Deploy an application
+     */
+    public function deployAction()
+    {
+        if (!$this->initApplication()) {
+            throw new RuntimeException(sprintf('Could not find application %d', $this->params('application')));
+        }
+
+        $this->getDeploymentNode()->deploy();
+        $package = $this->getApplicationPackageManager()->getPackageInstaller($archive);
+
+
 
     }
 
-    public function activateAction()
+    public function removeAction()
     {
 
-    }
-
-    public function deactivateAction()
-    {
-    }
-
-    public function unstageAction()
-    {
     }
 }
