@@ -42,6 +42,11 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     protected $file = null;
 
     /**
+     * @var string
+     */
+    protected $hash = null;
+
+    /**
      * @var array
      */
     protected $config = null;
@@ -56,7 +61,8 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
      */
     public function load(SplFileInfo $archive)
     {
-        $this->file = new PharData($archive->getFilename());
+        $this->file = new PharData($archive->getPathname());
+        $this->hash = md5_file($archive->getPathname());
         $metaData = $this->file->getMetadata();
         $composerFile = 'composer.json';
 
@@ -103,6 +109,15 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     public function getTypeName()
     {
         return 'composer';
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \rampage\nexus\ApplicationPackageInterface::getHash()
+     */
+    public function getHash()
+    {
+        return $this->hash;
     }
 
     /**

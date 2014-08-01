@@ -57,6 +57,11 @@ class ApplicationVersion
     protected $userParameters = null;
 
     /**
+     * @var string
+     */
+    protected $packageHash = null;
+
+    /**
      * @var array
      */
     private $prePersistAggregates = null;
@@ -229,5 +234,23 @@ class ApplicationVersion
         }
 
         return $params;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPackageHash()
+    {
+        return $this->packageHash;
+    }
+
+    /**
+     * @param string $packageHash
+     * @return self
+     */
+    public function setPackageHash($packageHash)
+    {
+        $this->packageHash = $packageHash;
+        return $this;
     }
 }

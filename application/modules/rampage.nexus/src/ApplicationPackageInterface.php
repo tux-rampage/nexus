@@ -90,6 +90,13 @@ interface ApplicationPackageInterface
     public function getLicense();
 
     /**
+     * Returns the hash of this package file
+     *
+     * @return string
+     */
+    public function getHash();
+
+    /**
      * @param entities\ApplicationInstance $application
      * @return bool
      */

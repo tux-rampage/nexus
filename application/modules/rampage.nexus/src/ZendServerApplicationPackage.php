@@ -39,7 +39,21 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
     /**
      * @var \ZipArchive
      */
-    protected $zip;
+    protected $zip = null;
+
+    /**
+     * @var string
+     */
+    protected $hash = null;
+
+    /**
+     * {@inheritdoc}
+     * @see \rampage\nexus\ApplicationPackageInterface::getHash()
+     */
+    public function getHash()
+    {
+        return $this->hash;
+    }
 
     /**
      * {@inheritdoc}
@@ -199,8 +213,9 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
      */
     public function load(SplFileInfo $package)
     {
-        $path = $package->getFilename();
+        $path = $package->getPathname();
         $this->zip = new \ZipArchive();
+        $this->hash = md5_file($path);
 
         if ($this->zip->open($package) !== true) {
             throw new RuntimeException(sprintf('Failed to open deployment package "%s"', $path));

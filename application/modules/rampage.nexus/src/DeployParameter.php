@@ -53,7 +53,12 @@ class DeployParameter
     /**
      * @var string
      */
-    protected $options = null;
+    protected $options = array();
+
+    /**
+     * @var string
+     */
+    protected $defaultValue = null;
 
     /**
      * @param string $name
@@ -86,7 +91,19 @@ class DeployParameter
             $param->setType($options['type']);
         }
 
+        if (isset($options['default'])) {
+            $param->setDefaultValue($options['default']);
+        }
+
         return $param;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDefaultValue()
+    {
+        return $this->defaultValue;
     }
 
     /**
@@ -122,11 +139,23 @@ class DeployParameter
     }
 
     /**
+     * Zend Form Element Options
+     *
      * @return array
      */
     public function getOptions()
     {
         return $this->options;
+    }
+
+    /**
+     * @param string $defaultValue
+     * @return self
+     */
+    public function setDefaultValue($defaultValue)
+    {
+        $this->defaultValue = $defaultValue;
+        return $this;
     }
 
     /**
@@ -160,10 +189,10 @@ class DeployParameter
     }
 
     /**
-     * @param string $options
+     * @param array $options
      * @return self
      */
-    public function setOptions($options)
+    public function setOptions(array $options)
     {
         $this->options = $options;
         return $this;

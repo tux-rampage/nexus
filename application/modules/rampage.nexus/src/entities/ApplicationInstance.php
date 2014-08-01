@@ -203,6 +203,18 @@ class ApplicationInstance
         if ($icon !== false) {
             $this->setIcon($icon);
         }
+
+        $versionNumber = $package->getVersion();
+        $version = $this->getVersion($versionNumber);
+
+        if (!$version) {
+            $version = new ApplicationVersion($versionNumber);
+        }
+
+        $version->setPackageHash($package->getHash());
+        $this->addVersion($version);
+
+        return $this;
     }
 
     /**
