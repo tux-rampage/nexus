@@ -103,6 +103,17 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     }
 
     /**
+     * Trigger deploy script
+     *
+     * @param string $script
+     * @return self
+     */
+    protected function trigger($script)
+    {
+        return $this;
+    }
+
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\ApplicationPackageInterface::getTypeName()
      */

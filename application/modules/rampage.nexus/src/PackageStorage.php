@@ -23,7 +23,7 @@
 
 namespace rampage\nexus;
 
-use rampage\io\WritableLocalFilesystem;
+use rampage\filesystem\WritableLocalFilesystem;
 use rampage\nexus\entities\ApplicationVersion;
 
 use SplFileInfo;
@@ -79,7 +79,7 @@ class PackageStorage extends WritableLocalFilesystem
 
     /**
      * {@inheritdoc}
-     * @see \rampage\io\WritableLocalFilesystem::offsetSet()
+     * @see \rampage\filesystem\WritableLocalFilesystem::offsetSet()
      */
     public function offsetSet($offset, $value)
     {
@@ -97,7 +97,7 @@ class PackageStorage extends WritableLocalFilesystem
 
     /**
      * {@inheritdoc}
-     * @see \rampage\io\LocalFilesystem::offsetGet()
+     * @see \rampage\filesystem\LocalFilesystem::offsetGet()
      */
     public function offsetGet($offset)
     {

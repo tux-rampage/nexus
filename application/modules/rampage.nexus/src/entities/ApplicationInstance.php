@@ -176,7 +176,7 @@ class ApplicationInstance
 
     /**
      * @throws LogicException
-     * @return \rampage\io\WrappedFileInfo
+     * @return \rampage\filesystem\WrappedFileInfo
      */
     public function getCurrentApplicationPackageFile()
     {

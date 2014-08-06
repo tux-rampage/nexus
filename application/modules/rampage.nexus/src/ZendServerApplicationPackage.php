@@ -47,6 +47,71 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
     protected $hash = null;
 
     /**
+     * @var string
+     */
+    private $tempScriptsDir = null;
+
+    /**
+     * @return self
+     */
+    protected function extractScriptsDir()
+    {
+        if ($this->tempScriptsDir !== null) {
+            return $this;
+        }
+
+        $scripts = isset($this->deploymentXml->scriptsdir)? (string)$this->deploymentXml->scriptsdir : 'scripts';
+        $dir = getenv('TMP')? : '/tmp';
+        $this->tempScriptsDir = tempnam($dir, 'zpk.scripts');
+        $this->extract($this->tempScriptsDir, $scripts);
+
+        return $this;
+    }
+
+    /**
+     * Trigger deploy script
+     *
+     * @param string $script
+     * @return self
+     */
+    protected function triggerDeployScript($script, ApplicationInstance $application)
+    {
+        $this->extractScriptsDir();
+
+        $file = $this->tempScriptsDir . '/' . $script . '.php';
+
+        if (!file_exists($file)) {
+            return $this;
+        }
+
+        $exec = new Executable('php');
+        $exec->addArg('-f')
+            ->addArg($file);
+
+        $exec->setEnv('ZS_RUN_ONCE_NODE', '1')
+            ->setEnv('ZS_WEBSERVER_TYPE', 'TODO')
+            ->setEnv('ZS_WEBSERVER_VERSION', 'TODO')
+            ->setEnv('ZS_WEBSERVER_UID', 'TODO')
+            ->setEnv('ZS_WEBSERVER_GID', 'TODO')
+            ->setEnv('ZS_PHP_VERSION', 'TODO')
+            ->setEnv('ZS_APPLICATION_BASE_DIR', $application->getDeployStrategy()->getTargetDirectory())
+            ->setEnv('ZS_CURRENT_APP_VERSION', $application->getCurrentVersion()->getVersion())
+            ->setEnv('ZS_PREVIOUS_APP_VERSION', 'TODO');
+
+        foreach ($application->getCurrentVersion()->getUserParameters(true) as $param => $value) {
+            $param = strtoupper($param);
+            $exec->setEnv('ZS_'.$param, $value);
+        }
+
+        if (!$exec->execute(true)) {
+            // TODO: Logging
+            throw new RuntimeException(sprintf('Stage script %s failed.', $script));
+        }
+
+        return $this;
+    }
+
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\ApplicationPackageInterface::getHash()
      */
@@ -172,7 +237,7 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
             $targetPath = $destination . '/' . $normalized;
             $targetDir = dirname($targetPath);
 
-            if (!is_dir($targetDir) && !mkdir($targetDir)) {
+            if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true)) {
                 throw new RuntimeException('Failed to create directory %s');
             }
 
@@ -195,13 +260,18 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
         $strategy = $application->getDeployStrategy();
 
         // TODO: $strategy->setUserParameters($parameters);
+        $this->triggerDeployScript('pre_stage', $application);
         $strategy->setWebRoot($webRoot);
         $strategy->prepareStaging();
 
         $this->extract($strategy->getTargetDirectory(), $appDir);
 
         $strategy->completeStaging();
+        $this->triggerDeployScript('post_stage', $application);
+
+        $this->triggerDeployScript('pre_activate', $application);
         $strategy->activate();
+        $this->triggerDeployScript('post_activate', $application);
 
         $application->setState(ApplicationInstance::STATE_DEPLOYED);
         return $this;
@@ -246,14 +316,14 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
     {
         $strategy = $application->getDeployStrategy();
 
-        $this->trigger('pre_deactivate', $application);
+        $this->triggerDeployScript('pre_deactivate', $application);
         $strategy->deactivate();
-        $this->trigger('post_deactivate', $application);
+        $this->triggerDeployScript('post_deactivate', $application);
 
-        $this->trigger('pre_unstage', $application);
+        $this->triggerDeployScript('pre_unstage', $application);
         $strategy->prepareRemoval();
         $strategy->completeRemoval();
-        $this->trigger('post_unstage', $application);
+        $this->triggerDeployScript('post_unstage', $application);
     }
 
     /**

@@ -2,11 +2,14 @@
   "name" : "rampage-php/nexus-deployment-manager",
   "description" : "A software to manage your PHP application deployments",
   "require" : {
-    "zendframework/zendframework" : "2.3.*",
-    "rampage-php/framework" : "1.0.*@dev",
+    "zendframework/zendframework" : "2.*",
+    "rampage-php/framework" : ">= 1.1, < 2",
     "doctrine/orm" : "~2.4",
     "doctrine/doctrine-orm-module" : "~0.8",
     "doctrine/migrations" : "1.0.*@dev"
+  },
+  "require-dev" : {
+    "rampage-php/framework" : "1.1.*@dev"
   },
   "authors" : [ {
     "name" : "Axel Helmert",

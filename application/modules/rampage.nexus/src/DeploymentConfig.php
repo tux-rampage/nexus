@@ -90,4 +90,41 @@ class DeploymentConfig extends Config
 
         return $url;
     }
+
+    /**
+     * {@inheritdoc}
+     * @see \Zend\Config\Config::get()
+     */
+    public function get($name, $default = null)
+    {
+        if (strpos($name, '.') === false) {
+            return parent::get($name, $default);
+        }
+
+        @list($section, $key) = explode('.', $name, 2);
+        $node = parent::get($section);
+
+        if (!$node instanceof self) {
+            return $default;
+        }
+
+        return $node->get($key);
+    }
+
+
+    public function getNode($name)
+    {
+        $node = $this->get($name);
+
+        if ($node instanceof self) {
+            return $node;
+        }
+
+        if ($node instanceof \Traversable) {
+            $node = iterator_to_array($node);
+        }
+
+        return new static(is_array($node)? $node : array());
+    }
+
 }
