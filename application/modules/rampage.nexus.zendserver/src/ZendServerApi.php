@@ -20,12 +20,16 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\api;
+namespace rampage\nexus\zs;
+
+use rampage\nexus\api\ServerApiInterface;
 
 use rampage\nexus\entities\Server;
 use rampage\nexus\entities\ApplicationInstance;
+
 use Zend\Stdlib\Parameters;
 use Zend\Uri\Http as HttpUri;
+
 
 class ZendServerApi implements ServerApiInterface
 {

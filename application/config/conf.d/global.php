@@ -18,6 +18,6 @@ return [
         'display_exceptions' => true,
         'exception_template' => 'error/500',
         'display_not_found_reason' => true,
-        'not_found_template'       => 'error/404',
+        'not_found_template' => 'error/404',
     ]
 ];

@@ -20,5 +20,33 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-require_once __DIR__ . '/../application/bootstrap.php';
-rampage\core\Application::init(include APPLICATION_DIR . 'config/application.conf.php')->run();
+namespace rampage\nexus\traits;
+
+use rampage\nexus\WebConfigInterface;
+
+
+trait WebConfigAwareTrait
+{
+    /**
+     * @var WebConfigInterface
+     */
+    protected $webConfig = null;
+
+    /**
+     * @return WebConfigInterface
+     */
+    public function getWebConfig()
+    {
+        return $this->webConfig;
+    }
+
+    /**
+     * @param WebConfigInterface $config
+     * @return self
+     */
+    public function setWebConfig(WebConfigInterface $config)
+    {
+        $this->webConfig = $config;
+        return $this;
+    }
+}

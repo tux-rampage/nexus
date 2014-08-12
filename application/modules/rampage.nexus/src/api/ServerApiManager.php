@@ -37,7 +37,6 @@ class ServerApiManager extends AbstractPluginManager
     {
         $this->invokableClasses = array(
             'rampage' => RampageServerApi::class,
-            'zendserver' => ZendServerApi::class,
         );
 
         $this->shareByDefault = false;

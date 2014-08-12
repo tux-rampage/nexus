@@ -43,8 +43,7 @@ class ApplicationPackageManager implements EventManagerAwareInterface
     {
         $this->packageTypes = new SplPriorityQueue();
 
-        $this->addPackageType(new ComposerApplicationPackage())
-            ->addPackageType(new ZendServerApplicationPackage());
+        $this->addPackageType(new ComposerApplicationPackage());
     }
 
     /**

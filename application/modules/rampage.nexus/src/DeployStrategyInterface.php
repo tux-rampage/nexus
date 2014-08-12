@@ -27,7 +27,7 @@ namespace rampage\nexus;
 /**
  * Deploy strategy interface
  */
-interface DeployStrategyInterface
+interface DeployStrategyInterface extends WebConfigAwareInterface
 {
     /**
      * Set the current application instance to perform the actions on
@@ -36,12 +36,6 @@ interface DeployStrategyInterface
      * @return self
      */
     public function setApplicationInstance(entities\ApplicationInstance $instance);
-
-    /**
-     * @param WebConfigInterface $config
-     * @return self
-     */
-    public function setWebConfig(WebConfigInterface $config);
 
     /**
      * Set the user parameters to use for deployment

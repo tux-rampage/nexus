@@ -120,7 +120,6 @@ class DeploymentNode
 
     /**
      * @param int $applicationId
-     * @param ApplicationPackageInterface $package
      */
     public function prepareApplicationInstance($applicationId)
     {

@@ -35,6 +35,7 @@ use Exception;
 class DefaultDeployStrategy implements DeployStrategyInterface, LoggerAwareInterface
 {
     use traits\LoggerAwareTrait;
+    use traits\WebConfigAwareTrait;
 
     /**
      * @var string
@@ -50,11 +51,6 @@ class DefaultDeployStrategy implements DeployStrategyInterface, LoggerAwareInter
      * @var entities\ApplicationInstance
      */
     protected $application = null;
-
-    /**
-     * @return WebConfigInterface
-     */
-    private $webConfig = null;
 
     /**
      * @var string
@@ -177,23 +173,6 @@ class DefaultDeployStrategy implements DeployStrategyInterface, LoggerAwareInter
         }
 
         return $root;
-    }
-
-    /**
-     * @see \rampage\nexus\DeployStrategyInterface::setWebConfig()
-     */
-    public function setWebConfig(WebConfigInterface $config)
-    {
-        $this->webConfig = $config;
-        return $this;
-    }
-
-    /**
-     * @return \rampage\nexus\WebConfigInterface
-     */
-    protected function getWebConfig()
-    {
-        return $this->webConfig;
     }
 
     /**

@@ -25,7 +25,6 @@ namespace rampage\nexus;
 use rampage\core\AbstractPluginManager;
 use rampage\core\exception\InvalidPluginException;
 use Zend\ServiceManager\ConfigInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
 
 class DeployStrategyManager extends AbstractPluginManager
 {
@@ -37,11 +36,7 @@ class DeployStrategyManager extends AbstractPluginManager
         parent::__construct($config);
 
         if (!$this->has('default')) {
-            $self = $this;
-
-            $this->setFactory('default', function(ServiceLocatorInterface $serviceLocator) use ($self) {
-                return $self->getServiceLocator()->get('DeployStrategy');
-            });
+            $this->setInvokableClass('default', DefaultDeployStrategy::class);
         }
     }
 

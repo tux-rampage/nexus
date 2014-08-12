@@ -16,9 +16,10 @@ return array(
         'WebConfig' => services\WebConfigFactory::class,
         'DeploymentConfig' => services\DeploymentConfigFactory::class,
         'navigation' => DefaultNavigationFactory::class,
+        'DefaultDeployStrategy' => services\DefaultDeployStrategyFactory::class,
     ),
     'aliases' => array(
-        DeployStrategyInterface::class => 'DeployStrategy',
+        DeployStrategyInterface::class => 'DefaultDeployStrategy',
         WebConfigInterface::class => 'WebConfig',
         DeploymentConfig::class => 'DeploymentConfig',
     )

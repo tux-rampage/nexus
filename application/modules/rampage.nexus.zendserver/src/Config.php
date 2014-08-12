@@ -20,5 +20,18 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-require_once __DIR__ . '/../application/bootstrap.php';
-rampage\core\Application::init(include APPLICATION_DIR . 'config/application.conf.php')->run();
+namespace rampage\nexus\zs;
+
+use rampage\nexus\ArrayConfig;
+
+
+class Config extends ArrayConfig
+{
+    /**
+     * @return string
+     */
+    public function getWebserverType()
+    {
+        return $this->get('installer.webserver.type', $_SERVER['SERVER_SOFTWARE']);
+    }
+}

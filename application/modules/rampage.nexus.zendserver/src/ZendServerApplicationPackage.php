@@ -20,12 +20,15 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus;
+namespace rampage\nexus\zs;
 
 use rampage\core\xml\SimpleXmlElement;
+
+use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\ApplicationPackageInterface;
+
 use RuntimeException;
 use SplFileInfo;
-use rampage\nexus\entities\ApplicationInstance;
 
 class ZendServerApplicationPackage implements ApplicationPackageInterface
 {
@@ -52,6 +55,19 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
     private $tempScriptsDir = null;
 
     /**
+     * @var Config
+     */
+    protected $options = null;
+
+    /**
+     * @param array|DeploymentConfig $options
+     */
+    public function __construct(Config $options)
+    {
+        $this->options = $options;
+    }
+
+    /**
      * @return self
      */
     protected function extractScriptsDir()
@@ -74,34 +90,16 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
      * @param string $script
      * @return self
      */
-    protected function triggerDeployScript($script, ApplicationInstance $application)
+    protected function triggerDeployScript($script, $application)
     {
         $this->extractScriptsDir();
-
         $file = $this->tempScriptsDir . '/' . $script . '.php';
 
         if (!file_exists($file)) {
             return $this;
         }
 
-        $exec = new Executable('php');
-        $exec->addArg('-f')
-            ->addArg($file);
-
-        $exec->setEnv('ZS_RUN_ONCE_NODE', '1')
-            ->setEnv('ZS_WEBSERVER_TYPE', 'TODO')
-            ->setEnv('ZS_WEBSERVER_VERSION', 'TODO')
-            ->setEnv('ZS_WEBSERVER_UID', 'TODO')
-            ->setEnv('ZS_WEBSERVER_GID', 'TODO')
-            ->setEnv('ZS_PHP_VERSION', 'TODO')
-            ->setEnv('ZS_APPLICATION_BASE_DIR', $application->getDeployStrategy()->getTargetDirectory())
-            ->setEnv('ZS_CURRENT_APP_VERSION', $application->getCurrentVersion()->getVersion())
-            ->setEnv('ZS_PREVIOUS_APP_VERSION', 'TODO');
-
-        foreach ($application->getCurrentVersion()->getUserParameters(true) as $param => $value) {
-            $param = strtoupper($param);
-            $exec->setEnv('ZS_'.$param, $value);
-        }
+        $exec = new StageScript($file, $application, $this->options);
 
         if (!$exec->execute(true)) {
             // TODO: Logging

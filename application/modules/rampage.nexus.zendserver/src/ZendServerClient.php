@@ -20,19 +20,21 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\api;
+namespace rampage\nexus\zs;
 
 use rampage\nexus\traits\HttpClientAwareTrait;
+
+use rampage\core\xml\SimpleXmlElement;
+use rampage\core\exception\RuntimeException;
 
 use Zend\Http\Request as HttpRequest;
 use Zend\Http\Header\Date as DateHeader;
 use Zend\Http\Client as HttpClient;
 use Zend\Http\Client\Adapter\Curl as CurlHttpAdapter;
+
 use Zend\Version\Version as ZFVersion;
 use Zend\Config\Config as ArrayConfig;
-use rampage\core\xml\SimpleXmlElement;
 use Zend\Stdlib\Parameters;
-use rampage\core\exception\RuntimeException;
 
 
 class ZendServerClient
@@ -286,10 +288,11 @@ class ZendServerClient
     public function findDeployedApplicationId($name)
     {
         $xml = $this->applicationGetStatusByName($name);
+
         if (!$xml instanceof SimpleXmlElement) {
             return false;
         }
 
-        return (string)$node->id;
+        return (string)$xml->id;
     }
 }

@@ -10,6 +10,10 @@ use Zend\ModuleManager\Feature\ServiceProviderInterface;
 use Zend\ModuleManager\Feature\InitProviderInterface;
 
 use rampage\core\modules\EventListenerProviderInterface;
+use Zend\ModuleManager\ModuleEvent;
+use Zend\Stdlib\CallbackHandler;
+use Zend\ModuleManager\Listener\ConfigListener;
+use Zend\ModuleManager\Listener\ServiceListener;
 
 /**
  * Module entry
@@ -46,6 +50,57 @@ class Module implements ConfigProviderInterface,
         ConfigFactory::registerWriter('conf', 'ini');
 
         $this->serviceManager = $manager->getEvent()->getParam('ServiceManager');
+        $serviceListener = $this->serviceManager->get('ServiceListener');
+
+        $manager->getEventManager()->attach(new ConfigListenerOptions());
+        $manager->getEventManager()->attach(ModuleEvent::EVENT_LOAD_MODULES_POST, array($this, 'addModulePackeTypes'));
+
+        // Add service listeners
+        if ($serviceListener instanceof ServiceListener) {
+            $serviceListener->addServiceManager(
+                DeployStrategyManager::class,
+                'deploy_strategies',
+                features\DeployStrategyProviderInterface::class,
+                'getDeployStrategiesConfig'
+            );
+
+            $serviceListener->addServiceManager(
+                WebConfigManager::class,
+                'web_configs',
+                features\WebConfigProviderInterface::class,
+                'getWebConfigsConfig'
+            );
+
+            $serviceListener->addServiceManager(
+                api\ServerApiManager::class,
+                'server_apis',
+                features\ServerApiProviderInterface::class,
+                'getServerApisConfig'
+            );
+        }
+    }
+
+    /**
+     * @param ModuleEvent $event
+     */
+    public function addModulePackeTypes(ModuleEvent $event)
+    {
+        $moduleManager = $event->getTarget();
+        $packageTypeManager = $this->serviceManager->get(ApplicationPackageManager::class);
+
+        if ((!$moduleManager instanceof ModuleManager) || (!$packageTypeManager instanceof ApplicationPackageManager)) {
+            return;
+        }
+
+        foreach ($moduleManager->getLoadedModules() as $module) {
+            if (!$module instanceof features\PackageTypeProviderInterface) {
+                continue;
+            }
+
+            foreach ($module->getDeploymentPackageTypes() as $type) {
+                $packageTypeManager->addPackageType($type);
+            }
+        }
     }
 
     /**

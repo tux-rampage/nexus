@@ -56,7 +56,7 @@ interface WebConfigInterface
     public function maintenance();
 
     /**
-     * @param string $documentRoot
+     * @param DeployStrategyInterface $strategy
      */
     public function configure(DeployStrategyInterface $strategy);
 
