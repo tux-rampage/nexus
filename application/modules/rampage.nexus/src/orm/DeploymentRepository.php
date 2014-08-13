@@ -100,11 +100,20 @@ class DeploymentRepository
 
     /**
      * @param int $id
-     * @return rampage\nexus\entities\ApplicationInstance|null
+     * @return \rampage\nexus\entities\ApplicationInstance
      */
     public function findApplicationById($id)
     {
         return $this->find(ApplicationInstance::class, $id);
+    }
+
+    /**
+     * @param int $masterId
+     * @return \Rampage\nexus\entities\ApplicationInstance
+     */
+    public function findApplicationByMasterId($masterId)
+    {
+        return $this->getEntityRepository(ApplicationInstance::class)->findOneBy(compact('masterId'));
     }
 
     /**

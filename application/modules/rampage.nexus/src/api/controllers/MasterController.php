@@ -21,15 +21,16 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\controllers\rest;
+namespace rampage\nexus\api\controllers;
 
-use Zend\Mvc\Controller\AbstractActionController;
-use rampage\nexus\orm\DeploymentRepository;
 use rampage\nexus\entities\ApplicationInstance;
-use rampage\nexus\PackageStorage;
-use Zend\Http\Response\Stream as StreamHttpResponse;
-use Zend\View\Model\JsonModel;
 use rampage\nexus\hydration\ApplicationInstanceHydrator;
+use rampage\nexus\orm\DeploymentRepository;
+use rampage\nexus\PackageStorage;
+
+use Zend\Http\Response\Stream as StreamHttpResponse;
+use Zend\Mvc\Controller\AbstractActionController;
+use Zend\View\Model\JsonModel;
 
 
 class MasterController extends AbstractActionController implements RestControllerInterface

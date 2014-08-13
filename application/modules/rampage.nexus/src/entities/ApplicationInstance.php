@@ -57,7 +57,13 @@ class ApplicationInstance
      * @orm\Id @orm\Column(type="integer") @orm\GeneratedValue
      * @var int
      */
-    protected $id = null;
+    private $id = null;
+
+    /**
+     * @orm\Column(type="integer", nullable=true)
+     * @var int
+     */
+    protected $masterId = null;
 
     /**
      * @orm\Column(type="string", nullable=false)
@@ -141,8 +147,9 @@ class ApplicationInstance
     /**
      * Construct
      */
-    public function __construct($isConsole = false)
+    public function __construct($masterId = null, $isConsole = false)
     {
+        $this->masterId = $masterId;
         $this->isConsoleApp = $isConsole;
         $this->configTemplates = new ArrayCollection();
         $this->userParameters = new ArrayCollection();

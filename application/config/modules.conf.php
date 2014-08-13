@@ -1,3 +1,6 @@
 <?php
 
-return [ 'rampage.nexus' ];
+return [
+    'rampage.nexus',
+    'rampage.nexus.zs'
+];

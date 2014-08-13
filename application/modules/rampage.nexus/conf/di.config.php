@@ -9,6 +9,9 @@
 
 namespace rampage\nexus;
 
+use Doctrine\ORM\EntityManager;
+
+
 return array(
     'definition' => array(
         'compiler' => array(
@@ -23,11 +26,13 @@ return array(
             'ConfigTemplateLocator' => ConfigTemplateLocator::class,
             'DeployStrategy' => DefaultDeployStrategy::class,
             'WebConfig' => WebConfigInterface::class,
+            'DeploymentEntityManager' => EntityManager::class,
         ),
         'preferences' => array(
             ConfigTemplateLocator::class => 'ConfigTemplateLocator',
             DefaultDeployStrategy::class => 'DeployStrategy',
             WebConfigInterface::class => 'WebConfig',
+            EntityManager::class => 'DeploymentEntityManager',
         ),
 
         'DeployStrategy' => array(

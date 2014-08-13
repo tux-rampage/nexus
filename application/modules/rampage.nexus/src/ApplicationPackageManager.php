@@ -80,4 +80,23 @@ class ApplicationPackageManager implements EventManagerAwareInterface
 
         throw new \DomainException(sprintf('Unable to find a supported package type for "%s"', $archive->getFilename()));
     }
+
+    /**
+     * @param \rampage\nexus\entities\ApplicationInstance $application
+     * @return ApplicationPackageInterface
+     */
+    public function createInstallerForApplication(entities\ApplicationInstance $application)
+    {
+        /* @var $application \rampage\nexus\entities\ApplicationInstance */
+        $archive = $application->getCurrentApplicationPackageFile();
+        if (!$archive) {
+            throw new \RuntimeException(sprintf('Could not find application package for application "%s" (%d)', $application->getName(), $application->getId()));
+        }
+
+        $file = new SplFileInfo($archive->getPathname());
+        $installer = $this->getPackageInstaller($file);
+
+        $installer->load($file);
+        return $installer;
+    }
 }

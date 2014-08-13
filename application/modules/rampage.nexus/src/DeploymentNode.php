@@ -58,11 +58,13 @@ class DeploymentNode
      * @param DeploymentConfig $config
      * @param orm\DeploymentRepository $repository
      */
-    public function __construct(DeploymentConfig $config, orm\DeploymentRepository $repository, PackageStorage $packageStorage)
+    public function __construct(DeploymentConfig $config, orm\DeploymentRepository $repository, PackageStorage $packageStorage, ApplicationPackageManager $packageManager, DeployStrategyManager $strategyManager)
     {
         $this->config = $config;
         $this->repository = $repository;
         $this->packageStorage = $packageStorage;
+        $this->applicationPackageManager = $packageManager;
+        $this->deployStrategyManager = $strategyManager;
         $this->hydrator = new hydration\ApplicationInstanceHydrator($repository);
 
         $this->httpClient = new HttpClient($this->config->getMasterApiUrl());
@@ -120,52 +122,66 @@ class DeploymentNode
 
     /**
      * @param int $applicationId
+     * @return \rampage\nexus\entities\ApplicationInstance
      */
     public function prepareApplicationInstance($applicationId)
     {
-        $application = $this->repository->findApplicationById($applicationId);
-
-        if ($application) {
-            $application->setPackageStorage($this->packageStorage);
-        }
-
         if (!$this->config->isNode()) {
-            return $application;
+            return $this->repository->findApplicationById($applicationId);
         }
+
+        $application = $this->repository->findApplicationByMasterId($applicationId);
 
         if (!$application) {
             $application = new ApplicationInstance();
-            $this->repository->persist($application);
         }
 
         $this->updateApplicationFromMaster($application);
-        $this->downloadArchiveFromMaster($application);
-
+        $this->repository->persist($application);
         $this->repository->flush($application);
+
+        $application->setPackageStorage($this->packageStorage);
+        $this->downloadArchiveFromMaster($application);
 
         return $application;
     }
 
     /**
-     * @param ApplicationInstance $application
+     * @param ApplicationInstance|int $application
      * @return self
      */
-    public function deploy(ApplicationInstance $application)
+    public function deploy($application)
     {
-        if (!$this->applicationPackageManager || !$this->deployStrategyManager) {
-            throw new \LogicException('Missing depenendencies (ApplicationPackageManager, DeployStartegyManager).');
+        if (!$application instanceof ApplicationInstance) {
+            $applicationId = (int)$application;
+            $application = $this->prepareApplicationInstance($applicationId);
+
+            if (!$application) {
+                throw new \RuntimeException(sprintf('Failed to prepare application %d for deployment', $applicationId));
+            }
         }
 
-        $archive = $application->getCurrentApplicationPackageFile();
-        $installer = $this->applicationPackageManager->getPackageInstaller($archive);
+        $application->setDeployStrategyManager($this->deployStrategyManager);
+        $application->setPackageStorage($this->packageStorage);
 
-        $installer->load(new \SplFileInfo($archive->getPathname()));
-
-        if ($this)
-
+        $installer = $this->applicationPackageManager->createInstallerForApplication($application);
         $installer->install($application);
 
+        $this->repository->flush($application);
+        return $application;
+    }
 
+    /**
+     * @param ApplicationInstance $application
+     */
+    public function remove(ApplicationInstance $application)
+    {
+        $application->setDeployStrategyManager($this->deployStrategyManager);
+        $application->setPackageStorage($this->packageStorage);
 
+        $installer = $this->applicationPackageManager->createInstallerForApplication($application);
+        $installer->remove($application);
+
+        $this->repository->getEntityManager()->remove($application);
     }
 }

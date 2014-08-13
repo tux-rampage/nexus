@@ -22,14 +22,17 @@
 
 namespace rampage\nexus;
 
-use Zend\EventManager\ListenerAggregateInterface;
-use Zend\EventManager\ListenerAggregateTrait;
-use Zend\ServiceManager\ServiceLocatorAwareTrait;
-use Zend\ServiceManager\ServiceLocatorAwareInterface;
-use Zend\Mvc\MvcEvent;
-use rampage\nexus\controllers\rest\RestControllerInterface;
 use rampage\core\view\TemplateViewModel;
 use rampage\core\controllers\ResourcesController;
+
+use Zend\EventManager\ListenerAggregateInterface;
+use Zend\EventManager\ListenerAggregateTrait;
+
+use Zend\ServiceManager\ServiceLocatorAwareTrait;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
+
+use Zend\Mvc\MvcEvent;
+
 
 class DispatchListener implements ListenerAggregateInterface, ServiceLocatorAwareInterface
 {
@@ -64,7 +67,7 @@ class DispatchListener implements ListenerAggregateInterface, ServiceLocatorAwar
             return;
         }
 
-        if (($event->getTarget() instanceof RestControllerInterface)
+        if (($event->getTarget() instanceof api\controllers\RestControllerInterface)
             || ($event->getTarget() instanceof ResourcesController)) {
             return;
         }
