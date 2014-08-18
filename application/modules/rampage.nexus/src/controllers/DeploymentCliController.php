@@ -27,13 +27,12 @@ use rampage\nexus\DeployStrategyManager;
 use rampage\nexus\entities\ApplicationInstance;
 use rampage\nexus\orm\DeploymentRepository;
 
-use Zend\Console\Adapter\AdapterInterface as ConsoleAdapterInterface;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\Mvc\MvcEvent;
 
 use RuntimeException;
 use rampage\nexus\DeploymentConfig;
-use rampage\nexus\ApplicationPackageManager;
+use rampage\nexus\PackageInstallerManager;
 use rampage\nexus\DeploymentNode;
 
 
@@ -75,11 +74,11 @@ class DeploymentCliController extends AbstractActionController
     }
 
     /**
-     * @return ApplicationPackageManager
+     * @return PackageInstallerManager
      */
-    public function getApplicationPackageManager()
+    public function getPackageInstallerManager()
     {
-        return $this->getServiceLocator()->get(ApplicationPackageManager::class);
+        return $this->getServiceLocator()->get(PackageInstallerManager::class);
     }
 
     /**
@@ -128,7 +127,7 @@ class DeploymentCliController extends AbstractActionController
         }
 
         $this->getDeploymentNode()->deploy();
-        $package = $this->getApplicationPackageManager()->getPackageInstaller($archive);
+        $package = $this->getPackageInstallerManager()->getPackageInstaller($archive);
 
 
 

@@ -5,15 +5,13 @@ use Zend\Config\Factory as ConfigFactory;
 
 use Zend\ModuleManager\ModuleManager;
 use Zend\ModuleManager\ModuleManagerInterface;
+use Zend\ModuleManager\ModuleEvent;
+use Zend\ModuleManager\Listener\ServiceListener;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
 use Zend\ModuleManager\Feature\ServiceProviderInterface;
 use Zend\ModuleManager\Feature\InitProviderInterface;
 
 use rampage\core\modules\EventListenerProviderInterface;
-use Zend\ModuleManager\ModuleEvent;
-use Zend\Stdlib\CallbackHandler;
-use Zend\ModuleManager\Listener\ConfigListener;
-use Zend\ModuleManager\Listener\ServiceListener;
 
 /**
  * Module entry
@@ -86,9 +84,9 @@ class Module implements ConfigProviderInterface,
     public function addModulePackeTypes(ModuleEvent $event)
     {
         $moduleManager = $event->getTarget();
-        $packageTypeManager = $this->serviceManager->get(ApplicationPackageManager::class);
+        $packageTypeManager = $this->serviceManager->get(PackageInstallerManager::class);
 
-        if ((!$moduleManager instanceof ModuleManager) || (!$packageTypeManager instanceof ApplicationPackageManager)) {
+        if ((!$moduleManager instanceof ModuleManager) || (!$packageTypeManager instanceof PackageInstallerManager)) {
             return;
         }
 

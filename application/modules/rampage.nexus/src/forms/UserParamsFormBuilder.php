@@ -23,7 +23,7 @@
 namespace rampage\nexus\forms;
 
 use rampage\nexus\entities\ApplicationInstance;
-use rampage\nexus\ApplicationPackageInterface;
+use rampage\nexus\PackageInstallerInterface;
 use rampage\nexus\DeployParameter;
 
 use Zend\Form\Form;
@@ -51,9 +51,9 @@ class UserParamsFormBuilder
     }
 
     /**
-     * @param ApplicationPackageInterface $package
+     * @param PackageInstallerInterface $package
      */
-    public function createForm(ApplicationPackageInterface $package)
+    public function createForm(PackageInstallerInterface $package)
     {
         $form = new Form();
         $inputFilter = new InputFilter();
@@ -67,6 +67,8 @@ class UserParamsFormBuilder
             $name = $userParameter->getName();
             $input = new Input($name);
             $value = $userParameter->getDefaultValue();
+
+            $input->setValidatorChain($userParameter->getValidatorChain());
 
             if (isset($previous[$name])) {
                 $value = $previous[$name];

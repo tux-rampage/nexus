@@ -20,12 +20,12 @@ use SplFileInfo;
 /**
  * Application package manager to retrieve the installer implementation for a package file
  */
-class ApplicationPackageManager implements EventManagerAwareInterface
+class PackageInstallerManager implements EventManagerAwareInterface
 {
     use ProvidesEvents;
 
     /**
-     * @var ApplicationPackageInterface[]
+     * @var PackageInstallerInterface[]
      */
     protected $packageTypes;
 
@@ -33,7 +33,7 @@ class ApplicationPackageManager implements EventManagerAwareInterface
      * @var string[]
      */
     protected $eventIdentifier = array(
-        'ApplicationPackageManager'
+        'PackageInstallerManager'
     );
 
     /**
@@ -47,9 +47,9 @@ class ApplicationPackageManager implements EventManagerAwareInterface
     }
 
     /**
-     * @param ApplicationPackageInterface $type
+     * @param PackageInstallerInterface $type
      */
-    public function addPackageType(ApplicationPackageInterface $type, $priority = 10)
+    public function addPackageType(PackageInstallerInterface $type, $priority = 10)
     {
         if ($type instanceof EventManagerAwareInterface) {
             $type->setEventManager($this->getEventManager());
@@ -61,7 +61,7 @@ class ApplicationPackageManager implements EventManagerAwareInterface
 
     /**
      * @param SplFileInfo $archive
-     * @return ApplicationPackageInterface
+     * @return PackageInstallerInterface
      */
     public function getPackageInstaller(SplFileInfo $archive)
     {
@@ -83,7 +83,7 @@ class ApplicationPackageManager implements EventManagerAwareInterface
 
     /**
      * @param \rampage\nexus\entities\ApplicationInstance $application
-     * @return ApplicationPackageInterface
+     * @return PackageInstallerInterface
      */
     public function createInstallerForApplication(entities\ApplicationInstance $application)
     {

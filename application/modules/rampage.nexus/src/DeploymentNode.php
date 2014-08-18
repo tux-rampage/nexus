@@ -45,7 +45,7 @@ class DeploymentNode
     protected $hydrator;
 
     /**
-     * @var ApplicationPackageManager
+     * @var PackageInstallerManager
      */
     protected $applicationPackageManager = null;
 
@@ -58,7 +58,7 @@ class DeploymentNode
      * @param DeploymentConfig $config
      * @param orm\DeploymentRepository $repository
      */
-    public function __construct(DeploymentConfig $config, orm\DeploymentRepository $repository, PackageStorage $packageStorage, ApplicationPackageManager $packageManager, DeployStrategyManager $strategyManager)
+    public function __construct(DeploymentConfig $config, orm\DeploymentRepository $repository, PackageStorage $packageStorage, PackageInstallerManager $packageManager, DeployStrategyManager $strategyManager)
     {
         $this->config = $config;
         $this->repository = $repository;

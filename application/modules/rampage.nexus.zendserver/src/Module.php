@@ -73,7 +73,7 @@ class Module implements
         $config = $this->serviceManager->get('DeploymentConfig');
 
         return array(
-            new ZendServerApplicationPackage(new Config($config->getSection('zendserver.installer')))
+            new ZendServerPackageInstaller(new Config($config->getSection('zendserver')))
         );
     }
 

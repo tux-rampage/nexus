@@ -32,6 +32,47 @@ class Config extends ArrayConfig
      */
     public function getWebserverType()
     {
-        return $this->get('installer.webserver.type', $_SERVER['SERVER_SOFTWARE']);
+        @list($name) = explode('/', $_SERVER['SERVER_SOFTWARE']);
+        return $this->get('installer.webserver.type', $name);
+    }
+
+    public function getWebserverVersion()
+    {
+        @list($name, $version) = explode('/', $_SERVER['SERVER_SOFTWARE']);
+        unset($name);
+
+        return $this->get('installer.webserver.version', $version);
+    }
+
+    /**
+     * @return string
+     */
+    public function getPHPVersion()
+    {
+        return $this->get('installer.php.version', PHP_VERSION);
+    }
+
+    /**
+     * @return int
+     */
+    public function getWebserverUserId()
+    {
+        return $this->get('installer.webserver.userid', posix_getuid());
+    }
+
+    /**
+     * @return int
+     */
+    public function getWebserverGroupId()
+    {
+        return $this->get('installer.webserver.groupid', posix_getgid());
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRunOnceNode()
+    {
+        return (bool)$this->get('installer.node.runonce', true);
     }
 }

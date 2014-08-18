@@ -98,11 +98,11 @@ class NginxWebConfig implements WebConfigInterface, VHostCapableInterface
 
         if (isset($options['paths']) && (is_array($options['paths']) || ($options['paths'] instanceof Traversable))) {
             foreach ($options['paths'] as $type => $path) {
-                if (!isset($this->paths[$type])) {
+                if (!isset($instance->paths[$type])) {
                     continue;
                 }
 
-                $this->paths[$type] = $path;
+                $instance->paths[$type] = $path;
             }
         }
 

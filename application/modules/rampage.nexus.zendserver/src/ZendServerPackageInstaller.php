@@ -24,13 +24,20 @@ namespace rampage\nexus\zs;
 
 use rampage\core\xml\SimpleXmlElement;
 
+use rampage\nexus\PackageInstallerInterface;
+use rampage\nexus\DeployParameter;
 use rampage\nexus\entities\ApplicationInstance;
-use rampage\nexus\ApplicationPackageInterface;
+
+use Zend\Validator as validators;
+
+use Zend\InputFilter\InputFilter;
+use Zend\InputFilter\Input;
 
 use RuntimeException;
 use SplFileInfo;
 
-class ZendServerApplicationPackage implements ApplicationPackageInterface
+
+class ZendServerPackageInstaller implements PackageInstallerInterface
 {
     const TYPENAME = 'zpk';
 
@@ -58,6 +65,18 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
      * @var Config
      */
     protected $options = null;
+
+    /**
+     * @var array
+     */
+    protected $variables = array();
+
+    protected $parameters = null;
+
+    /**
+     * @var InputFilter
+     */
+    protected $paramInputFilter = null;
 
     /**
      * @param array|DeploymentConfig $options
@@ -99,7 +118,7 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
             return $this;
         }
 
-        $exec = new StageScript($file, $application, $this->options);
+        $exec = new StageScript($file, $application, $this->options, $this->variables);
 
         if (!$exec->execute(true)) {
             // TODO: Logging
@@ -111,7 +130,7 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::getHash()
+     * @see \rampage\nexus\PackageInstallerInterface::getHash()
      */
     public function getHash()
     {
@@ -120,7 +139,7 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::getIcon()
+     * @see \rampage\nexus\PackageInstallerInterface::getIcon()
      */
     public function getIcon()
     {
@@ -134,7 +153,7 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::getLicense()
+     * @see \rampage\nexus\PackageInstallerInterface::getLicense()
      */
     public function getLicense()
     {
@@ -148,26 +167,94 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::getName()
+     * @see \rampage\nexus\PackageInstallerInterface::getName()
      */
     public function getName()
     {
         return (string)$this->deploymentXml->name;
     }
 
-    /**
-     * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::getParameters()
-     */
-    public function getParameters()
+    protected function getParameterTypeValidator($type)
     {
-        // TODO Auto-generated method stub
+        switch ($type) {
+            case 'email':
+                return new validators\EmailAddress();
 
+            case 'number':
+                return new validators\Digits();
+
+            case 'hostname':
+                return new validators\Hostname();
+        }
+
+        return null;
     }
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::getTypeName()
+     * @see \rampage\nexus\PackageInstallerInterface::getParameters()
+     */
+    public function getParameters()
+    {
+        if ($this->parameters !== null) {
+            return $this->parameters;
+        }
+
+        $this->parameters = array();
+
+        foreach ($this->deploymentXml->xpath('./parameters/parameter') as $parameterNode) {
+            $name = (string)$parameterNode['id'];
+            $type = (string)$parameterNode['type'];
+            $options = array(
+                'label' => (string)$parameterNode['display'],
+                'required' => ($parameterNode['required'] == 'true'),
+                'readonly' => ($parameterNode['readonly'] == 'true'),
+                'default' => (string)$parameterNode->defaultvalue,
+                'validators' => array()
+            );
+
+            switch ($type) {
+                case 'choice':
+                    $options['type'] = DeployParameter::TYPE_SELECT;
+                    $options['options'] = array();
+
+                    foreach ($parameterNode->xpath('./validation/enums/enum') as $enum) {
+                        $enumValue = (string)$enum;
+                        $options[$enumValue] = $enumValue;
+                    }
+
+                    break;
+
+                case 'checkbox':
+                    $options['type'] = DeployParameter::TYPE_CHECKBOX;
+                    break;
+
+                case 'password':
+                    $options['type'] = DeployParameter::TYPE_PASSWORD;
+                    break;
+
+                case 'email': // break intentionally omitted
+                case 'number': // break intentionally omitted
+                case 'hostname': // break intentionally omitted
+                case 'string': // break intentionally omitted
+                default:
+                    $options['type'] = DeployParameter::TYPE_TEXT;
+                    $validator = $this->getParameterTypeValidator($type);
+                    if ($validator) {
+                        $options['validators'][] = $validator;
+                    }
+
+            }
+
+            $this->parameters[] = DeployParameter::factory($name, $options);
+        }
+
+        return $this->parameters;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \rampage\nexus\PackageInstallerInterface::getTypeName()
      */
     public function getTypeName()
     {
@@ -176,7 +263,7 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::getVersion()
+     * @see \rampage\nexus\PackageInstallerInterface::getVersion()
      */
     public function getVersion()
     {
@@ -249,7 +336,7 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::install()
+     * @see \rampage\nexus\PackageInstallerInterface::install()
      */
     public function install(ApplicationInstance $application)
     {
@@ -257,7 +344,6 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
         $webRoot = $this->getWebRoot();
         $strategy = $application->getDeployStrategy();
 
-        // TODO: $strategy->setUserParameters($parameters);
         $this->triggerDeployScript('pre_stage', $application);
         $strategy->setWebRoot($webRoot);
         $strategy->prepareStaging();
@@ -277,13 +363,16 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::load()
+     * @see \rampage\nexus\PackageInstallerInterface::load()
      */
     public function load(SplFileInfo $package)
     {
         $path = $package->getPathname();
         $this->zip = new \ZipArchive();
         $this->hash = md5_file($path);
+        $this->variables = array();
+        $this->parameters = null;
+        $this->paramInputFilter = null;
 
         if ($this->zip->open($package) !== true) {
             throw new RuntimeException(sprintf('Failed to open deployment package "%s"', $path));
@@ -304,11 +393,16 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
         if (!$this->deploymentXml instanceof SimpleXmlElement) {
             throw new RuntimeException('Failed to load deployment.xml from package file.');
         }
+
+        foreach ($this->deploymentXml->xpath('./variables/variable') as $variableNode) {
+            $name = (string)$variableNode['name'];
+            $this->variables[$name] = (string)$variableNode['value'];
+        }
     }
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::remove()
+     * @see \rampage\nexus\PackageInstallerInterface::remove()
      */
     public function remove(ApplicationInstance $application)
     {
@@ -326,7 +420,7 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::supports()
+     * @see \rampage\nexus\PackageInstallerInterface::supports()
      */
     public function supports(SplFileInfo $package)
     {
@@ -340,11 +434,40 @@ class ZendServerApplicationPackage implements ApplicationPackageInterface
     }
 
     /**
+     * @return \Zend\InputFilter\InputFilter
+     */
+    protected function getParamInputFilter()
+    {
+        if ($this->paramInputFilter) {
+            return $this->paramInputFilter;
+        }
+
+        $this->paramInputFilter = new InputFilter();
+        foreach ($this->getParameters() as $parameter) {
+            $input = new Input($parameter->getName());
+
+            $input->setValidatorChain($parameter->getValidatorChain());
+            $input->setRequired($parameter->isRequired());
+
+            switch ($parameter->getType()) {
+                case DeployParameter::TYPE_SELECT:
+                    $input->getFilterChain()->attach(new validators\InArray($parameter->getOptions()));
+                    break;
+            }
+        }
+
+        return $this->paramInputFilter;
+    }
+
+    /**
      * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::validateUserOptions()
+     * @see \rampage\nexus\PackageInstallerInterface::validateUserOptions()
      */
     public function validateUserOptions(ApplicationInstance $application)
     {
-        // TODO Auto-generated method stub
+        $input = $application->getCurrentVersion()->getUserParameters(true);
+        $filter = $this->getParamInputFilter();
+
+        return $filter->setData($input)->isValid();
     }
 }

@@ -25,28 +25,56 @@ namespace rampage\nexus\zs;
 use rampage\nexus\Executable;
 use rampage\nexus\entities\ApplicationInstance;
 
+
 class StageScript extends Executable
 {
-    public function __construct($file, ApplicationInstance $application, Config $options)
+    /**
+     * @param string $file
+     * @param ApplicationInstance $application
+     * @param Config $options
+     * @param array $variables
+     */
+    public function __construct($file, ApplicationInstance $application, Config $options, array $variables = array())
     {
         parent::__construct('php');
 
         $this->addArg('-f')
             ->addArg($file);
 
-        $this->setEnv('ZS_RUN_ONCE_NODE', '1')
-            ->setEnv('ZS_WEBSERVER_TYPE', $options->getWebserverType())
-            ->setEnv('ZS_WEBSERVER_VERSION', 'TODO')
-            ->setEnv('ZS_WEBSERVER_UID', 'TODO')
-            ->setEnv('ZS_WEBSERVER_GID', 'TODO')
-            ->setEnv('ZS_PHP_VERSION', 'TODO')
+        $this->setEnv('ZS_WEBSERVER_TYPE', $options->getWebserverType())
+            ->setEnv('ZS_WEBSERVER_VERSION', $options->getWebserverVersion())
+            ->setEnv('ZS_WEBSERVER_UID', $options->getWebserverUserId())
+            ->setEnv('ZS_WEBSERVER_GID', $options->getWebserverGroupId())
+            ->setEnv('ZS_PHP_VERSION', $options->getPHPVersion())
             ->setEnv('ZS_APPLICATION_BASE_DIR', $application->getDeployStrategy()->getTargetDirectory())
             ->setEnv('ZS_CURRENT_APP_VERSION', $application->getCurrentVersion()->getVersion())
-            ->setEnv('ZS_PREVIOUS_APP_VERSION', 'TODO');
+            ->setEnv('ZS_PREVIOUS_APP_VERSION', $application->getPreviousVersion()->getVersion())
+            ->setEnv('ZS_RUN_ONCE_NODE', ($options->isRunOnceNode())? '1' : '0');
+
+        foreach ($variables as $name => $value) {
+            $this->setEnv($this->prepareParamName($name, false), $value);
+        }
 
         foreach ($application->getCurrentVersion()->getUserParameters(true) as $param => $value) {
-            $param = strtoupper($param);
-            $this->setEnv('ZS_'.$param, $value);
+            $param = $this->prepareParamName($param);
+            $this->setEnv($param, $value);
         }
+    }
+
+    /**
+     * @param string $name
+     * @param bool $uppercase
+     * @return string
+     */
+    protected function prepareParamName($name, $uppercase = true)
+    {
+        $name = preg_replace('~[^a-z0-9_]+~i', '_', $name);
+        $name = 'ZS_' . $name;
+
+        if ($uppercase) {
+            $name = strtoupper($name);
+        }
+
+        return $name;
     }
 }

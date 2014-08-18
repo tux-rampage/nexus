@@ -23,6 +23,7 @@
 
 namespace rampage\nexus;
 
+use Zend\Validator\ValidatorChain;
 class DeployParameter
 {
     const TYPE_TEXT = 'text';
@@ -61,6 +62,11 @@ class DeployParameter
     protected $defaultValue = null;
 
     /**
+     * @var ValidatorChain
+     */
+    protected $validatorChain;
+
+    /**
      * @param string $name
      * @param string $label
      */
@@ -68,6 +74,7 @@ class DeployParameter
     {
         $this->name = $name;
         $this->label = $label? : $name;
+        $this->validatorChain = new ValidatorChain();
     }
 
     /**
@@ -93,6 +100,12 @@ class DeployParameter
 
         if (isset($options['default'])) {
             $param->setDefaultValue($options['default']);
+        }
+
+        if (isset($options['validators']) && (is_array($options['validators']) || ($options['validators'] instanceof \Traversable))) {
+            foreach ($options['validators'] as $validator) {
+                $param->getValidatorChain()->attach($validator);
+            }
         }
 
         return $param;
@@ -198,6 +211,11 @@ class DeployParameter
         return $this;
     }
 
-
-
+    /**
+     * @return \Zend\Validator\ValidatorChain
+     */
+    public function getValidatorChain()
+    {
+        return $this->validatorChain;
+    }
 }

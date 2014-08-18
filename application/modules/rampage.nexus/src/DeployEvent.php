@@ -36,7 +36,7 @@ class DeployEvent extends Event
     const POST_DEACTIVATE = 'postDeactivate';
 
     /**
-     * @var ApplicationPackageInterface
+     * @var PackageInstallerInterface
      */
     private $package = null;
 
@@ -51,17 +51,17 @@ class DeployEvent extends Event
     }
 
     /**
-     * @param ApplicationPackageInterface $package
+     * @param PackageInstallerInterface $package
      * @return self
      */
-    public function setPackage(ApplicationPackageInterface $package)
+    public function setPackage(PackageInstallerInterface $package)
     {
         $this->package = $package;
         return $this;
     }
 
     /**
-     * @return ApplicationPackageInterface
+     * @return PackageInstallerInterface
      */
     public function getPackage()
     {

@@ -34,7 +34,7 @@ use Zend\InputFilter\Input;
 use Zend\InputFilter\InputFilter;
 use Zend\Validator as validation;
 
-class ComposerApplicationPackage implements ApplicationPackageInterface
+class ComposerApplicationPackage implements PackageInstallerInterface
 {
     /**
      * @var PharData
@@ -115,7 +115,7 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::getTypeName()
+     * @see \rampage\nexus\PackageInstallerInterface::getTypeName()
      */
     public function getTypeName()
     {
@@ -124,7 +124,7 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::getHash()
+     * @see \rampage\nexus\PackageInstallerInterface::getHash()
      */
     public function getHash()
     {
@@ -145,7 +145,7 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     }
 
     /**
-     * @see \rampage\nexus\ApplicationPackageInterface::getIcon()
+     * @see \rampage\nexus\PackageInstallerInterface::getIcon()
      */
     public function getIcon()
     {
@@ -156,7 +156,7 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     }
 
     /**
-     * @see \rampage\nexus\ApplicationPackageInterface::getLicense()
+     * @see \rampage\nexus\PackageInstallerInterface::getLicense()
      */
     public function getLicense()
     {
@@ -164,7 +164,7 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     }
 
     /**
-     * @see \rampage\nexus\ApplicationPackageInterface::getName()
+     * @see \rampage\nexus\PackageInstallerInterface::getName()
      */
     public function getName()
     {
@@ -172,7 +172,7 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     }
 
     /**
-     * @see \rampage\nexus\ApplicationPackageInterface::getParameters()
+     * @see \rampage\nexus\PackageInstallerInterface::getParameters()
      */
     public function getParameters()
     {
@@ -192,7 +192,7 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     }
 
     /**
-     * @see \rampage\nexus\ApplicationPackageInterface::getVersion()
+     * @see \rampage\nexus\PackageInstallerInterface::getVersion()
      */
     public function getVersion()
     {
@@ -255,14 +255,11 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
         foreach ($this->getParameters() as $parameter) {
             $input = new Input($parameter->getName());
 
+            $input->setValidatorChain($parameter->getValidatorChain());
             $input->setRequired($parameter->isRequired());
 
-            switch ($parameter->getType()) {
-                case DeployParameter::TYPE_SELECT:
-                    $input->getFilterChain()
-                        ->attach(new validation\InArray($parameter->getOptions()));
-
-                    break;
+            if ($parameter->getType() == DeployParameter::TYPE_SELECT) {
+                $input->getFilterChain()->attach(new validation\InArray($parameter->getOptions()));
             }
         }
 
@@ -271,7 +268,7 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::validateUserOptions()
+     * @see \rampage\nexus\PackageInstallerInterface::validateUserOptions()
      * @param \rampage\nexus\entities\ApplicationInstance $application
      */
     public function validateUserOptions(entities\ApplicationInstance $application)
@@ -284,7 +281,7 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
     }
 
     /**
-     * @see \rampage\nexus\ApplicationPackageInterface::install()
+     * @see \rampage\nexus\PackageInstallerInterface::install()
      */
     public function install(entities\ApplicationInstance $application)
     {
@@ -333,7 +330,7 @@ class ComposerApplicationPackage implements ApplicationPackageInterface
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\ApplicationPackageInterface::remove()
+     * @see \rampage\nexus\PackageInstallerInterface::remove()
      */
     public function remove(entities\ApplicationInstance $application)
     {

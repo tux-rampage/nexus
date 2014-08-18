@@ -12,7 +12,7 @@ namespace rampage\nexus\features;
 interface PackageTypeProviderInterface
 {
     /**
-     * @return \rampage\nexus\ApplicationPackageInterface[]
+     * @return \rampage\nexus\PackageInstallerInterface[]
      */
     public function getDeploymentPackageTypes();
 }

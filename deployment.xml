@@ -15,4 +15,16 @@
       </php>
     </required>
   </dependencies>
+    <parameters>
+    <parameter display="Test" id="test" readonly="false" required="false" type="choice">
+      <validation>
+        <enums>
+          <enum>a</enum>
+          <enum>b</enum>
+          <enum>c</enum>
+        </enums>
+      </validation>
+      <defaultvalue>a</defaultvalue>
+    </parameter>
+  </parameters>
 </package>

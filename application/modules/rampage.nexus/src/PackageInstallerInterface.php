@@ -28,7 +28,7 @@ use SplFileInfo;
 /**
  * Interface for implementing application packages
  */
-interface ApplicationPackageInterface
+interface PackageInstallerInterface
 {
     /**
      * Check if this installer supports the given package

@@ -23,7 +23,7 @@
 
 namespace rampage\nexus\entities;
 
-use rampage\nexus\ApplicationPackageInterface;
+use rampage\nexus\PackageInstallerInterface;
 use rampage\nexus\PackageStorage;
 use rampage\nexus\traits\DeployStrategyManagerAwareTrait;
 
@@ -107,6 +107,13 @@ class ApplicationInstance
      * @var ApplicationVersion
      */
     protected $currentVersion = null;
+
+    /**
+     * @orm\OneToOne(targetEntity="ApplicationVersion")
+     * @orm\JoinColumn(name="previous_version_id", referencedColumnName="id", nullable=true)
+     * @var ApplicationVersion
+     */
+    protected $previousVersion = null;
 
     /**
      * @orm\ManyToOne(targetEntity="VirtualHost")
@@ -195,9 +202,9 @@ class ApplicationInstance
     }
 
     /**
-     * @param ApplicationPackageInterface $package
+     * @param PackageInstallerInterface $package
      */
-    public function updateFromApplicationPackage(ApplicationPackageInterface $package)
+    public function updateFromApplicationPackage(PackageInstallerInterface $package)
     {
         if ($this->id && (($this->applicationName != $package->getName()) || ($this->packageType != $package->getTypeName()))) {
             throw new LogicException('Application name mismatch.');
@@ -421,11 +428,33 @@ class ApplicationInstance
      */
     public function setCurrentVersion(ApplicationVersion $version)
     {
+        if ($this->getCurrentVersion()) {
+            $this->setPreviousVersion($this->getCurrentVersion());
+        }
+
         if (!isset($this->versions[$version->getVersion()])) {
             $this->addVersion($version);
         }
 
         $this->currentVersion = $version;
+        return $this;
+    }
+
+    /**
+     * @return \rampage\nexus\entities\ApplicationVersion
+     */
+    public function getPreviousVersion()
+    {
+        return $this->previousVersion;
+    }
+
+    /**
+     * @param \rampage\nexus\entities\ApplicationVersion $previousVersion
+     * @return self
+     */
+    public function setPreviousVersion(ApplicationVersion $previousVersion = null)
+    {
+        $this->previousVersion = $previousVersion;
         return $this;
     }
 
