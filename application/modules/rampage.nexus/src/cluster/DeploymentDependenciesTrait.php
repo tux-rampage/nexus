@@ -10,12 +10,17 @@
 namespace rampage\nexus\cluster;
 
 use rampage\nexus\DeployStrategyManager;
-use Zend\ServiceManager\ServiceLocatorInterface;
 use rampage\nexus\PackageStorage;
+use rampage\nexus\orm\DeploymentRepository;
+use rampage\nexus\orm\DeploymentRepositoryAwareTrait;
+
+use Zend\ServiceManager\ServiceLocatorInterface;
 
 
 trait DeploymentDependenciesTrait
 {
+    use DeploymentRepositoryAwareTrait;
+
     /**
      * @var DeployStrategyManager
      */
@@ -33,7 +38,8 @@ trait DeploymentDependenciesTrait
     protected function setDependenciesFromServiceLocator(ServiceLocatorInterface $serviceLocator)
     {
         $this->setDeployStrategyManager($serviceLocator->get(DeployStrategyManager::class))
-            ->setPackageStoreage($serviceLocator->get(PackageStorage::class));
+            ->setPackageStoreage($serviceLocator->get(PackageStorage::class))
+            ->setDeploymentRepository($serviceLocator->get(DeploymentRepository::class));
 
         return $this;
     }

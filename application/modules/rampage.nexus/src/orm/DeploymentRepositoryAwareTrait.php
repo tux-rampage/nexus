@@ -20,9 +20,8 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\traits;
+namespace rampage\nexus\orm;
 
-use rampage\nexus\orm\DeploymentRepository;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 
 /**
