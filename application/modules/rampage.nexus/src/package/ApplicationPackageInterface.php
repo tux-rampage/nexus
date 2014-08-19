@@ -21,31 +21,40 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus;
+namespace rampage\nexus\package;
+
+use rampage\nexus\entities\ApplicationInstance;
 
 use SplFileInfo;
+use rampage\nexus\DeployStrategyInterface;
+
 
 /**
  * Interface for implementing application packages
  */
-interface PackageInstallerInterface
+interface ApplicationPackageInterface
 {
     /**
      * Check if this installer supports the given package
      *
-     * @param SplFileInfo $archive
+     * @param string|SplFileInfo $archive
      * @return boolean
      */
     public function supports(SplFileInfo $archive);
 
     /**
-     * Load the given package from file
+     * Create a new package instance from the given package file
      *
-     * @param SplFileInfo $archive
+     * @param string|SplFileInfo $archive
      * @throws Exception
-     * @return self
+     * @return ApplicationPackageInterface
      */
-    public function load(SplFileInfo $archive);
+    public function create(SplFileInfo $archive);
+
+    /**
+     * @param DeployStrategyInterface $strategy
+     */
+    public function setDeployStrategy(DeployStrategyInterface $strategy);
 
     /**
      * Returns the common name of this package type
@@ -97,10 +106,13 @@ interface PackageInstallerInterface
     public function getHash();
 
     /**
-     * @param entities\ApplicationInstance $application
-     * @return bool
+     * Returns the relative web root path.
+     *
+     * If the return value is NULL or empty, the deploy strategy may assume that the application directory is the web root.
+     *
+     * @return string|null
      */
-    public function validateUserOptions(entities\ApplicationInstance $application);
+    public function getWebRoot();
 
     /**
      * Install this application package for the given application
@@ -108,12 +120,12 @@ interface PackageInstallerInterface
      * @param Application $application
      * @return self
      */
-    public function install(entities\ApplicationInstance $application);
+    public function install(ApplicationInstance $application);
 
     /**
      * Remove this application
      *
      * @param entities\ApplicationInstance $application
      */
-    public function remove(entities\ApplicationInstance $application);
+    public function remove(ApplicationInstance $application);
 }

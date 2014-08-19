@@ -24,22 +24,27 @@ namespace rampage\nexus\zs;
 
 use rampage\core\xml\SimpleXmlElement;
 
-use rampage\nexus\PackageInstallerInterface;
 use rampage\nexus\DeployParameter;
+use rampage\nexus\DeployEvent;
 use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\package\AbstractApplicationPackage;
+
+use Zend\EventManager\ListenerAggregateInterface;
+use Zend\EventManager\ListenerAggregateTrait;
+use Zend\EventManager\EventManagerInterface;
 
 use Zend\Validator as validators;
-
 use Zend\InputFilter\InputFilter;
-use Zend\InputFilter\Input;
 
 use RuntimeException;
 use SplFileInfo;
 
 
-class ZendServerPackageInstaller implements PackageInstallerInterface
+class ZendServerPackage extends AbstractApplicationPackage implements ListenerAggregateInterface
 {
-    const TYPENAME = 'zpk';
+    use ListenerAggregateTrait;
+
+    const TYPE_NAME = 'zpk';
 
     /**
      * @var SimpleXmlElement
@@ -71,6 +76,9 @@ class ZendServerPackageInstaller implements PackageInstallerInterface
      */
     protected $variables = array();
 
+    /**
+     * @var array
+     */
     protected $parameters = null;
 
     /**
@@ -79,11 +87,99 @@ class ZendServerPackageInstaller implements PackageInstallerInterface
     protected $paramInputFilter = null;
 
     /**
+     * @var array
+     */
+    protected $eventScriptMap = array(
+        DeployEvent::EVENT_ACTIVATE => 'activate',
+        DeployEvent::EVENT_DEACTIVATE => 'deactivate',
+        DeployEvent::EVENT_STAGE => 'stage',
+        DeployEvent::EVENT_UNSTAGE => 'unstage'
+    );
+
+    /**
      * @param array|DeploymentConfig $options
      */
     public function __construct(Config $options)
     {
         $this->options = $options;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \rampage\nexus\PackageInstallerInterface::load()
+     */
+    protected function load(SplFileInfo $package)
+    {
+        $path = $package->getPathname();
+        $this->zip = new \ZipArchive();
+        $this->hash = md5_file($path);
+        $this->variables = array();
+        $this->parameters = null;
+        $this->paramInputFilter = null;
+
+        if ($this->zip->open($package) !== true) {
+            throw new RuntimeException(sprintf('Failed to open deployment package "%s"', $path));
+        }
+
+        $xml = $this->zip->getFromName('deployment.xml');
+        if (!$xml) {
+            throw new RuntimeException('Could not find deployment.xml in package file.');
+        }
+
+        $dom = new \DOMDocument();
+        $dom->loadXML($xml);
+
+        if (!$dom->schemaValidate(dirname(__DIR__) . '/resource/xsd/zpk.xsd')) {
+            throw new RuntimeException('Invalid deployment.xml');
+        }
+
+        $this->deploymentXml = simplexml_load_string($xml, SimpleXmlElement::class);
+
+        if (!$this->deploymentXml instanceof SimpleXmlElement) {
+            throw new RuntimeException('Failed to load deployment.xml from package file.');
+        }
+
+        foreach ($this->deploymentXml->xpath('./variables/variable') as $variableNode) {
+            $name = (string)$variableNode['name'];
+            $this->variables[$name] = (string)$variableNode['value'];
+        }
+    }
+
+    /**
+     * @throws \RuntimeException
+     * @return self
+     */
+    protected function extract($destination, $dir)
+    {
+        if (!$dir) {
+            if (!$this->zip->extractTo($destination)) {
+                throw new RuntimeException('Failed to extract package content.');
+            }
+
+            return $this;
+        }
+
+        for ($i = 0; $i < $this->zip->numFiles; $i++) {
+            $name = $this->zip->getNameIndex($i);
+            $normalized = ltrim($name, '/');
+
+            if (strpos($normalized, $dir) !== 0) {
+                continue;
+            }
+
+            $targetPath = $destination . '/' . $normalized;
+            $targetDir = dirname($targetPath);
+
+            if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true)) {
+                throw new RuntimeException('Failed to create directory %s');
+            }
+
+            if (!$this->zip->extractTo($targetPath, $name)) {
+                throw new RuntimeException(sprintf('Failed to extract "%s".', $name));
+            }
+        }
+
+        return $this;
     }
 
     /**
@@ -104,13 +200,32 @@ class ZendServerPackageInstaller implements PackageInstallerInterface
     }
 
     /**
+     * @param string $eventName
+     * @return string|bool
+     */
+    protected function mapEventScriptName($eventName, $prefix)
+    {
+        if (!isset($this->eventScriptMap[$eventName])) {
+            return false;
+        }
+
+        return $prefix . '_' . $this->eventScriptMap[$eventName];
+    }
+
+    /**
      * Trigger deploy script
      *
      * @param string $script
      * @return self
      */
-    protected function triggerDeployScript($script, $application)
+    protected function triggerDeployScript($eventName, ApplicationInstance $application, $prefix)
     {
+        $script = $this->mapEventScriptName($eventName, $prefix);
+
+        if (!$script) {
+            return $this;
+        }
+
         $this->extractScriptsDir();
         $file = $this->tempScriptsDir . '/' . $script . '.php';
 
@@ -126,6 +241,79 @@ class ZendServerPackageInstaller implements PackageInstallerInterface
         }
 
         return $this;
+    }
+
+    /**
+     * @param string $type
+     * @return \Zend\Validator\ValidatorInterface|null
+     */
+    protected function getParameterTypeValidator($type)
+    {
+        switch ($type) {
+            case 'email':
+                return new validators\EmailAddress();
+
+            case 'number':
+                return new validators\Digits();
+
+            case 'hostname':
+                return new validators\Hostname();
+        }
+
+        return null;
+    }
+
+    /**
+     * @return string
+     */
+    public function getApplicationDir()
+    {
+        return (isset($this->deploymentXml->appdir))? (string)$this->deploymentXml->appdir : 'data';
+    }
+
+    /**
+     * @return string
+     */
+    public function getWebRoot()
+    {
+        if (!isset($this->deploymentXml->webroot)) {
+            return '';
+        }
+
+        $webRoot = (string)$this->deploymentXml->webroot;
+        $appDir = $this->getApplicationDir();
+
+        if (strpos($webRoot, $appDir) === 0) {
+            $webRoot = trim(substr($webRoot, strlen($appDir)), '/');
+        }
+
+        return $webRoot;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \Zend\EventManager\ListenerAggregateInterface::attach()
+     */
+    public function attach(EventManagerInterface $events)
+    {
+        $this->listeners[] = $events->attach('*', array($this, 'beforeDeployEvent'), 1000);
+        $this->listeners[] = $events->attach('*', array($this, 'afterDeployEvent'), -1000);
+    }
+
+    /**
+     * @param DeployEvent $event
+     */
+    public function beforeDeployEvent(DeployEvent $event)
+    {
+        $this->triggerDeployScript($event->getName(), $event->getApplication(), 'pre');
+    }
+
+    /**
+     * @param DeployEvent $event
+     */
+    public function afterDeployEvent(DeployEvent $event)
+    {
+        $this->triggerDeployScript($event->getName(), $event->getApplication(), 'post');
     }
 
     /**
@@ -172,22 +360,6 @@ class ZendServerPackageInstaller implements PackageInstallerInterface
     public function getName()
     {
         return (string)$this->deploymentXml->name;
-    }
-
-    protected function getParameterTypeValidator($type)
-    {
-        switch ($type) {
-            case 'email':
-                return new validators\EmailAddress();
-
-            case 'number':
-                return new validators\Digits();
-
-            case 'hostname':
-                return new validators\Hostname();
-        }
-
-        return null;
     }
 
     /**
@@ -254,15 +426,6 @@ class ZendServerPackageInstaller implements PackageInstallerInterface
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\PackageInstallerInterface::getTypeName()
-     */
-    public function getTypeName()
-    {
-        return self::TYPENAME;
-    }
-
-    /**
-     * {@inheritdoc}
      * @see \rampage\nexus\PackageInstallerInterface::getVersion()
      */
     public function getVersion()
@@ -271,67 +434,15 @@ class ZendServerPackageInstaller implements PackageInstallerInterface
     }
 
     /**
-     * @return string
+     * {@inheritdoc}
+     * @see \rampage\nexus\package\ApplicationPackageInterface::create()
      */
-    public function getApplicationDir()
+    public function create(SplFileInfo $archive)
     {
-        return (isset($this->deploymentXml->appdir))? (string)$this->deploymentXml->appdir : 'data';
-    }
+        $package = new self($this->options);
+        $package->load($archive);
 
-    /**
-     * @return string
-     */
-    public function getWebRoot()
-    {
-        if (!isset($this->deploymentXml->webroot)) {
-            return '';
-        }
-
-        $webRoot = (string)$this->deploymentXml->webroot;
-        $appDir = $this->getApplicationDir();
-
-        if (strpos($webRoot, $appDir) === 0) {
-            $webRoot = trim(substr($webRoot, strlen($appDir)), '/');
-        }
-
-        return $webRoot;
-    }
-
-    /**
-     * @throws \RuntimeException
-     * @return self
-     */
-    protected function extract($destination, $dir)
-    {
-        if (!$dir) {
-            if (!$this->zip->extractTo($destination)) {
-                throw new RuntimeException('Failed to extract package content.');
-            }
-
-            return $this;
-        }
-
-        for ($i = 0; $i < $this->zip->numFiles; $i++) {
-            $name = $this->zip->getNameIndex($i);
-            $normalized = ltrim($name, '/');
-
-            if (strpos($normalized, $dir) !== 0) {
-                continue;
-            }
-
-            $targetPath = $destination . '/' . $normalized;
-            $targetDir = dirname($targetPath);
-
-            if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true)) {
-                throw new RuntimeException('Failed to create directory %s');
-            }
-
-            if (!$this->zip->extractTo($targetPath, $name)) {
-                throw new RuntimeException(sprintf('Failed to extract "%s".', $name));
-            }
-        }
-
-        return $this;
+        return $package;
     }
 
     /**
@@ -341,63 +452,9 @@ class ZendServerPackageInstaller implements PackageInstallerInterface
     public function install(ApplicationInstance $application)
     {
         $appDir = $this->getApplicationDir();
-        $webRoot = $this->getWebRoot();
-        $strategy = $application->getDeployStrategy();
+        $this->extract($this->deployStrategy->getTargetDirectory(), $appDir);
 
-        $this->triggerDeployScript('pre_stage', $application);
-        $strategy->setWebRoot($webRoot);
-        $strategy->prepareStaging();
-
-        $this->extract($strategy->getTargetDirectory(), $appDir);
-
-        $strategy->completeStaging();
-        $this->triggerDeployScript('post_stage', $application);
-
-        $this->triggerDeployScript('pre_activate', $application);
-        $strategy->activate();
-        $this->triggerDeployScript('post_activate', $application);
-
-        $application->setState(ApplicationInstance::STATE_DEPLOYED);
         return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     * @see \rampage\nexus\PackageInstallerInterface::load()
-     */
-    public function load(SplFileInfo $package)
-    {
-        $path = $package->getPathname();
-        $this->zip = new \ZipArchive();
-        $this->hash = md5_file($path);
-        $this->variables = array();
-        $this->parameters = null;
-        $this->paramInputFilter = null;
-
-        if ($this->zip->open($package) !== true) {
-            throw new RuntimeException(sprintf('Failed to open deployment package "%s"', $path));
-        }
-
-        $xml = $this->zip->getFromName('deployment.xml');
-        if (!$xml) {
-            throw new RuntimeException('Could not find deployment.xml in package file.');
-        }
-
-        $dom = new \DOMDocument();
-        $dom->loadXML($xml);
-        if (!$dom->schemaValidate(dirname(__DIR__) . '/resource/xsd/zpk.xsd')) {
-            throw new RuntimeException('Invalid deployment.xml');
-        }
-
-        $this->deploymentXml = simplexml_load_string($xml, SimpleXmlElement::class);
-        if (!$this->deploymentXml instanceof SimpleXmlElement) {
-            throw new RuntimeException('Failed to load deployment.xml from package file.');
-        }
-
-        foreach ($this->deploymentXml->xpath('./variables/variable') as $variableNode) {
-            $name = (string)$variableNode['name'];
-            $this->variables[$name] = (string)$variableNode['value'];
-        }
     }
 
     /**
@@ -406,16 +463,8 @@ class ZendServerPackageInstaller implements PackageInstallerInterface
      */
     public function remove(ApplicationInstance $application)
     {
-        $strategy = $application->getDeployStrategy();
-
-        $this->triggerDeployScript('pre_deactivate', $application);
-        $strategy->deactivate();
-        $this->triggerDeployScript('post_deactivate', $application);
-
-        $this->triggerDeployScript('pre_unstage', $application);
-        $strategy->prepareRemoval();
-        $strategy->completeRemoval();
-        $this->triggerDeployScript('post_unstage', $application);
+        // Nothing additional to do
+        return $this;
     }
 
     /**
@@ -431,43 +480,5 @@ class ZendServerPackageInstaller implements PackageInstallerInterface
         }
 
         return ($zip->statName('deployment.xml') !== false);
-    }
-
-    /**
-     * @return \Zend\InputFilter\InputFilter
-     */
-    protected function getParamInputFilter()
-    {
-        if ($this->paramInputFilter) {
-            return $this->paramInputFilter;
-        }
-
-        $this->paramInputFilter = new InputFilter();
-        foreach ($this->getParameters() as $parameter) {
-            $input = new Input($parameter->getName());
-
-            $input->setValidatorChain($parameter->getValidatorChain());
-            $input->setRequired($parameter->isRequired());
-
-            switch ($parameter->getType()) {
-                case DeployParameter::TYPE_SELECT:
-                    $input->getFilterChain()->attach(new validators\InArray($parameter->getOptions()));
-                    break;
-            }
-        }
-
-        return $this->paramInputFilter;
-    }
-
-    /**
-     * {@inheritdoc}
-     * @see \rampage\nexus\PackageInstallerInterface::validateUserOptions()
-     */
-    public function validateUserOptions(ApplicationInstance $application)
-    {
-        $input = $application->getCurrentVersion()->getUserParameters(true);
-        $filter = $this->getParamInputFilter();
-
-        return $filter->setData($input)->isValid();
     }
 }

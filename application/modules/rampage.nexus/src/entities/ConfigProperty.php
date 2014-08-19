@@ -134,7 +134,10 @@ class ConfigProperty
         }
 
         $this->type = gettype($value);
-        $this->value = $value;
+        $this->phpValue = $value;
+
+        $this->serializeValue();
+
         return $this;
     }
 }

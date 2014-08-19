@@ -24,47 +24,111 @@ namespace rampage\nexus;
 
 use Zend\EventManager\Event;
 
-class DeployEvent extends Event
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorAwareTrait;
+
+
+class DeployEvent extends Event implements ServiceLocatorAwareInterface
 {
-    const PRE_STAGE = 'preStage';
-    const POST_STAGE = 'postStage';
-    const PRE_ACTIVATE = 'preActivate';
-    const POST_ACTIVATE = 'postActivate';
-    const PRE_UNSTAGE = 'preUnstage';
-    const POST_UNSTAGE = 'postUnstage';
-    const PRE_DEACTIVATE = 'preDeactivate';
-    const POST_DEACTIVATE = 'postDeactivate';
+    use ServiceLocatorAwareTrait;
+
+    const EVENT_DEPLOY = 'deploy';
+    const EVENT_REMOVE = 'deploy';
+
+    const EVENT_STAGE = 'stage';
+    const EVENT_ACTIVATE = 'activate';
+    const EVENT_UNSTAGE = 'unstage';
+    const EVENT_DEACTIVATE = 'deactivate';
 
     /**
-     * @var PackageInstallerInterface
+     * @var entities\ApplicationInstance
      */
-    private $package = null;
+    protected $application = null;
 
     /**
-     * {@inheritdoc}
-     * @see \Zend\EventManager\Event::getTarget()
-     * @return entities\ApplicationInstance
+     * @var DeployStrategyInterface
      */
-    public function getTarget()
-    {
-        return parent::getTarget();
-    }
+    protected $deployStrategy = null;
 
     /**
-     * @param PackageInstallerInterface $package
+     * @var WebConfigInterface
+     */
+    protected $webConfig = null;
+
+    /**
+     * @var package\ApplicationPackageInterface
+     */
+    protected $package = null;
+
+    /**
+     * @param  package\ApplicationPackageInterface $package
      * @return self
      */
-    public function setPackage(PackageInstallerInterface $package)
+    public function setPackage(package\ApplicationPackageInterface $package)
     {
         $this->package = $package;
         return $this;
     }
 
     /**
-     * @return PackageInstallerInterface
+     * @return package\ApplicationPackageInterface
      */
     public function getPackage()
     {
         return $this->package;
+    }
+
+    /**
+     * @return \rampage\nexus\entities\ApplicationInstance
+     */
+    public function getApplication()
+    {
+        return $this->application;
+    }
+
+    /**
+     * @param \rampage\nexus\entities\ApplicationInstance $application
+     * @return self
+     */
+    public function setApplication(entities\ApplicationInstance $application)
+    {
+        $this->application = $application;
+        return $this;
+    }
+
+    /**
+     * @return \rampage\nexus\DeployStrategyInterface
+     */
+    public function getDeployStrategy()
+    {
+        return $this->deployStrategy;
+    }
+
+    /**
+     * @param \rampage\nexus\DeployStrategyInterface $deployStrategy
+     * @return self
+     */
+    public function setDeployStrategy(DeployStrategyInterface $deployStrategy)
+    {
+        $this->deployStrategy = $deployStrategy;
+        return $this;
+    }
+
+    /**
+     * @return \rampage\nexus\WebConfigInterface
+     */
+    public function getWebConfig()
+    {
+        return $this->webConfig;
+    }
+
+    /**
+     * @param \rampage\nexus\WebConfigInterface $webConfig
+     * @return self
+     */
+    public function setWebConfig(WebConfigInterface $webConfig)
+    {
+        $this->webConfig = $webConfig;
+        return $this;
     }
 }

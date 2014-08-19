@@ -7,7 +7,7 @@
  * @license   $license$
  */
 
-namespace rampage\nexus;
+namespace rampage\nexus\cluster;
 
 use rampage\nexus\entities\ApplicationInstance;
 
@@ -17,7 +17,8 @@ use Zend\Http\Client\Adapter\Curl as CurlHttpAdapter;
 use Zend\Json\Json;
 use Zend\Stdlib\Hydrator\HydratorInterface;
 
-class DeploymentNode
+
+class LocalNode implements NodeInterface
 {
     /**
      * @var DeploymentConfig

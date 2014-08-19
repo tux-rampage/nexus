@@ -24,47 +24,15 @@ return [
             ]
         ]
     ],
+
     'controllers' => [
         'index' => controllers\IndexController::class,
     ],
 
-    'router' => [
-        'root' => [
-            'type' => 'literal',
-            'may_terminate' => true,
-            'options' => [
-                'route' => '/',
-                'defaults' => [
-                     'controller' => 'index',
-                     'action' => 'index',
-                 ]
-             ]
-        ],
-        'cluster' => [
-            'type' => 'literal',
-            'may_terminate' => true,
-            'options' => [
-                'route' => '/clusters',
-                'defaults' => [
-                    'controller' => 'cluster',
-                    'action' => 'index',
-                ]
-            ],
+    'deployment_config' => [
+    ],
 
-            'child_routes' => [
-                'info' => [
-                    'type' => 'segment',
-                    'options' => [
-                        'route' => '/info/:clusterId',
-                        'defaults' => [
-                            'action' => 'info',
-                        ],
-                        'constraints' => [
-                            'clusterId' => '~^\d+$~',
-                        ]
-                    ]
-                ]
-            ]
-        ]
-    ]
+//     'router' => [
+//         'routes' => require __DIR__ . '/routes.config.php',
+//     ]
 ];

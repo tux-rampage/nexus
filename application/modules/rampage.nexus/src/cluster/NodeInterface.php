@@ -1,6 +1,5 @@
 <?php
 /**
- * This is part of rampage-nexus
  * Copyright (c) 2014 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,57 +20,40 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\api;
+namespace rampage\nexus\cluster;
 
 use rampage\nexus\entities\ApplicationInstance;
-use rampage\nexus\entities\Server;
-use rampage\nexus\cluster\ClusterManagerInterface;
 
-/**
- * Server API
- */
-interface ServerApiInterface
+
+interface NodeInterface
 {
     /**
      * @return string
      */
-    public function getServerName(Server $server);
+    public function getId();
 
     /**
-     * @param Server $server
-     * @return bool
+     * @param string $id
      */
-    public function isClusterSupported(ClusterManagerInterface $clusterManager);
+    public function assignId($id);
 
     /**
-     * Deploy the given application's current version
-     *
-     * @param ApplicationInstance $instance
-     */
-    public function deploy(Server $server, ApplicationInstance $instance);
-
-    /**
-     * Remove the application from the given server
-     *
-     * @param ApplicationInstance $aplication
-     */
-    public function remove(Server $server, ApplicationInstance $application);
-
-    /**
-     * Fetch the deployment status
-     *
      * @param ApplicationInstance $application
-     * @return string
      */
-    public function status(Server $server, ApplicationInstance $application);
+    public function stage(ApplicationInstance $application);
 
     /**
-     * Detatch server from this master
+     * @param ApplicationInstance $application
      */
-    public function attach(Server $server);
+    public function unstage(ApplicationInstance $application);
 
     /**
-     * Attach server to this master
+     * @param ApplicationInstance $application
      */
-    public function detach(Server $server);
+    public function activate(ApplicationInstance $application);
+
+    /**
+     * @param ApplicationInstance $application
+     */
+    public function deactivate(ApplicationInstance $application);
 }

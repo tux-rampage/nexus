@@ -10,6 +10,7 @@ use Zend\ModuleManager\Listener\ServiceListener;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
 use Zend\ModuleManager\Feature\ServiceProviderInterface;
 use Zend\ModuleManager\Feature\InitProviderInterface;
+use Zend\ModuleManager\Feature\RouteProviderInterface;
 
 use rampage\core\modules\EventListenerProviderInterface;
 
@@ -19,6 +20,7 @@ use rampage\core\modules\EventListenerProviderInterface;
 class Module implements ConfigProviderInterface,
     ServiceProviderInterface,
     InitProviderInterface,
+    RouteProviderInterface,
     EventListenerProviderInterface
 {
     /**
@@ -30,6 +32,15 @@ class Module implements ConfigProviderInterface,
      * @var \Zend\ServiceManager\ServiceManager
      */
     protected $serviceManager = null;
+
+    /**
+     * @param string $type
+     * @return array
+     */
+    protected function loadConfig($type)
+    {
+        return include __DIR__ . '/../conf/' . $type . '.config.php';
+    }
 
     /**
      * @return string
@@ -84,9 +95,9 @@ class Module implements ConfigProviderInterface,
     public function addModulePackeTypes(ModuleEvent $event)
     {
         $moduleManager = $event->getTarget();
-        $packageTypeManager = $this->serviceManager->get(PackageInstallerManager::class);
+        $packageTypeManager = $this->serviceManager->get(package\PackageTypeManager::class);
 
-        if ((!$moduleManager instanceof ModuleManager) || (!$packageTypeManager instanceof PackageInstallerManager)) {
+        if ((!$moduleManager instanceof ModuleManager) || (!$packageTypeManager instanceof package\PackageTypeManager)) {
             return;
         }
 
@@ -107,7 +118,7 @@ class Module implements ConfigProviderInterface,
      */
     public function getConfig()
     {
-        return include __DIR__ . '/../conf/module.config.php';
+        return $this->loadConfig('module');;
     }
 
     /**
@@ -115,7 +126,16 @@ class Module implements ConfigProviderInterface,
      */
     public function getServiceConfig()
     {
-        return include __DIR__ . '/../conf/services.config.php';
+        return $this->loadConfig('services');
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \Zend\ModuleManager\Feature\RouteProviderInterface::getRouteConfig()
+     */
+    public function getRouteConfig()
+    {
+        return $this->loadConfig('routes');
     }
 
     /**
@@ -123,6 +143,6 @@ class Module implements ConfigProviderInterface,
      */
     public function getEventListeners()
     {
-        return include __DIR__ . '/../conf/events.config.php';
+        return $this->loadConfig('events');
     }
 }

@@ -21,7 +21,7 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus;
+namespace rampage\nexus\package;
 
 use ArrayObject;
 use SplFileInfo;
@@ -30,12 +30,15 @@ use RecursiveIterator;
 use RecursiveDirectoryIterator;
 use RuntimeException;
 
-use Zend\InputFilter\Input;
-use Zend\InputFilter\InputFilter;
-use Zend\Validator as validation;
+use rampage\nexus\ArrayConfig;
+use rampage\nexus\DeployParameter;
+use rampage\nexus\entities\ApplicationInstance;
 
-class ComposerApplicationPackage implements PackageInstallerInterface
+
+class ComposerPackage extends AbstractApplicationPackage
 {
+    const TYPE_NAME = 'composer';
+
     /**
      * @var PharData
      */
@@ -47,19 +50,19 @@ class ComposerApplicationPackage implements PackageInstallerInterface
     protected $hash = null;
 
     /**
-     * @var array
+     * @var ArrayConfig
      */
     protected $config = null;
 
     /**
-     * @var InputFilter
+     * @var array
      */
-    protected $paramInputFilter = null;
+    protected $parameters = null;
 
     /**
      * @param SplFileInfo $archive
      */
-    public function load(SplFileInfo $archive)
+    protected function load(SplFileInfo $archive)
     {
         $this->file = new PharData($archive->getPathname());
         $this->hash = md5_file($archive->getPathname());
@@ -71,7 +74,7 @@ class ComposerApplicationPackage implements PackageInstallerInterface
         }
 
         $json = @json_decode($this->file[$composerFile]->getContent(), true);
-        $this->config = is_array($json)? new ArrayObject($json, ArrayObject::ARRAY_AS_PROPS) : false;
+        $this->config = is_array($json)? new ArrayConfig($json) : false;
 
         if (!$this->config) {
             throw new \RuntimeException('Failed to load deployment definition from package');
@@ -103,23 +106,15 @@ class ComposerApplicationPackage implements PackageInstallerInterface
     }
 
     /**
-     * Trigger deploy script
-     *
-     * @param string $script
-     * @return self
-     */
-    protected function trigger($script)
-    {
-        return $this;
-    }
-
-    /**
      * {@inheritdoc}
-     * @see \rampage\nexus\PackageInstallerInterface::getTypeName()
+     * @see \rampage\nexus\package\ApplicationPackageInterface::create()
      */
-    public function getTypeName()
+    public function create(SplFileInfo $archive)
     {
-        return 'composer';
+        $package = new self();
+        $package->load($archive);
+
+        return $this;
     }
 
     /**
@@ -137,11 +132,7 @@ class ComposerApplicationPackage implements PackageInstallerInterface
      */
     protected function getOption($name, $default = null)
     {
-        if (!isset($this->config->extra['deployment'][$name])) {
-            return $default;
-        }
-
-        return $this->config->extra['deployment'][$name];
+        return $this->config->getSection('extra.deployment')->get($name, $default);
     }
 
     /**
@@ -176,23 +167,21 @@ class ComposerApplicationPackage implements PackageInstallerInterface
      */
     public function getParameters()
     {
-        $result = array();
-        $params = $this->getOption('parameters', array());
+        if ($this->parameters === null) {
+            $this->parameters = array();
+            $params = $this->config->getSection('extra.deployment.parameters');
 
-        if (!is_array($params)) {
-            return array();
+            foreach ($params as $name => $options) {
+                $param = DeployParameter::factory($name, ($options instanceof ArrayConfig)? $options->toArray() : array());
+                $this->parameters[$name] = $param;
+            }
         }
 
-        foreach ($params as $name => $options) {
-            $param = DeployParameter::factory($name, $options);
-            $result[$name] = $param;
-        }
-
-        return $result;
+        return $this->parameters;
     }
 
     /**
-     * @see \rampage\nexus\PackageInstallerInterface::getVersion()
+     * @return string
      */
     public function getVersion()
     {
@@ -200,7 +189,7 @@ class ComposerApplicationPackage implements PackageInstallerInterface
     }
 
     /**
-     * @return RecursiveDirectoryIterator
+     * @return string
      */
     public function getApplicationDir()
     {
@@ -243,70 +232,12 @@ class ComposerApplicationPackage implements PackageInstallerInterface
     }
 
     /**
-     * @return \Zend\InputFilter\InputFilter
-     */
-    protected function getParamInputFilter()
-    {
-        if ($this->paramInputFilter) {
-            return $this->paramInputFilter;
-        }
-
-        $this->paramInputFilter = new InputFilter();
-        foreach ($this->getParameters() as $parameter) {
-            $input = new Input($parameter->getName());
-
-            $input->setValidatorChain($parameter->getValidatorChain());
-            $input->setRequired($parameter->isRequired());
-
-            if ($parameter->getType() == DeployParameter::TYPE_SELECT) {
-                $input->getFilterChain()->attach(new validation\InArray($parameter->getOptions()));
-            }
-        }
-
-        return $this->paramInputFilter;
-    }
-
-    /**
-     * {@inheritdoc}
-     * @see \rampage\nexus\PackageInstallerInterface::validateUserOptions()
-     * @param \rampage\nexus\entities\ApplicationInstance $application
-     */
-    public function validateUserOptions(entities\ApplicationInstance $application)
-    {
-        /* @var $application entities\ApplicationInstance */
-        $input = $application->getCurrentVersion()->getUserParameters(true);
-        $filter = $this->getParamInputFilter();
-
-        return $filter->setData($input)->isValid();
-    }
-
-    /**
      * @see \rampage\nexus\PackageInstallerInterface::install()
      */
-    public function install(entities\ApplicationInstance $application)
+    public function install(ApplicationInstance $application)
     {
-        if (!$this->validateUserOptions($application)) {
-            $messages = $this->getParamInputFilter()->getMessages();
-            foreach ($messages as $field => $sub) {
-                $glue = "\n" . str_repeat(' ', strlen($messages) + 4);
-                $messages[$field] = '- ' . $field . ': ' . implode($glue, $sub);
-            }
-
-            throw new RuntimeException(sprintf(
-                'Invalid user parameters: %s',
-                "\n" . implode("\n", $this->getParamInputFilter()->getMessages())
-            ));
-        }
-
         $webRoot = $this->getWebRoot();
-        $strategy = $application->getDeployStrategy();
-        $parameters = $this->getParamInputFilter()->getValues();
-
-        $strategy->setUserParameters($parameters);
-        $strategy->setWebRoot($webRoot);
-        $strategy->prepareStaging();
-
-        $target = $strategy->getTargetDirectory();
+        $target = $this->deployStrategy->getTargetDirectory();
 
         if ($this->isStandalone()) {
             $pharName = $this->getOption('pharName');
@@ -314,17 +245,20 @@ class ComposerApplicationPackage implements PackageInstallerInterface
                 $pharName = $this->file->getFilename();
             }
 
-            mkdir($target . '/' . $webRoot);
-            $this->file->extractTo($target . '/' . $webRoot, $this->getApplicationDir());
+            if ($webRoot != '') {
+                mkdir($target . '/' . $webRoot);
+
+                $prefix = $this->getApplicationDir();
+                $prefix .= ($prefix)? '/' : '';
+
+                $this->file->extractTo($target . '/' . $webRoot, $prefix . $webRoot);
+            }
+
             rename($this->file->getPathname(), $target . '/' . $pharName);
         } else {
             $this->file->extractTo($target, $this->getApplicationDir());
         }
 
-        $strategy->completeStaging();
-        $strategy->activate();
-
-        $application->setState(entities\ApplicationInstance::STATE_DEPLOYED);
         return $this;
     }
 
@@ -332,8 +266,8 @@ class ComposerApplicationPackage implements PackageInstallerInterface
      * {@inheritdoc}
      * @see \rampage\nexus\PackageInstallerInterface::remove()
      */
-    public function remove(entities\ApplicationInstance $application)
+    public function remove(ApplicationInstance $application)
     {
-        // TODO: Remove application
+        // Nothing to do
     }
 }
