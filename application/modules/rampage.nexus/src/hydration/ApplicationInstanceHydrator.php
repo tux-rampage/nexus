@@ -175,16 +175,24 @@ class ApplicationInstanceHydrator implements HydratorInterface
         }
 
         $currentVersion = $application->getCurrentVersion();
+        $previousVersion = $application->getPreviousVersion();
+
         $data = [
             'id'  => $application->getId(),
             'applicationName' => $application->getApplicationName(),
             'baseUrl' => $application->getBaseUrl()->toString(),
-            'currentVersion' => $currentVersion? $this->extractVersion($currentVersion) : null,
+            'currentVersion' => $currentVersion? $currentVersion->getVersion() : null,
+            'previousVersion' => $previousVersion? $previousVersion->getVersion() : null,
             'deployStrategy' => $this->extractProperty($application, 'deployStrategy'),
             'name' => $application->getName(),
             'packageType' => $application->getPackageType(),
             'vhost' => $this->extractVhost($application->getVirtualHost()),
+            'versions' => [],
         ];
+
+        foreach ($application->getVersions() as $version) {
+            $data[$version->getVersion()] = $this->extractVersion($version);
+        }
 
         return $data;
     }
@@ -225,9 +233,8 @@ class ApplicationInstanceHydrator implements HydratorInterface
 
         $this->hydrator->hydrate($data, $version);
 
-        $version->setUserParameters($parameters)
-            ->getConfigTemplates()
-            ->clear();
+        $version->setUserParameters($parameters);
+        $version->getConfigTemplates()->clear();
 
         foreach ($templates as $templateData) {
             $version->getConfigTemplates()->add($this->hydrateConfigTemplate($templateData));
@@ -266,6 +273,32 @@ class ApplicationInstanceHydrator implements HydratorInterface
     }
 
     /**
+     * @param ApplicationInstance $object
+     * @param array $versions
+     * @param string $currentVersion
+     * @param string $previousVersion
+     */
+    protected function hydrateVersions(ApplicationInstance $application, $versions, $currentVersion, $previousVersion)
+    {
+        $application->getVersions()->clear();
+
+        foreach ($versions as $data) {
+            $version = $this->hydrateVersion($data);
+            $application->addVersion($version);
+        }
+
+        if ($currentVersion && ($current = $application->getVersion($currentVersion))) {
+            $application->setCurrentVersion($current);
+        }
+
+        if ($previousVersion && ($previous = $application->getVersion($previousVersion))) {
+            $application->setPreviousVersion($previous);
+        }
+
+        return $application;
+    }
+
+    /**
      * {@inheritdoc}
      * @see \Zend\Stdlib\Hydrator\HydrationInterface::hydrate()
      */
@@ -276,15 +309,21 @@ class ApplicationInstanceHydrator implements HydratorInterface
         }
 
         $vhost = $data['vhost'];
+        $versions = $data['versions'];
         $currentVersion = $data['currentVersion'];
+        $previousVersion = $data['previousVersion'];
 
-        unset($data['vhost'], $data['currentVersion'], $data['versions']);
+        $data['currentVersion'] = null;
+        $data['previousVersion'] = null;
+
+        unset($data['vhost'], $data['versions']);
 
         $hydrator = new ReflectionHydrator();
         $hydrator->hydrate($data, $object);
 
-        $object->getVersions()->clear();
-        $object->setCurrentVersion($this->hydrateVersion($currentVersion));
+        $this->repository->persist($object, true);
+
+        $this->hydrateVersions($object, $versions, $currentVersion, $previousVersion);
         $object->setVirtualHost($this->hydrateVhost($vhost));
 
         return $object;

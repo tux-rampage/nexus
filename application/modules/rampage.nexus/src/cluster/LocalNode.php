@@ -9,180 +9,145 @@
 
 namespace rampage\nexus\cluster;
 
+use rampage\nexus\DeployEvent;
+use rampage\nexus\DeploymentConfig;
+
 use rampage\nexus\entities\ApplicationInstance;
 
-use Zend\Http\Request as HttpRequest;
-use Zend\Http\Client as HttpClient;
-use Zend\Http\Client\Adapter\Curl as CurlHttpAdapter;
-use Zend\Json\Json;
-use Zend\Stdlib\Hydrator\HydratorInterface;
+use Zend\EventManager\ListenerAggregateInterface;
+use Zend\EventManager\EventManagerInterface;
+use Zend\EventManager\EventManagerAwareInterface;
+use Zend\EventManager\EventManagerAwareTrait;
+
+use Zend\ServiceManager\ServiceManagerAwareInterface;
 
 
-class LocalNode implements NodeInterface
+class LocalNode implements NodeInterface, ServiceManagerAwareInterface, EventManagerAwareInterface
 {
-    /**
-     * @var DeploymentConfig
-     */
-    protected $config;
+    use DeploymentDependenciesTrait;
+    use EventManagerAwareTrait;
 
     /**
-     * @var orm\DeploymentRepository
+     * @var DeployEvent
      */
-    protected $repository;
-
-    /**
-     * @var PackageStorage
-     */
-    protected $packageStorage = null;
-
-    /**
-     * @var HttpClient
-     */
-    protected $httpClient = null;
-
-    /**
-     * @var HydratorInterface
-     */
-    protected $hydrator;
-
-    /**
-     * @var PackageInstallerManager
-     */
-    protected $applicationPackageManager = null;
-
-    /**
-     * @var DeployStrategyManager
-     */
-    protected $deployStrategyManager = null;
+    protected $event;
 
     /**
      * @param DeploymentConfig $config
-     * @param orm\DeploymentRepository $repository
      */
-    public function __construct(DeploymentConfig $config, orm\DeploymentRepository $repository, PackageStorage $packageStorage, PackageInstallerManager $packageManager, DeployStrategyManager $strategyManager)
+    public function __construct(DeploymentConfig $config)
     {
-        $this->config = $config;
-        $this->repository = $repository;
-        $this->packageStorage = $packageStorage;
-        $this->applicationPackageManager = $packageManager;
-        $this->deployStrategyManager = $strategyManager;
-        $this->hydrator = new hydration\ApplicationInstanceHydrator($repository);
+        $this->event = new DeployEvent();
+        $this->setDeploymentConfig($config);
+    }
 
-        $this->httpClient = new HttpClient($this->config->getMasterApiUrl());
-        $this->httpClient->setAdapter(new CurlHttpAdapter());
+    protected function attachDefaultListeners()
+    {
     }
 
     /**
-     * @param entities\ApplicationInstance $application
-     * @return self
+     * {@inheritdoc}
+     * @see \rampage\nexus\cluster\NodeInterface::getId()
      */
-    protected function updateApplicationFromMaster(ApplicationInstance $application)
+    public function getId()
     {
-        $request = new HttpRequest();
-        $request->setUri($this->config->getMasterApiUrl('application/' . $application->getId()))
-            ->setMethod(HttpRequest::METHOD_GET);
-
-        $response = $this->httpClient->send($request);
-        if (!$response->isSuccess()) {
-            throw new \RuntimeException('Failed to load application info from master');
-        }
-
-        $data = Json::decode($response->getBody(), Json::TYPE_ARRAY);
-        $this->hydrator->hydrate($data, $application);
-
-        return $this;
+        return 1;
     }
 
     /**
      * @param ApplicationInstance $application
-     * @throws \RuntimeException
-     * @return self
+     * @param string $newState
      */
-    public function downloadArchiveFromMaster(ApplicationInstance $application)
+    protected function changeApplicationState(ApplicationInstance $application, $newState)
     {
-        $archive = $application->getCurrentApplicationPackageFile();
+        $application->setState($newState);
+        $this->getDeploymentRepository()->flush($application);
+    }
 
-        if ($archive->exists()) {
+    /**
+     * @param ApplicationInstance $application
+     * @return EventManagerInterface
+     */
+    protected function prepareDispatch(ApplicationInstance $application)
+    {
+        if ($this->event->getApplication() === $application) {
             return $this;
         }
 
-        $request = new HttpRequest();
-        $request->setUri($this->config->getMasterApiUrl('application/package/' . $application->getId()))
-            ->setMethod(HttpRequest::METHOD_GET);
+        $this->injectDeployEventDependencies($this->event, $application);
 
-        $this->packageStorage->mkdir(dirname($archive->getRelativePath()));
-        $this->httpClient->setStream($archive->getPathname());
+        $package = $this->event->getPackage();
+        $events = $this->getEventManager();
 
-        $response = $this->httpClient->send($request);
-        if (!$response->isSuccess()) {
-            throw new \RuntimeException('Failed to download application package from master');
+        if ($package instanceof ListenerAggregateInterface) {
+            $events->attach($package);
+        }
+
+        return $events;
+    }
+
+    /**
+     * @param ApplicationInstance $application
+     * @param string $eventName
+     */
+    protected function dispatch(ApplicationInstance $application, $eventName)
+    {
+        try {
+            $events = $this->prepareDispatch($application);
+            $strategy = $this->event->getDeployStrategy();
+
+            $events->attach($strategy);
+            $events->trigger($eventName, $this->event);
+            $events->detach($strategy);
+        } catch (\Exception $e) {
+            $this->changeApplicationState($application, ApplicationInstance::STATE_ERROR);
+            throw $e;
         }
 
         return $this;
     }
 
     /**
-     * @param int $applicationId
-     * @return \rampage\nexus\entities\ApplicationInstance
+     * {@inheritdoc}
+     * @see \rampage\nexus\cluster\NodeInterface::activate()
      */
-    public function prepareApplicationInstance($applicationId)
+    public function activate(ApplicationInstance $application)
     {
-        if (!$this->config->isNode()) {
-            return $this->repository->findApplicationById($applicationId);
-        }
-
-        $application = $this->repository->findApplicationByMasterId($applicationId);
-
-        if (!$application) {
-            $application = new ApplicationInstance();
-        }
-
-        $this->updateApplicationFromMaster($application);
-        $this->repository->persist($application);
-        $this->repository->flush($application);
-
-        $application->setPackageStorage($this->packageStorage);
-        $this->downloadArchiveFromMaster($application);
-
-        return $application;
+        $this->changeApplicationState($application, ApplicationInstance::STATE_ACTIVATING);
+        $this->dispatch($application, DeployEvent::EVENT_ACTIVATE);
+        $this->changeApplicationState($application, ApplicationInstance::STATE_DEPLOYED);
     }
 
     /**
-     * @param ApplicationInstance|int $application
-     * @return self
+     * {@inheritdoc}
+     * @see \rampage\nexus\cluster\NodeInterface::deactivate()
      */
-    public function deploy($application)
+    public function deactivate(ApplicationInstance $application)
     {
-        if (!$application instanceof ApplicationInstance) {
-            $applicationId = (int)$application;
-            $application = $this->prepareApplicationInstance($applicationId);
-
-            if (!$application) {
-                throw new \RuntimeException(sprintf('Failed to prepare application %d for deployment', $applicationId));
-            }
-        }
-
-        $application->setDeployStrategyManager($this->deployStrategyManager);
-        $application->setPackageStorage($this->packageStorage);
-
-        $installer = $this->applicationPackageManager->createInstallerForApplication($application);
-        $installer->install($application);
-
-        $this->repository->flush($application);
-        return $application;
+        $this->changeApplicationState($application, ApplicationInstance::STATE_DEACTIVATING);
+        $this->dispatch($application, DeployEvent::EVENT_DEACTIVATE);
+        $this->changeApplicationState($application, ApplicationInstance::STATE_INACTIVE);
     }
 
     /**
-     * @param ApplicationInstance $application
+     * {@inheritdoc}
+     * @see \rampage\nexus\cluster\NodeInterface::stage()
+     */
+    public function stage(ApplicationInstance $application)
+    {
+        $this->changeApplicationState($application, ApplicationInstance::STATE_STAGING);
+        $this->dispatch($application, DeployEvent::EVENT_STAGE);
+        $this->changeApplicationState($application, ApplicationInstance::STATE_INACTIVE);
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \rampage\nexus\cluster\NodeInterface::remove()
      */
     public function remove(ApplicationInstance $application)
     {
-        $application->setDeployStrategyManager($this->deployStrategyManager);
-        $application->setPackageStorage($this->packageStorage);
-
-        $installer = $this->applicationPackageManager->createInstallerForApplication($application);
-        $installer->remove($application);
-
-        $this->repository->getEntityManager()->remove($application);
+        $this->changeApplicationState($application, ApplicationInstance::STATE_REMOVING);
+        $this->dispatch($application, DeployEvent::EVENT_UNSTAGE);
+        $this->changeApplicationState($application, ApplicationInstance::STATE_REMOVED);
     }
 }

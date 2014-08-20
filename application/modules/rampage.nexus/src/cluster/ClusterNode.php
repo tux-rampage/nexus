@@ -25,30 +25,40 @@ namespace rampage\nexus\cluster;
 use rampage\nexus\entities\ApplicationInstance;
 
 
-interface NodeInterface
+class ClusterNode extends LocalNode
 {
-    /**
-     * @return string
-     */
-    public function getId();
+    protected $master = null;
 
     /**
-     * @param ApplicationInstance $application
+     * {@inheritdoc}
+     * @see \rampage\nexus\cluster\LocalNode::__construct()
      */
-    public function stage(ApplicationInstance $application);
+    public function __construct(ClusterManager $master)
+    {
+        $this->master = $master;
+    }
 
     /**
-     * @param ApplicationInstance $application
+     * {@inheritdoc}
+     * @see \rampage\nexus\cluster\LocalNode::changeApplicationState()
      */
-    public function remove(ApplicationInstance $application);
+    protected function changeApplicationState(ApplicationInstance $application, $newState)
+    {
+        parent::changeApplicationState($application, $newState);
+        $this->master->updateApplicationState($application);
+
+        return $this;
+    }
 
     /**
-     * @param ApplicationInstance $application
+     * {@inheritdoc}
+     * @see \rampage\nexus\cluster\LocalNode::stage()
      */
-    public function activate(ApplicationInstance $application);
+    public function stage(ApplicationInstance $application)
+    {
+        $this->master->syncApplication($application);
+        $this->master->downloadArchive($application);
 
-    /**
-     * @param ApplicationInstance $application
-     */
-    public function deactivate(ApplicationInstance $application);
+        parent::stage($application);
+    }
 }

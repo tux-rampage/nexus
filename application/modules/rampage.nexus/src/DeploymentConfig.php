@@ -72,7 +72,7 @@ class DeploymentConfig extends ArrayConfig
      */
     public function getMasterApiUrl($path = null)
     {
-        $url = $this->server->master_url;
+        $url = $this->get('server.master_url');
 
         if (empty($url)) {
             return null;

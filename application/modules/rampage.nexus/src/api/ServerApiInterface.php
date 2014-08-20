@@ -44,11 +44,11 @@ interface ServerApiInterface
     public function isClusterSupported(ClusterManagerInterface $clusterManager);
 
     /**
-     * Deploy the given application's current version
+     * Stage the given application's current version
      *
      * @param ApplicationInstance $instance
      */
-    public function deploy(Server $server, ApplicationInstance $instance);
+    public function stage(Server $server, ApplicationInstance $application);
 
     /**
      * Remove the application from the given server
@@ -56,6 +56,20 @@ interface ServerApiInterface
      * @param ApplicationInstance $aplication
      */
     public function remove(Server $server, ApplicationInstance $application);
+
+    /**
+     * Activate the current version of the given application
+     *
+     * @param ApplicationInstance $instance
+     */
+    public function activate(Server $server, ApplicationInstance $application);
+
+    /**
+     * Deactivate the current version of the given application
+     *
+     * @param ApplicationInstance $instance
+     */
+    public function deactivate(Server $server, ApplicationInstance $application);
 
     /**
      * Fetch the deployment status

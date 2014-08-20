@@ -23,34 +23,31 @@
 
 namespace rampage\nexus;
 
-use Zend\Log\LoggerAwareInterface;
-
 use FilesystemIterator;
 use RuntimeException;
 use Exception;
 
+use Zend\EventManager\EventManagerInterface;
+use Zend\EventManager\ListenerAggregateTrait;
+
+
 /**
  * The default deployment strategy implementation
  */
-class DefaultDeployStrategy implements DeployStrategyInterface, LoggerAwareInterface
+class DefaultDeployStrategy implements DeployStrategyInterface
 {
-    use traits\LoggerAwareTrait;
     use traits\WebConfigAwareTrait;
-
-    /**
-     * @var string
-     */
-    protected $webRoot = null;
-
-    /**
-     * @var array
-     */
-    protected $userParams = array();
+    use ListenerAggregateTrait;
 
     /**
      * @var entities\ApplicationInstance
      */
     protected $application = null;
+
+    /**
+     * @var string
+     */
+    protected $webRoot = null;
 
     /**
      * @var string
@@ -73,10 +70,66 @@ class DefaultDeployStrategy implements DeployStrategyInterface, LoggerAwareInter
     protected $symlinkFormat = 'current';
 
     /**
+     * @var Filesystem
+     */
+    protected $filesystem = null;
+
+
+    public function __construct()
+    {
+        $this->filesystem = new Filesystem();
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \Zend\EventManager\ListenerAggregateInterface::attach()
+     */
+    public function attach(EventManagerInterface $events)
+    {
+        $this->listeners[] = $this->attach(DeployEvent::EVENT_ACTIVATE, array($this, 'activate'));
+        $this->listeners[] = $this->attach(DeployEvent::EVENT_DEACTIVATE, array($this, 'deactivate'));
+        $this->listeners[] = $this->attach(DeployEvent::EVENT_STAGE, array($this, 'stage'));
+        $this->listeners[] = $this->attach(DeployEvent::EVENT_REMOVE, array($this, 'remove'));
+    }
+
+    /**
+     * @param DeployEvent $event
+     * @return self
+     */
+    protected function injectDependenciesFromEvent(DeployEvent $event)
+    {
+        $event->getPackage()->setDeployStrategy($this);
+
+        $this->setApplication($event->getApplication());
+        $this->setWebRoot($event->getPackage()->getWebRoot());
+        $this->setWebConfig($event->getWebConfig());
+
+        return $this;
+    }
+
+    /**
+     * @param entities\ApplicationInstance $application
+     * @return self
+     */
+    public function setApplication(entities\ApplicationInstance $application)
+    {
+        $this->application = $application;
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    protected function isConsole()
+    {
+        return $this->application->isConsoleApplication();
+    }
+
+    /**
      * @param string $format
      * @return string
      */
-    protected function formatDir($format = null)
+    protected function formatDir($format = null, array $additionalParams = array())
     {
         $dir = $format;
 
@@ -94,6 +147,8 @@ class DefaultDeployStrategy implements DeployStrategyInterface, LoggerAwareInter
             'version' => $this->application->getCurrentVersion()->getVersion(),
         );
 
+        $params = array_merge($params, $additionalParams);
+
         foreach ($params as $key => $value) {
             $dir = str_replace('%' . $key . '%', $value, $dir);
         }
@@ -106,8 +161,7 @@ class DefaultDeployStrategy implements DeployStrategyInterface, LoggerAwareInter
      */
     private function lastErrorMessage()
     {
-        $error = new LastPhpError();
-        return $error->getMessage();
+        return (new LastPhpError())->getMessage();
     }
 
     /**
@@ -115,47 +169,7 @@ class DefaultDeployStrategy implements DeployStrategyInterface, LoggerAwareInter
      */
     protected function deltree($dir)
     {
-        if (!is_dir($dir)) {
-            if (is_file($dir) && !@unlink($dir)) {
-                throw new RuntimeException(sprintf(
-                    'Could not delete file "%s": %s',
-                    $dir, $this->lastErrorMessage()
-                ));
-            }
-
-            return $this;
-        }
-
-        $iterator = new FilesystemIterator($dir, FilesystemIterator::CURRENT_AS_FILEINFO);
-
-        /* @var $info \SplFileInfo */
-        foreach ($iterator as $info) {
-            if (in_array($info->getFilename(), array('.', '..'))) {
-                continue;
-            }
-
-            if ($info->isDir()) {
-                $this->deltree($info->getPathname());
-                continue;
-            }
-
-            if (!@unlink($info->getPathname())) {
-                throw new RuntimeException(sprintf(
-                    'Could not delete file "%s": %s',
-                    $info->getPathname(),
-                    $this->lastErrorMessage()
-                ));
-            }
-        }
-
-        if (!@rmdir($dir)) {
-            throw new RuntimeException(sprintf(
-                'Could not delete file "%s": %s',
-                $info->getPathname(),
-                $this->lastErrorMessage()
-            ));
-        }
-
+        $this->filesystem->delete($dir);
         return $this;
     }
 
@@ -176,65 +190,6 @@ class DefaultDeployStrategy implements DeployStrategyInterface, LoggerAwareInter
     }
 
     /**
-     * @see \rampage\nexus\DeployStrategyInterface::activate()
-     */
-    public function activate()
-    {
-        $symlink = $this->formatDir($this->symlinkFormat);
-
-        @unlink($symlink);
-        symlink($this->getTargetDirectory(), $symlink);
-
-        if ($this->application->isConsoleApplication()) {
-            return $this;
-        }
-
-        $webConfig = $this->getWebConfig();
-        $webConfig->configure($this);
-        $webConfig->activate();
-
-        return $this;
-    }
-
-    /**
-     * @see \rampage\nexus\DeployStrategyInterface::completeRemoval()
-     */
-    public function completeRemoval()
-    {
-        try {
-            $this->deltree($this->formatDir());
-        } catch (Exception $e) {
-            $this->getLogger()->err($e);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @see \rampage\nexus\DeployStrategyInterface::completeStaging()
-     */
-    public function completeStaging()
-    {
-        // TODO Manage persistent resources
-        return $this;
-    }
-
-    /**
-     * @see \rampage\nexus\DeployStrategyInterface::deactivate()
-     */
-    public function deactivate()
-    {
-        $symlink = $this->formatDir($this->symlinkFormat);
-        @unlink($symlink);
-
-        if (!$this->application->isConsoleApplication()) {
-            $this->getWebConfig()->maintenance();
-        }
-
-        return $this;
-    }
-
-    /**
      * @see \rampage\nexus\DeployStrategyInterface::getTargetDirectory()
      */
     public function getTargetDirectory()
@@ -251,54 +206,12 @@ class DefaultDeployStrategy implements DeployStrategyInterface, LoggerAwareInter
     }
 
     /**
-     * @see \rampage\nexus\DeployStrategyInterface::prepareRemoval()
+     * {@inheritdoc}
+     * @see \rampage\nexus\DeployStrategyInterface::getApplication()
      */
-    public function prepareRemoval()
+    public function getApplication()
     {
-        if ($this->application->isConsoleApplication()) {
-            return $this;
-        }
-
-        $this->getWebConfig()->remove();
-        return $this;
-    }
-
-    /**
-     * @see \rampage\nexus\DeployStrategyInterface::prepareStaging()
-     */
-    public function prepareStaging()
-    {
-        $targetDir = $this->getTargetDirectory();
-
-        if (is_dir($targetDir)) {
-            // Deploying the same version again!
-            $this->application->getWebConfig()->maintenance();
-            $this->previousDir = dirname($targetDir) . '/' . basename($targetDir) . '_previous';
-
-            $this->deltree($this->previousDir);
-            rename($targetDir, $this->previousDir);
-        }
-
-        mkdir($this->getTargetDirectory(), 0775, true);
-        return $this;
-    }
-
-    /**
-     * @see \rampage\nexus\DeployStrategyInterface::setApplicationInstance()
-     */
-    public function setApplicationInstance(entities\ApplicationInstance $instance)
-    {
-        $this->application = $instance;
-        return $this;
-    }
-
-    /**
-     * @see \rampage\nexus\DeployStrategyInterface::setUserParameters()
-     */
-    public function setUserParameters($parameters)
-    {
-        $this->userParams = $parameters;
-        return $this;
+        return $this->application;
     }
 
     /**
@@ -308,5 +221,98 @@ class DefaultDeployStrategy implements DeployStrategyInterface, LoggerAwareInter
     {
         $this->webRoot = $dir? trim($dir, '/') : $dir;
         return $this;
+    }
+
+    /**
+     * @return self
+     */
+    protected function removeOldVersionDirectories()
+    {
+        $keepVersions = array($this->application->getCurrentVersion()->getVersion());
+
+        if ($previous = $this->application->getPreviousVersion()) {
+            $keepVersions[] = $previous->getVersion();
+        }
+
+        foreach ($this->application->getVersions() as $version) {
+            if (in_array($version->getVersion(), $keepVersions)) {
+                continue;
+            }
+
+            $oldDir = $this->formatDir($this->dirFormat, array('version' => $version->getVersion()));
+            $this->deltree($oldDir);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param DeployEvent $event
+     */
+    public function stage(DeployEvent $event)
+    {
+        $this->injectDependenciesFromEvent($event);
+
+        $targetDir = $this->getTargetDirectory();
+
+        if (is_dir($targetDir)) {
+            // Deploying the same version again!
+            $this->getWebConfig()->maintenance($this);
+            $this->previousDir = dirname($targetDir) . '/' . basename($targetDir) . '_previous';
+
+            $this->deltree($this->previousDir);
+            rename($targetDir, $this->previousDir);
+            unlink($this->formatDir($this->symlinkFormat));
+        }
+
+        mkdir($this->getTargetDirectory(), 0775, true);
+        $event->getPackage()->install($this->application);
+        $this->removeOldVersionDirectories();
+    }
+
+    /**
+     * @param DeployEvent $event
+     * @return self
+     */
+    public function remove(DeployEvent $event)
+    {
+        $this->injectDependenciesFromEvent($event);
+
+        $this->getWebConfig()->remove($this);
+        $event->getPackage()->remove($this->application);
+
+        $this->deltree($this->formatDir());
+
+        return $this;
+    }
+
+    /**
+     * @event EVENT_ACTIVATE
+     * @param DeployEvent $event
+     */
+    public function activate(DeployEvent $event)
+    {
+        $this->injectDependenciesFromEvent($event);
+
+        $symlink = $this->formatDir($this->symlinkFormat);
+
+        @unlink($symlink);
+        symlink($this->getTargetDirectory(), $symlink);
+
+        $webConfig = $this->getWebConfig();
+        $webConfig->configure($this);
+        $webConfig->activate($this);
+    }
+
+    /**
+     * @param DeployEvent $event
+     * @return self
+     */
+    public function deactivate(DeployEvent $event)
+    {
+        $this->injectDependenciesFromEvent($event);
+
+        $this->getWebConfig()->maintenance($this);
+        @unlink($this->formatDir($this->symlinkFormat));
     }
 }

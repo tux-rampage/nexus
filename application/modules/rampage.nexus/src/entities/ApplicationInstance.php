@@ -23,9 +23,7 @@
 
 namespace rampage\nexus\entities;
 
-use rampage\nexus\PackageInstallerInterface;
-use rampage\nexus\PackageStorage;
-use rampage\nexus\traits\DeployStrategyManagerAwareTrait;
+use rampage\nexus\package\ApplicationPackageInterface;
 
 use Doctrine\ORM\Mapping as orm;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -42,8 +40,6 @@ use LogicException;
  */
 class ApplicationInstance
 {
-    use DeployStrategyManagerAwareTrait;
-
     const STATE_DEPLOYED = 'deployed';
     const STATE_ERROR = 'deployed';
     const STATE_PENDING = 'pending';
@@ -51,6 +47,8 @@ class ApplicationInstance
     const STATE_ACTIVATING = 'activating';
     const STATE_REMOVING = 'removing';
     const STATE_DEACTIVATING = 'deactivating';
+    const STATE_REMOVED = 'removed';
+    const STATE_INACTIVE = 'inactive';
     const STATE_UNKNOWN = 'unknown';
 
     /**
@@ -58,12 +56,6 @@ class ApplicationInstance
      * @var int
      */
     private $id = null;
-
-    /**
-     * @orm\Column(type="integer", nullable=true)
-     * @var int
-     */
-    protected $masterId = null;
 
     /**
      * @orm\Column(type="string", nullable=false)
@@ -141,11 +133,6 @@ class ApplicationInstance
     protected $cluster = null;
 
     /**
-     * @var PackageStorage
-     */
-    protected $packageStorage = null;
-
-    /**
      * @orm\Column(type="string", nullable=false)
      * @var string
      */
@@ -154,9 +141,8 @@ class ApplicationInstance
     /**
      * Construct
      */
-    public function __construct($masterId = null, $isConsole = false)
+    public function __construct($isConsole = false)
     {
-        $this->masterId = $masterId;
         $this->isConsoleApp = $isConsole;
         $this->configTemplates = new ArrayCollection();
         $this->userParameters = new ArrayCollection();
@@ -171,40 +157,9 @@ class ApplicationInstance
     }
 
     /**
-     * @param PackageStorage $storage
-     * @return self
-     */
-    public function setPackageStorage(PackageStorage $storage)
-    {
-        $this->packageStorage = $storage;
-        return $this;
-    }
-
-    /**
-     * @return PackageStorage
-     */
-    public function getPackageStorage()
-    {
-        return $this->packageStorage;
-    }
-
-    /**
-     * @throws LogicException
-     * @return \rampage\filesystem\WrappedFileInfo
-     */
-    public function getCurrentApplicationPackageFile()
-    {
-        if (!$this->packageStorage) {
-            throw new LogicException('Cannot resolve package without package storage');
-        }
-
-        return $this->packageStorage->getPackageFile($this->getCurrentVersion());
-    }
-
-    /**
      * @param PackageInstallerInterface $package
      */
-    public function updateFromApplicationPackage(PackageInstallerInterface $package)
+    public function updateFromApplicationPackage(ApplicationPackageInterface $package)
     {
         if ($this->id && (($this->applicationName != $package->getName()) || ($this->packageType != $package->getTypeName()))) {
             throw new LogicException('Application name mismatch.');
@@ -347,11 +302,11 @@ class ApplicationInstance
     }
 
     /**
-     * @return \rampage\nexus\DeployStrategyInterface
+     * @return string
      */
     public function getDeployStrategy()
     {
-        return $this->deployStrategyManager->get($this->deployStrategy);
+        return $this->deployStrategy;
     }
 
     /**

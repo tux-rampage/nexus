@@ -34,14 +34,24 @@ class PackageTypeManager
     protected $packageStorage;
 
     /**
-     * Construct
+     * @param PackageStorage $packageStorage
      */
     public function __construct(PackageStorage $packageStorage)
     {
-        $this->packageStorage = $packageStorage;
         $this->packageTypes = new SplPriorityQueue();
 
+        $this->setPackageStorage($packageStorage);
         $this->addPackageType(new ComposerPackage());
+    }
+
+    /**
+     * @param \rampage\nexus\PackageStorage $packageStorage
+     * @return self
+     */
+    public function setPackageStorage(PackageStorage $packageStorage)
+    {
+        $this->packageStorage = $packageStorage;
+        return $this;
     }
 
     /**

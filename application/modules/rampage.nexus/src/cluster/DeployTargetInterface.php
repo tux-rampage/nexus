@@ -25,15 +25,11 @@ namespace rampage\nexus\cluster;
 use rampage\nexus\entities\ApplicationInstance;
 
 
-interface ClusterManagerInterface
+interface DeployTargetInterface
 {
-    public function updateApplicationState(DeploymentNodeInterface $node, ApplicationInstance $application);
-
     public function deploy(ApplicationInstance $application);
 
     public function remove(ApplicationInstance $application);
 
-    public function attachNode();
-
-    public function detachNode();
+    public function refreshState(ApplicationInstance $application);
 }

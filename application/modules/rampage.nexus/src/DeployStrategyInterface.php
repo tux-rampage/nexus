@@ -24,35 +24,13 @@
 
 namespace rampage\nexus;
 
+use Zend\EventManager\ListenerAggregateInterface;
+
 /**
  * Deploy strategy interface
  */
-interface DeployStrategyInterface extends WebConfigAwareInterface
+interface DeployStrategyInterface extends WebConfigAwareInterface, ListenerAggregateInterface
 {
-    /**
-     * Set the current application instance to perform the actions on
-     *
-     * @param entities\ApplicationInstance $instance
-     * @return self
-     */
-    public function setApplicationInstance(entities\ApplicationInstance $instance);
-
-    /**
-     * Set the user parameters to use for deployment
-     *
-     * @param array|\ArrayAccess $parameters
-     * @retrun self
-     */
-    public function setUserParameters($parameters);
-
-    /**
-     * Set the document root relative to the target directory
-     *
-     * @param string $dir
-     * @return self
-     */
-    public function setWebRoot($dir);
-
     /**
      * Returns the darget directory of the application
      *
@@ -77,35 +55,9 @@ interface DeployStrategyInterface extends WebConfigAwareInterface
     public function getWebRoot();
 
     /**
-     * Prepare staging the application
-     */
-    public function prepareStaging();
-
-    /**
-     * Complete staging the application
-     */
-    public function completeStaging();
-
-    /**
-     * Prepare removing the application
-     */
-    public function prepareRemoval();
-
-    /**
-     * Complete removing the application
+     * Returns the current application which is about to be deployed
      *
-     * This method will do cleanup tasks like removing the directory,
-     * removing unused configs, deactivating the vhost (if applicable) and so on
+     * @return entities\ApplicationInstance
      */
-    public function completeRemoval();
-
-    /**
-     * Activate the application
-     */
-    public function activate();
-
-    /**
-     * Deactivate the application
-     */
-    public function deactivate();
+    public function getApplication();
 }

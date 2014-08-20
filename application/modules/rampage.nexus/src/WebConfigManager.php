@@ -52,7 +52,7 @@ class WebConfigManager extends AbstractPluginManager implements ConfigTemplateLo
     {
         $class = $this->invokableClasses[$canonicalName];
 
-        if (!self::isSubclassOf($class, WebConfigInterface::class)) {
+        if (!$this->isSubclassOf($class, WebConfigInterface::class)) {
             throw new InvalidServiceTypeException(sprintf('The requested service class %s does not implement %s', $class, WebConfigInterface::class));
         }
 

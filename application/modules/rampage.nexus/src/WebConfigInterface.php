@@ -30,17 +30,12 @@ use Serializable;
  */
 interface WebConfigInterface
 {
-    /**
-     * @param entities\ApplicationInstance $instance
-     */
-    public function setApplication(entities\ApplicationInstance $instance);
-
-    /**
-     * Returns the form containing the options
-     *
-     * @return \Zend\Form\FormInterface
-     */
-    public function getOptionsForm();
+//     /**
+//      * Returns the form containing the options
+//      *
+//      * @return \Zend\Form\FormInterface
+//      */
+//     public function getOptionsForm();
 
     /**
      * Set options for this web config
@@ -53,7 +48,7 @@ interface WebConfigInterface
     /**
      * Deactivate the current config for maintenance
      */
-    public function maintenance();
+    public function maintenance(DeployStrategyInterface $strategy);
 
     /**
      * @param DeployStrategyInterface $strategy
@@ -63,12 +58,12 @@ interface WebConfigInterface
     /**
      * Activate the current config
      */
-    public function activate();
+    public function activate(DeployStrategyInterface $strategy);
 
     /**
      * Remove the current config
      */
-    public function remove();
+    public function remove(DeployStrategyInterface $strategy);
 
     /**
      * @param array $options
