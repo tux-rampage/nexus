@@ -25,7 +25,7 @@ namespace rampage\nexus\api;
 
 use rampage\nexus\entities\ApplicationInstance;
 use rampage\nexus\entities\Server;
-use rampage\nexus\cluster\ClusterManagerInterface;
+use rampage\nexus\entities\Cluster;
 
 /**
  * Server API
@@ -41,7 +41,7 @@ interface ServerApiInterface
      * @param Server $server
      * @return bool
      */
-    public function isClusterSupported(ClusterManagerInterface $clusterManager);
+    public function isClusterSupported(Cluster $cluster);
 
     /**
      * Stage the given application's current version

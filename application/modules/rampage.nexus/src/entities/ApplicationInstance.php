@@ -149,6 +149,24 @@ class ApplicationInstance
     }
 
     /**
+     * @return \rampage\nexus\entities\Cluster
+     */
+    public function getCluster()
+    {
+        return $this->cluster;
+    }
+
+    /**
+     * @param \rampage\nexus\entities\Cluster $cluster
+     * @return self
+     */
+    public function setCluster(Cluster $cluster)
+    {
+        $this->cluster = $cluster;
+        return $this;
+    }
+
+    /**
      * @return int
      */
     public function getId()
@@ -182,6 +200,48 @@ class ApplicationInstance
 
         $version->setPackageHash($package->getHash());
         $this->addVersion($version);
+
+        return $this;
+    }
+
+    /**
+     * @return self
+     */
+    public function updateStateFromServers()
+    {
+        $completeStatus = null;
+        $hasErrors = false;
+
+        foreach ($this->cluster->getServers() as $server) {
+            $state = $server->setApplicationState($this)->getApplicationState($this)->getState();
+
+            switch ($state) {
+                case self::STATE_DEPLOYED:
+                case self::STATE_REMOVED:
+                    if (($completeStatus !== null) && ($completeStatus != $state)) {
+                        $hasErrors = true;
+                    } else {
+                        $completeStatus = $state;
+                    }
+
+                    break;
+
+                case self::STATE_ERROR:
+                case self::STATE_UNKNOWN:
+                    $hasErrors = true;
+                    break;
+
+                default:
+                    return $this;
+                    break;
+            }
+        }
+
+        if ($hasErrors) {
+            $this->setState(self::STATE_ERROR);
+        } else if ($completeStatus !== null) {
+            $this->setState($completeStatus);
+        }
 
         return $this;
     }

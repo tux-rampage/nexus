@@ -150,7 +150,6 @@ class ClusterManager
             ->setMethod(HttpRequest::METHOD_PUT)
             ->setContent(Json::encode($data));
 
-        // Fire and forget
         $this->httpClient->send($request);
 
         return $this;

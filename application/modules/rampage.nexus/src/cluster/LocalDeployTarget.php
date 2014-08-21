@@ -25,43 +25,46 @@ namespace rampage\nexus\cluster;
 use rampage\nexus\entities\ApplicationInstance;
 
 
-class ClusterNode extends LocalNode
+class LocalDeployTarget implements DeployTargetInterface
 {
     /**
-     * @var ClusterManager
+     * @var NodeInterface
      */
-    protected $master = null;
+    protected $node;
 
     /**
-     * {@inheritdoc}
-     * @see \rampage\nexus\cluster\LocalNode::__construct()
+     * @param NodeInterface $node
      */
-    public function __construct(ClusterManager $master)
+    public function __construct(NodeInterface $node)
     {
-        $this->master = $master;
+        $this->node = $node;
     }
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\cluster\LocalNode::changeApplicationState()
+     * @see \rampage\nexus\cluster\DeployTargetInterface::deploy()
      */
-    protected function changeApplicationState(ApplicationInstance $application, $newState)
+    public function deploy(ApplicationInstance $application)
     {
-        parent::changeApplicationState($application, $newState);
-        $this->master->updateApplicationState($application);
-
-        return $this;
+        $this->node->stage($application);
+        $this->node->activate($application);
     }
 
     /**
      * {@inheritdoc}
-     * @see \rampage\nexus\cluster\LocalNode::stage()
+     * @see \rampage\nexus\cluster\DeployTargetInterface::refreshState()
      */
-    public function stage(ApplicationInstance $application)
+    public function refreshState(ApplicationInstance $application)
     {
-        $this->master->syncApplication($application);
-        $this->master->downloadArchive($application);
+    }
 
-        parent::stage($application);
+    /**
+     * {@inheritdoc}
+     * @see \rampage\nexus\cluster\DeployTargetInterface::remove()
+     */
+    public function remove(ApplicationInstance $application)
+    {
+        $this->node->deactivate($application);
+        $this->node->remove($application);
     }
 }

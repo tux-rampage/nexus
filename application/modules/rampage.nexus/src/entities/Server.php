@@ -59,10 +59,17 @@ class Server
     protected $url = null;
 
     /**
-     * @orm\ManyToMany(targetEntity="Cluster", mappedBy="servers")
+     * @orm\ManyToMany(targetEntity="Cluster", mappedBy="servers", indexBy="id")
      * @var ArrayCollection|Cluster[]
      */
     protected $clusters = null;
+
+    /**
+     *
+     * @orm\OneToMany(targetEntity="ServerApplicationState", mappedBy="server", fetch="EXTRA_LAZY", indexBy="application", cascade={"all"})
+     * @var ArrayCollection|ServerApplicationState[]
+     */
+    protected $applications;
 
     /**
      * Construct
@@ -140,5 +147,61 @@ class Server
     public function getClusters()
     {
         return $this->clusters;
+    }
+
+    /**
+     * @param ApplicationInstance $application
+     * @return bool
+     */
+    public function hasApplication(ApplicationInstance $application)
+    {
+        foreach ($this->getClusters() as $cluster) {
+            foreach ($cluster->getApplications() as $assignedApplication) {
+                if ($application->getId() == $assignedApplication->getId()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param ApplicationInstance $application
+     * @param string $state
+     * @throws \UnexpectedValueException
+     * @return self
+     */
+    public function setApplicationState(ApplicationInstance $application, $state = null)
+    {
+        if (!$application->getId() && !$this->getId()) {
+            throw new \UnexpectedValueException('setApplicationState requires a persisted application and server instance!');
+        }
+
+        $state = $this->getApplicationState($application);
+
+        if (!$state) {
+            $state = new ServerApplicationState($this, $application);
+            $this->applications[$application->getId()] = $state;
+        }
+
+        if ($state !== null) {
+            $state->setState($state);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param ApplicationInstance $application
+     * @return ServerApplicationState|null
+     */
+    public function getApplicationState(ApplicationInstance $application)
+    {
+        if (!isset($this->applications[$application->getId()])) {
+            return null;
+        }
+
+        return $this->applications[$application->getId()];
     }
 }

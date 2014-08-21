@@ -43,13 +43,13 @@ class Cluster
     protected $name = null;
 
     /**
-     * @orm\ManyToMany(targetEntity="Server")
+     * @orm\ManyToMany(targetEntity="Server", indexBy="id")
      * @orm\JoinTable(name="cluster_servers",
      *      joinColumns={
      *          @orm\JoinColumn(name="cluster_id", referencedColumnName="id", nullable=false)
      *      },
      *      inverseJoinColumns={
-     *          @orm\JoinColumn(name="server_id", referencedColumnName="id", nullable=false)
+     *          @orm\JoinColumn(name="server_id", referencedColumnName="id", nullable=false, unique=true)
      *      }
      * )
      * @var ArrayCollection|Server[]
@@ -63,11 +63,19 @@ class Cluster
     protected $applications = null;
 
     /**
+     * @orm\Column(type="string", nullable=true)
+     * @var string
+     */
+    protected $type = null;
+
+    /**
      * Construct
      */
-    public function __construct()
+    public function __construct($type = null)
     {
+        $this->type = $type;
         $this->servers = new ArrayCollection();
+        $this->applications = new ArrayCollection();
     }
 
     /**
@@ -86,14 +94,6 @@ class Cluster
         return $this->name;
     }
 
-  /**
-     * @return Server[]
-     */
-    public function getServers()
-    {
-        return $this->servers;
-    }
-
     /**
      * @param string $name
      */
@@ -104,14 +104,38 @@ class Cluster
     }
 
     /**
+     * @return string
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
      * @param Server $server
      * @return \rampage\nexus\entities\Cluster
      */
     public function addServer(Server $server)
     {
-        $server->setCluster($this);
+        $server->getClusters()->add($this);
         $this->servers->add($server);
 
         return $this;
+    }
+
+    /**
+     * @return Server[]
+     */
+    public function getServers()
+    {
+        return $this->servers;
+    }
+
+    /**
+     * @return ApplicationInstance[]
+     */
+    public function getApplications()
+    {
+        return $this->applications;
     }
 }

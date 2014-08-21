@@ -20,31 +20,16 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\cluster;
+namespace rampage\nexus\api;
 
-use rampage\nexus\entities\ApplicationInstance;
-
-
-interface DeployTargetInterface
+/**
+ * Key Storage
+ */
+interface KeyStorageInterface
 {
     /**
-     * Deploy the current version of the given application
-     *
-     * @param ApplicationInstance $application
+     * @param string $id
+     * @return resource|null
      */
-    public function deploy(ApplicationInstance $application);
-
-    /**
-     * Remove the given application completely
-     *
-     * @param ApplicationInstance $application
-     */
-    public function remove(ApplicationInstance $application);
-
-    /**
-     * Refresh the application state
-     *
-     * @param ApplicationInstance $application
-     */
-    public function refreshState(ApplicationInstance $application);
+    public function findPublicKey($id);
 }
