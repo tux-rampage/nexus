@@ -22,14 +22,29 @@
 
 namespace rampage\nexus\api;
 
+use rampage\nexus\entities\TrustedPublicKey;
+use Zend\Crypt\PublicKey\Rsa\PrivateKey;
+
 /**
  * Key Storage
  */
 interface KeyStorageInterface
 {
     /**
+     * Return a trusted public key
+     *
      * @param string $id
-     * @return resource|null
+     * @return TrustedPublicKey
      */
-    public function findPublicKey($id);
+    public function findTrustedPublicKey($id);
+
+    /**
+     * @return PrivateKey
+     */
+    public function getPrivateKey();
+
+    /**
+     * @return string
+     */
+    public function getFingerprint();
 }

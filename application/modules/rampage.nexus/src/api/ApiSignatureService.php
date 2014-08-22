@@ -27,15 +27,15 @@ use Zend\Authentication\Result as AuthResult;
 
 use Zend\Http\Request as HttpRequest;
 use Zend\Http\PhpEnvironment\Request as PhpHttpRequest;
+use Zend\Http\Header\Date as DateHeader;
+use Zend\Http\Header\UserAgent;
+use Zend\Crypt\PublicKey\Rsa;
+
+use DateTime;
 
 
-class AuthToken implements AuthAdapterInterface
+class AuthTokenService implements AuthAdapterInterface
 {
-    /**
-     * @var string
-     */
-    private $privateKey = null;
-
     /**
      * @var KeyStorageInterface
      */
@@ -47,26 +47,62 @@ class AuthToken implements AuthAdapterInterface
     protected $request = null;
 
     /**
+     * Maximum time difference in seconds
+     *
+     * @var int
+     */
+    protected $maxTimeDiff = 30;
+
+    /**
      * @param string $name
      */
-    public function __construct(KeyStorageInterface $keyStorage, $privateKey = null, $privatePassphrase = null)
+    public function __construct(KeyStorageInterface $keyStorage)
     {
         $this->keyStorage = $keyStorage;
-
-        if ($privateKey) {
-            $this->privateKey = openssl_pkey_get_private($privateKey, $privatePassphrase);
-        }
-
         $this->request = new PhpHttpRequest();
     }
 
-    public function signRequest(HttpRequest $request)
+    /**
+     * @param string $keyId
+     * @param HttpRequest $request
+     * @throws \LogicException
+     * @return string
+     */
+    protected function createSignatureData($keyId, HttpRequest $request)
     {
-        if (!$this->privateKey) {
-            throw new \LogicException('Cannot sign request without private key');
+        $userAgent = $request->getHeader('User-Agent');
+        $path = $request->getUri()->getPath();
+        $host = $request->getUri()->getHost();
+        $date = $request->getHeader('Date');
+
+        if (!$userAgent instanceof UserAgent) {
+            throw new \LogicException('Cannot sign request without user agent');
         }
 
-        // TODO: Sign request
+        if (!$date instanceof DateHeader) {
+            $date = new DateHeader();
+        }
+
+        return implode('|', array($keyId, $host, $path, $date->getDate(), $userAgent->getFieldValue()));
+    }
+
+    /**
+     * @param HttpRequest $request
+     * @throws \LogicException
+     * @return \rampage\nexus\api\AuthTokenService
+     */
+    public function signRequest(HttpRequest $request)
+    {
+        $keyId = $this->keyStorage->getFingerprint();
+        $key = $this->keyStorage->getPrivateKey();
+        $data = $this->createSignatureData($keyId, $request);
+
+        $signature = (new Rsa())->sign($data, $key);
+        $signature = base64_encode($signature);
+
+        $request->getHeaders()
+            ->addHeaderLine('X-Rampage-Auth-KeyId', $keyId)
+            ->addHeaderLine('X-Rampage-Auth-Signature', $signature);
 
         return $this;
     }
@@ -82,20 +118,55 @@ class AuthToken implements AuthAdapterInterface
     }
 
     /**
+     * @param DateTime $date
+     */
+    protected function checkTimeDiff()
+    {
+        $header = $this->request->getHeader('Date');
+
+        if (!$header instanceof DateHeader) {
+            return false;
+        }
+
+        $date = $header->getDate();
+        $now = new \DateTime(null, $date->date()->getTimezone());
+        $max = $now->getTimestamp() + $this->maxTimeDiff;
+        $min = $now->getTimestamp() - $this->maxTimeDiff;
+
+        if (($date->getTimestamp() < $min) || ($date->getTimestamp() > $max)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * {@inheritdoc}
      * @see \Zend\Authentication\Adapter\AdapterInterface::authenticate()
      */
     public function authenticate()
     {
-        $this->request->getHeader('X-Rampage-Auth')
+        $keyId = $this->request->getHeader('X-Rampage-Auth-KeyId');
+        $signature = $this->request->getHeader('X-Rampage-Auth-Signature');
+        $key = ($keyId)? $this->keyStorage->findTrustedPublicKey($keyId->getFieldValue()) : null;
 
-        if (!$this->publicKey) {
+        if (!$key || !$signature || !$signature->getFieldValue()) {
             return new AuthResult(AuthResult::FAILURE, null);
         }
 
+        if (!$this->checkTimeDiff()) {
+            return new AuthResult(AuthResult::FAILURE, null, array(
+                sprintf('Request time difference too big. Maximum difference is %d seconds', $this->maxTimeDiff)
+            ));
+        }
 
+        $data = $this->createSignatureData($keyId, $this->request);
+        $rawSignature = base64_decode($signature);
+
+        if (!(new Rsa())->verify($data, $rawSignature, $key->getKey())) {
+            return new AuthResult(AuthResult::FAILURE, null);
+        }
+
+        return new AuthResult(AuthResult::SUCCESS, $key);
     }
-
-
-
 }

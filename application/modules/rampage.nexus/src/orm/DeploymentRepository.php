@@ -29,11 +29,15 @@ use rampage\nexus\entities\ApplicationInstance;
 use rampage\nexus\entities\VirtualHost;
 use rampage\nexus\entities\Cluster;
 use rampage\nexus\entities\ConfigTemplate;
+use rampage\nexus\entities\ConfigProperty;
+use rampage\nexus\entities\TrustedPublicKey;
+
+use rampage\auth\UserRepositoryInterface;
 
 use Doctrine\ORM\EntityManager;
 
 
-class DeploymentRepository
+class DeploymentRepository implements UserRepositoryInterface
 {
     /**
      * @var EntityManager
@@ -52,6 +56,26 @@ class DeploymentRepository
     {
         $this->entityManager = $entityManager;
         $this->config = $config;
+    }
+
+    /**
+     * @see \rampage\auth\UserRepositoryInterface::findOneByIdentity()
+     */
+    public function findOneByIdentity($identity)
+    {
+        if (substr($identity, 0, 4) == 'key:') {
+            $id = substr($identity, 4);
+            $key = $this->find(TrustedPublicKey::class, $id);
+
+            if ($key && $key->isRevoked()) {
+                $key = null;
+            }
+
+            return $key;
+        }
+
+        // TODO: Identity Lookup
+        return null;
     }
 
     /**
@@ -74,11 +98,32 @@ class DeploymentRepository
     /**
      * @param string $class
      * @param mixed $id
-     * @return ApplicationInstance|VirtualHost|ConfigTemplate
+     * @return ApplicationInstance|VirtualHost|ConfigTemplate|TrustedPublicKey
      */
     public function find($class, $id)
     {
         return $this->getEntityRepository($class)->find($id);
+    }
+
+    /**
+     * @param string $id
+     * @return ConfigProperty|null
+     */
+    public function findConfigProperty($id)
+    {
+        return $this->getEntityRepository(ConfigProperty::class)->find($id);
+    }
+
+    /**
+     * @return ConfigProperty[]
+     */
+    public function findMergableConfigProperties()
+    {
+        $query = $this->getEntityRepository(ConfigProperty::class)->createQueryBuilder('p');
+        $query->where($query->expr()->notLike('p.name', ':privateProps'));
+        $query->setParameter('privateProps', '.%');
+
+        return $query->getQuery()->getResult();
     }
 
     /**

@@ -89,4 +89,20 @@ class DeploymentConfig extends ArrayConfig
 
         return $url;
     }
+
+    /**
+     * @return string
+     */
+    public function getPrivateKey()
+    {
+        return $this->get('api.private_key');
+    }
+
+    /**
+     * @return string
+     */
+    public function getPrivateKeyPassphrase()
+    {
+        return $this->get('api.private_key_passphrase');
+    }
 }
