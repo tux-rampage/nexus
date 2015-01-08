@@ -3,14 +3,18 @@
   "description" : "A software to manage your PHP application deployments",
   "require" : {
     "zendframework/zendframework" : "2.*",
-    "rampage-php/framework" : ">= 1.1, < 2",
-    "doctrine/orm" : "~2.4",
-    "doctrine/doctrine-orm-module" : "~0.8",
-    "doctrine/migrations" : "1.0.*@dev",
-    "rampage-php/auth" : "1.0.*@dev"
+    "rampage-php/framework" : ">= 1.2,<2",
+    "rampage-php/auth" : "1.0.*",
+    "doctrine/doctrine-mongo-odm-module" : "<1.1",
+    "doctrine/mongodb-odm" : "1.0.*@beta",
+    "rampage-php/gui" : "1.0.*@dev"
   },
+  "repositories" : [ {
+    "type" : "git",
+    "url" : "https://github.com/tux-rampage/rampage-gui"
+  } ],
   "require-dev" : {
-    "rampage-php/framework" : "1.1.*@dev"
+    "rampage-php/framework" : "1.2.*@dev"
   },
   "authors" : [ {
     "name" : "Axel Helmert",
@@ -27,7 +31,7 @@
   "config" : {
     "discard-changes" : true
   },
-  "license" : "GPL-3.0+",
   "type" : "application",
+  "license" : "GPL-3.0+",
   "homepage" : "https://github.com/tux-rampage/rampage-nexus"
 }
