@@ -23,18 +23,18 @@
 namespace rampage\nexus\zs;
 
 use rampage\nexus\Executable;
-use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\entities\Application;
 
 
 class StageScript extends Executable
 {
     /**
      * @param string $file
-     * @param ApplicationInstance $application
+     * @param Application $application
      * @param Config $options
      * @param array $variables
      */
-    public function __construct($file, ApplicationInstance $application, Config $options, array $variables = array())
+    public function __construct($file, Application $application, Config $options, array $variables = array())
     {
         parent::__construct('php');
 

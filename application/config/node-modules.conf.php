@@ -2,5 +2,5 @@
 
 return [
     'rampage.nexus',
-    'rampage.nexus.gui'
+    'rampage.nexus.node'
 ];

@@ -20,35 +20,15 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus;
-
-use Zend\EventManager\ListenerAggregateInterface;
-use Zend\EventManager\ListenerAggregateTrait;
-
-use Zend\ServiceManager\ServiceLocatorAwareTrait;
-use Zend\ServiceManager\ServiceLocatorAwareInterface;
-
-use Zend\Mvc\MvcEvent;
-
-
-class DispatchListener implements ListenerAggregateInterface, ServiceLocatorAwareInterface
-{
-    use ServiceLocatorAwareTrait;
-    use ListenerAggregateTrait;
-
-    /**
-     * @see \Zend\EventManager\ListenerAggregateInterface::attach()
-     */
-    public function attach(\Zend\EventManager\EventManagerInterface $events)
-    {
-        $this->listeners[] = $events->attach(MvcEvent::EVENT_DISPATCH, array($this, 'initLayout'), 100);
-    }
-
-    /**
-     * @param MvcEvent $event
-     */
-    public function initLayout(MvcEvent $event)
-    {
-        // TODO: Implement layout initialization
-    }
-}
+return [
+    'rest' => [
+        'type' => 'segment',
+        'may_terminate' => false,
+        'options' => [
+            'route' => '/rest[/:restVersion]',
+            'constraints' => [
+                'restVersion' => '\d+(\.\d+)+',
+            ],
+        ],
+    ],
+];

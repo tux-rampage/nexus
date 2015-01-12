@@ -20,8 +20,8 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-Phar::webPhar('rampage-nexus.phar', 'index.php', 'public/index.php', null, function($path) {
+Phar::webPhar('rampage-nexus.phar', 'node.php', 'node.php', null, function($path) {
     return 'public/' . ltrim($path . '/');
 });
 
-require 'phar://' . __FILE__ . '/cli.php';
+require 'phar://' . __FILE__ . '/node.php';

@@ -24,7 +24,7 @@
 namespace rampage\nexus\controllers;
 
 use rampage\nexus\DeployStrategyManager;
-use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\entities\Application;
 use rampage\nexus\orm\DeploymentRepository;
 
 use Zend\Mvc\Controller\AbstractActionController;

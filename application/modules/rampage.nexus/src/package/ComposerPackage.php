@@ -32,7 +32,7 @@ use RuntimeException;
 
 use rampage\nexus\ArrayConfig;
 use rampage\nexus\DeployParameter;
-use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\entities\Application;
 
 
 class ComposerPackage extends AbstractApplicationPackage
@@ -234,7 +234,7 @@ class ComposerPackage extends AbstractApplicationPackage
     /**
      * @see \rampage\nexus\PackageInstallerInterface::install()
      */
-    public function install(ApplicationInstance $application)
+    public function install(Application $application)
     {
         $webRoot = $this->getWebRoot();
         $target = $this->deployStrategy->getTargetDirectory();
@@ -266,7 +266,7 @@ class ComposerPackage extends AbstractApplicationPackage
      * {@inheritdoc}
      * @see \rampage\nexus\PackageInstallerInterface::remove()
      */
-    public function remove(ApplicationInstance $application)
+    public function remove(Application $application)
     {
         // Nothing to do
     }

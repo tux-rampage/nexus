@@ -26,7 +26,7 @@ use rampage\core\xml\SimpleXmlElement;
 
 use rampage\nexus\DeployParameter;
 use rampage\nexus\DeployEvent;
-use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\entities\Application;
 use rampage\nexus\package\AbstractApplicationPackage;
 
 use Zend\EventManager\ListenerAggregateInterface;
@@ -218,7 +218,7 @@ class ZendServerPackage extends AbstractApplicationPackage implements ListenerAg
      * @param string $script
      * @return self
      */
-    protected function triggerDeployScript($eventName, ApplicationInstance $application, $prefix)
+    protected function triggerDeployScript($eventName, Application $application, $prefix)
     {
         $script = $this->mapEventScriptName($eventName, $prefix);
 
@@ -449,7 +449,7 @@ class ZendServerPackage extends AbstractApplicationPackage implements ListenerAg
      * {@inheritdoc}
      * @see \rampage\nexus\PackageInstallerInterface::install()
      */
-    public function install(ApplicationInstance $application)
+    public function install(Application $application)
     {
         $appDir = $this->getApplicationDir();
         $this->extract($this->deployStrategy->getTargetDirectory(), $appDir);
@@ -461,7 +461,7 @@ class ZendServerPackage extends AbstractApplicationPackage implements ListenerAg
      * {@inheritdoc}
      * @see \rampage\nexus\PackageInstallerInterface::remove()
      */
-    public function remove(ApplicationInstance $application)
+    public function remove(Application $application)
     {
         // Nothing additional to do
         return $this;

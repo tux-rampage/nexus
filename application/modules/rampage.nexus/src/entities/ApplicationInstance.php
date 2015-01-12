@@ -23,22 +23,19 @@
 
 namespace rampage\nexus\entities;
 
-use rampage\nexus\package\ApplicationPackageInterface;
+use rampage\nexus\forms\FormProviderInterface;
 
-use Doctrine\ORM\Mapping as orm;
-use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ODM\MongoDB\Mapping\Annotations as odm;
 
 use Zend\Form\Annotation as form;
-use Zend\Uri\Http as HttpUri;
-
-use LogicException;
+use Zend\Stdlib\Guard\ArrayOrTraversableGuardTrait;
 
 
 /**
- * @orm\Entity
- * @form\Hydrator("Zend\Stdlib\Hydrator\Reflection")
+ * @odm\Document(collection="applicationInstances")
+ * @form\Hydrator("Zend\Stdlib\Hydrator\ClassMethods")
  */
-class ApplicationInstance
+class ApplicationInstance implements FormProviderInterface
 {
     const STATE_DEPLOYED = 'deployed';
     const STATE_ERROR = 'deployed';
@@ -51,119 +48,77 @@ class ApplicationInstance
     const STATE_INACTIVE = 'inactive';
     const STATE_UNKNOWN = 'unknown';
 
+    use ArrayOrTraversableGuardTrait;
+
     /**
-     * @orm\Id @orm\Column(type="integer") @orm\GeneratedValue
-     * @var int
+     * @odm\Id
+     * @form\Exclude
+     * @var \MongoId
      */
     private $id = null;
 
     /**
-     * @orm\Column(type="string", nullable=false)
+     * @odm\String
+     * @form\Type("text")
      * @var string
      */
     protected $name = null;
 
     /**
-     * @orm\Column(type="string", nullable=false)
+     * @odm\String
+     * @form\Exclude
      * @var string
      */
     protected $state = self::STATE_PENDING;
 
     /**
-     * @orm\Column(type="blob", nullable=true)
-     * @var resource
+     * @form\Type("text")
+     * @form\Attributes({
+     *  "type": "appPackageSelector"
+     * })
+     *
+     * @odm\ReferenceOne(targetDocument="ApplicationPackage")
+     *
+     * @var ApplicationPackage
      */
-    protected $icon = null;
+    protected $package = null;
 
     /**
-     * @orm\Column(type="string", nullable=false)
+     * @form\Exclude
+     * @odm\ReferenceOne(targetDocument="ApplicationPackage")
+     * @var ApplicationPackage
+     */
+    protected $previousPackage = null;
+
+    /**
+     * @form\Type("text")
+     * @form\Atributes({
+     *  "type": "deployTargetSelector"
+     * })
+     *
+     * @odm\ReferenceOne(targetEntity="DeployTarget")
+     * @var DeployTarget
+     */
+    protected $target = null;
+
+    /**
+     * @form\Type("text")
+     * @odm\String
      * @var string
      */
-    protected $applicationName = null;
+    protected $path = null;
 
     /**
-     * @orm\Column(type="string", nullable=false)
-     * @var string
+     * @odm\Hash
+     * @var array
      */
-    protected $packageType = null;
-
-    /**
-     * @orm\OneToMany(targetEntity="ApplicationVersion", cascade={"all"}, mappedBy="application", indexBy="version")
-     * @var ArrayCollection|ApplicationVersion[]
-     */
-    protected $versions = null;
-
-    /**
-     * @orm\OneToOne(targetEntity="ApplicationVersion")
-     * @orm\JoinColumn(name="current_version_id", referencedColumnName="id", nullable=true)
-     * @var ApplicationVersion
-     */
-    protected $currentVersion = null;
-
-    /**
-     * @orm\OneToOne(targetEntity="ApplicationVersion")
-     * @orm\JoinColumn(name="previous_version_id", referencedColumnName="id", nullable=true)
-     * @var ApplicationVersion
-     */
-    protected $previousVersion = null;
-
-    /**
-     * @orm\ManyToOne(targetEntity="VirtualHost")
-     * @orm\JoinColumn(name="vhost_id", referencedColumnName="id", nullable=true)
-     * @var VirtualHost
-     */
-    protected $vhost = null;
-
-    /**
-     * @orm\Column(type="boolean", nullable=false)
-     * @var bool
-     */
-    protected $isConsoleApp = false;
-
-    /**
-     * @orm\Column(type="string", nullable=false)
-     * @var string
-     */
-    protected $deployStrategy = 'default';
-
-    /**
-     * @orm\ManyToOne(targetEntity="Cluster")
-     * @var Cluster
-     */
-    protected $cluster = null;
-
-    /**
-     * @orm\Column(type="string", nullable=false)
-     * @var string
-     */
-    protected $baseUrl = null;
+    protected $userParameters = [];
 
     /**
      * Construct
      */
-    public function __construct($isConsole = false)
+    public function __construct()
     {
-        $this->isConsoleApp = $isConsole;
-        $this->configTemplates = new ArrayCollection();
-        $this->userParameters = new ArrayCollection();
-    }
-
-    /**
-     * @return \rampage\nexus\entities\Cluster
-     */
-    public function getCluster()
-    {
-        return $this->cluster;
-    }
-
-    /**
-     * @param \rampage\nexus\entities\Cluster $cluster
-     * @return self
-     */
-    public function setCluster(Cluster $cluster)
-    {
-        $this->cluster = $cluster;
-        return $this;
     }
 
     /**
@@ -175,122 +130,12 @@ class ApplicationInstance
     }
 
     /**
-     * @param PackageInstallerInterface $package
+     * {@inheritdoc}
      */
-    public function updateFromApplicationPackage(ApplicationPackageInterface $package)
+    public function getForm()
     {
-        if ($this->id && (($this->applicationName != $package->getName()) || ($this->packageType != $package->getTypeName()))) {
-            throw new LogicException('Application name mismatch.');
-        }
+        // TODO Auto-generated method stub
 
-        $this->packageType = $package->getTypeName();
-        $this->applicationName = $package->getName();
-        $icon = $package->getIcon();
-
-        if ($icon !== false) {
-            $this->setIcon($icon);
-        }
-
-        $versionNumber = $package->getVersion();
-        $version = $this->getVersion($versionNumber);
-
-        if (!$version) {
-            $version = new ApplicationVersion($versionNumber);
-        }
-
-        $version->setPackageHash($package->getHash());
-        $this->addVersion($version);
-
-        return $this;
-    }
-
-    /**
-     * @return self
-     */
-    public function updateStateFromServers()
-    {
-        $completeStatus = null;
-        $hasErrors = false;
-
-        foreach ($this->cluster->getServers() as $server) {
-            $state = $server->setApplicationState($this)->getApplicationState($this)->getState();
-
-            switch ($state) {
-                case self::STATE_DEPLOYED:
-                case self::STATE_REMOVED:
-                    if (($completeStatus !== null) && ($completeStatus != $state)) {
-                        $hasErrors = true;
-                    } else {
-                        $completeStatus = $state;
-                    }
-
-                    break;
-
-                case self::STATE_ERROR:
-                case self::STATE_UNKNOWN:
-                    $hasErrors = true;
-                    break;
-
-                default:
-                    return $this;
-                    break;
-            }
-        }
-
-        if ($hasErrors) {
-            $this->setState(self::STATE_ERROR);
-        } else if ($completeStatus !== null) {
-            $this->setState($completeStatus);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @param SplFileInfo|PharFileInfo|resource|string|null $icon
-     * @return self
-     */
-    public function setIcon($icon)
-    {
-        if (is_resource($this->icon)) {
-            fclose($this->icon);
-            $this->icon = null;
-        }
-
-        if (($icon === null) || ($icon === false)) {
-            return $this;
-        }
-
-        if (is_resource($icon)) {
-            $this->icon = $icon;
-            return $this;
-        }
-
-        if ($icon instanceof \PharFileInfo) {
-            $this->icon = fopen('php://temp', 'w+');
-
-            fwrite($this->icon, $icon->getContent());
-            fseek($this->icon, 0);
-
-            return $this;
-        }
-
-        $path = ($icon instanceof \SplFileInfo)? $icon->getPathname() : $icon;
-        $this->icon = fopen($path, 'r');
-
-        if ($this->icon === false) {
-            $this->icon = null;
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return resource
-     */
-    public function getIcon()
-    {
-        return $this->icon;
     }
 
     /**
@@ -302,19 +147,12 @@ class ApplicationInstance
     }
 
     /**
-     * @return string
+     * @param string $name
      */
-    public function getApplicationName()
+    public function setName($name)
     {
-        return $this->applicationName;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPackageType()
-    {
-        return $this->packageType;
+        $this->name = (string)$name;
+        return $this;
     }
 
     /**
@@ -326,185 +164,104 @@ class ApplicationInstance
     }
 
     /**
-     * @return HttpUri
-     */
-    public function getBaseUrl()
-    {
-        return new HttpUri($this->baseUrl);
-    }
-
-    /**
-     * @param string $baseUrl
-     * @return self
-     */
-    public function setBaseUrl($baseUrl)
-    {
-        $this->baseUrl = $baseUrl;
-        return $this;
-    }
-
-    /**
-     * @param string $name
-     */
-    public function setName($name)
-    {
-        $this->name = $name;
-        return $this;
-    }
-
-    /**
      * @param string $state
+     * @return self
      */
     public function setState($state)
     {
-        $this->state = $state;
+        $this->state = (string)$state;
+        return $this;
+    }
+
+    /**
+     * @return ApplicationPackage
+     */
+    public function getPackage()
+    {
+        return $this->package;
+    }
+
+    /**
+     * @param ApplicationPackage $package
+     * @return self
+     */
+    public function setPackage(ApplicationPackage $package)
+    {
+        $this->package = $package;
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getDeployStrategy()
+    public function getPath()
     {
-        return $this->deployStrategy;
+        return $this->path;
     }
 
     /**
-     * @return bool
-     */
-    public function isConsoleApplication()
-    {
-        return $this->isConsoleApp;
-    }
-
-    /**
-     * @param VirtualHost $host
+     * @param string $path
      * @return self
      */
-    public function setVirtualHost(VirtualHost $host)
+    public function setPath($path)
     {
-        $this->vhost = $host;
+        $this->path = (string)$path;
         return $this;
     }
 
     /**
-     * @return \rampage\nexus\entities\VirtualHost|null
+     * @return ApplicationPackage
      */
-    public function getVirtualHost()
+    public function getPreviousPackage()
     {
-        if ($this->isConsoleApplication()) {
-            return null;
-        }
-
-        return $this->vhost;
+        return $this->previousPackage;
     }
 
     /**
-     * @param string $version
-     * @return ApplicationVersion|null
-     */
-    public function getVersion($version)
-    {
-        if (!isset($this->versions[$version])) {
-            return null;
-        }
-
-        return $this->versions[$version];
-    }
-
-    /**
-     * @param ApplicationVersion $version
-     */
-    public function addVersion(ApplicationVersion $version)
-    {
-        $version->setApplication($this);
-        $this->versions[$version->getVersion()] = $version;
-    }
-
-    /**
-     * @return Ambigous <\Doctrine\Common\Collections\ArrayCollection, multitype:\rampage\nexus\entities\UserParameter >
-     */
-    public function getVersions()
-    {
-        return $this->versions;
-    }
-
-    /**
-     * @return \rampage\nexus\entities\ApplicationVersion
-     */
-    public function getCurrentVersion()
-    {
-        return $this->currentVersion;
-    }
-
-    /**
-     * @param \rampage\nexus\entities\ApplicationVersion $version
+     * @param ApplicationPackage $previousPackage
      * @return self
      */
-    public function setCurrentVersion(ApplicationVersion $version)
+    public function setPreviousPackage(ApplicationPackage $previousPackage)
     {
-        if ($this->getCurrentVersion()) {
-            $this->setPreviousVersion($this->getCurrentVersion());
-        }
-
-        if (!isset($this->versions[$version->getVersion()])) {
-            $this->addVersion($version);
-        }
-
-        $this->currentVersion = $version;
+        $this->previousPackage = $previousPackage;
         return $this;
     }
 
     /**
-     * @return \rampage\nexus\entities\ApplicationVersion
+     * @return DeployTarget
      */
-    public function getPreviousVersion()
+    public function getTarget()
     {
-        return $this->previousVersion;
+        return $this->target;
     }
 
     /**
-     * @param \rampage\nexus\entities\ApplicationVersion $previousVersion
+     * @param DeployTarget $target
      * @return self
      */
-    public function setPreviousVersion(ApplicationVersion $previousVersion = null)
+    public function setTarget(DeployTarget $target)
     {
-        $this->previousVersion = $previousVersion;
+        $this->target = $target;
         return $this;
     }
 
     /**
-     * Create a new application version that should be used as current version
-     *
-     * @param string $version
-     * @param array|Traversable $params
-     * @param ConfigTemplate[] $templates
-     * @return ApplicationVersion
+     * @return array|\Traversable
      */
-    public function newVersion($version, $params = array(), $templates = array())
+    public function getUserParameters()
     {
-        if (isset($this->versions[$version])) {
-            $instance = $this->versions[$version];
-        } else {
-            $instance = new ApplicationVersion($version);
-        }
+        return $this->userParameters;
+    }
 
-        $current = $this->getCurrentVersion();
-        if ($current) {
-            $instance->setUserParameters($current->getUserParameters());
+    /**
+     * @param array|\Traversable $parameters
+     * @return self
+     */
+    public function setUserParameters($parameters)
+    {
+        $this->guardForArrayOrTraversable($parameters, 'user parameters');
+        $this->userParameters = $parameters;
 
-            foreach ($current->getConfigTemplates() as $template) {
-                $instance->addConfigTemplate($template);
-            }
-        }
-
-        $instance->addUserParameters($params);
-
-        foreach ($templates as $template) {
-            $instance->addConfigTemplate($template);
-        }
-
-        $this->setCurrentVersion($instance);
-        return $instance;
+        return $this;
     }
 }

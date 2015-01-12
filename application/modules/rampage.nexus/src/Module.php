@@ -5,12 +5,9 @@ use Zend\Config\Factory as ConfigFactory;
 
 use Zend\ModuleManager\ModuleManager;
 use Zend\ModuleManager\ModuleManagerInterface;
-use Zend\ModuleManager\ModuleEvent;
-use Zend\ModuleManager\Listener\ServiceListener;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
 use Zend\ModuleManager\Feature\ServiceProviderInterface;
 use Zend\ModuleManager\Feature\InitProviderInterface;
-use Zend\ModuleManager\Feature\RouteProviderInterface;
 
 use rampage\core\modules\EventListenerProviderInterface;
 
@@ -20,7 +17,6 @@ use rampage\core\modules\EventListenerProviderInterface;
 class Module implements ConfigProviderInterface,
     ServiceProviderInterface,
     InitProviderInterface,
-    RouteProviderInterface,
     EventListenerProviderInterface
 {
     /**
@@ -39,7 +35,7 @@ class Module implements ConfigProviderInterface,
      */
     protected function loadConfig($type)
     {
-        return include __DIR__ . '/../conf/' . $type . '.config.php';
+        return include __DIR__ . '/../config/' . $type . '.conf.php';
     }
 
     /**
@@ -58,58 +54,35 @@ class Module implements ConfigProviderInterface,
         ConfigFactory::registerReader('conf', 'ini');
         ConfigFactory::registerWriter('conf', 'ini');
 
-        $this->serviceManager = $manager->getEvent()->getParam('ServiceManager');
-        $serviceListener = $this->serviceManager->get('ServiceListener');
+//         $this->serviceManager = $manager->getEvent()->getParam('ServiceManager');
+//         $serviceListener = $this->serviceManager->get('ServiceListener');
 
-        $manager->getEventManager()->attach(new ConfigListenerOptions());
-        $manager->getEventManager()->attach(ModuleEvent::EVENT_LOAD_MODULES_POST, array($this, 'addModulePackeTypes'));
+//         $manager->getEventManager()->attach(new ConfigListenerOptions());
+//         $manager->getEventManager()->attach(ModuleEvent::EVENT_LOAD_MODULES_POST, array($this, 'addModulePackeTypes'));
 
-        // Add service listeners
-        if ($serviceListener instanceof ServiceListener) {
-            $serviceListener->addServiceManager(
-                DeployStrategyManager::class,
-                'deploy_strategies',
-                features\DeployStrategyProviderInterface::class,
-                'getDeployStrategiesConfig'
-            );
+//         // Add service listeners
+//         if ($serviceListener instanceof ServiceListener) {
+//             $serviceListener->addServiceManager(
+//                 DeployStrategyManager::class,
+//                 'deploy_strategies',
+//                 features\DeployStrategyProviderInterface::class,
+//                 'getDeployStrategiesConfig'
+//             );
 
-            $serviceListener->addServiceManager(
-                WebConfigManager::class,
-                'web_configs',
-                features\WebConfigProviderInterface::class,
-                'getWebConfigsConfig'
-            );
+//             $serviceListener->addServiceManager(
+//                 WebConfigManager::class,
+//                 'web_configs',
+//                 features\WebConfigProviderInterface::class,
+//                 'getWebConfigsConfig'
+//             );
 
-            $serviceListener->addServiceManager(
-                api\ServerApiManager::class,
-                'server_apis',
-                features\ServerApiProviderInterface::class,
-                'getServerApisConfig'
-            );
-        }
-    }
-
-    /**
-     * @param ModuleEvent $event
-     */
-    public function addModulePackeTypes(ModuleEvent $event)
-    {
-        $moduleManager = $event->getTarget();
-        $packageTypeManager = $this->serviceManager->get(package\PackageTypeManager::class);
-
-        if ((!$moduleManager instanceof ModuleManager) || (!$packageTypeManager instanceof package\PackageTypeManager)) {
-            return;
-        }
-
-        foreach ($moduleManager->getLoadedModules() as $module) {
-            if (!$module instanceof features\PackageTypeProviderInterface) {
-                continue;
-            }
-
-            foreach ($module->getDeploymentPackageTypes() as $type) {
-                $packageTypeManager->addPackageType($type);
-            }
-        }
+//             $serviceListener->addServiceManager(
+//                 api\ServerApiManager::class,
+//                 'server_apis',
+//                 features\ServerApiProviderInterface::class,
+//                 'getServerApisConfig'
+//             );
+//         }
     }
 
     /**
@@ -127,15 +100,6 @@ class Module implements ConfigProviderInterface,
     public function getServiceConfig()
     {
         return $this->loadConfig('services');
-    }
-
-    /**
-     * {@inheritdoc}
-     * @see \Zend\ModuleManager\Feature\RouteProviderInterface::getRouteConfig()
-     */
-    public function getRouteConfig()
-    {
-        return $this->loadConfig('routes');
     }
 
     /**

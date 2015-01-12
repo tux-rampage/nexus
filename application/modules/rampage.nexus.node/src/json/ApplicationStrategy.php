@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2014 Axel Helmert
+ * Copyright (c) 2015 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @author    Axel Helmert
- * @copyright Copyright (c) 2014 Axel Helmert
+ * @copyright Copyright (c) 2015 Axel Helmert
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus;
+namespace rampage\nexus\node\json;
 
-require_once __DIR__ . '/../application/bootstrap.php';
-Application::init()->run();
+use rampage\nexus\entities;
+use rampage\nexus\json\AbstractStrategy;
+
+
+class ApplicationStrategy extends AbstractStrategy
+{
+    /**
+     * {@inheritdoc}
+     * @var entities\Application $model
+     */
+    public function toArray()
+    {
+        return [
+            // TODO: Implement JSON-Strategy
+        ];
+    }
+}

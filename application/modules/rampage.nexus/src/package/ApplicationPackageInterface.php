@@ -23,7 +23,7 @@
 
 namespace rampage\nexus\package;
 
-use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\entities\Application;
 
 use SplFileInfo;
 use rampage\nexus\DeployStrategyInterface;
@@ -120,12 +120,12 @@ interface ApplicationPackageInterface
      * @param Application $application
      * @return self
      */
-    public function install(ApplicationInstance $application);
+    public function install(Application $application);
 
     /**
      * Remove this application
      *
      * @param entities\ApplicationInstance $application
      */
-    public function remove(ApplicationInstance $application);
+    public function remove(Application $application);
 }

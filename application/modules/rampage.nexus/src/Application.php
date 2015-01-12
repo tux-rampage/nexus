@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2014 Axel Helmert
+ * Copyright (c) 2015 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,39 +16,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @author    Axel Helmert
- * @copyright Copyright (c) 2014 Axel Helmert
+ * @copyright Copyright (c) 2015 Axel Helmert
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
 namespace rampage\nexus;
 
-use Zend\EventManager\ListenerAggregateInterface;
-use Zend\EventManager\ListenerAggregateTrait;
+use rampage\core\Application as MvcApplication;
 
-use Zend\ServiceManager\ServiceLocatorAwareTrait;
-use Zend\ServiceManager\ServiceLocatorAwareInterface;
-
-use Zend\Mvc\MvcEvent;
-
-
-class DispatchListener implements ListenerAggregateInterface, ServiceLocatorAwareInterface
+/**
+ * MVC application
+ */
+class Application extends MvcApplication
 {
-    use ServiceLocatorAwareTrait;
-    use ListenerAggregateTrait;
-
     /**
-     * @see \Zend\EventManager\ListenerAggregateInterface::attach()
+     * @return array
      */
-    public function attach(\Zend\EventManager\EventManagerInterface $events)
+    protected static function getAppConfig()
     {
-        $this->listeners[] = $events->attach(MvcEvent::EVENT_DISPATCH, array($this, 'initLayout'), 100);
+        return require APPLICATION_DIR . 'config/application.conf.php';
     }
 
     /**
-     * @param MvcEvent $event
+     * @return \rampage\core\Application
      */
-    public function initLayout(MvcEvent $event)
+    public static function init()
     {
-        // TODO: Implement layout initialization
+        return parent::init(static::getAppConfig());
     }
 }

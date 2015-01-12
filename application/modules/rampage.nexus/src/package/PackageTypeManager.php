@@ -11,7 +11,7 @@ namespace rampage\nexus\package;
 
 use SplFileInfo;
 
-use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\entities\Application;
 use rampage\nexus\PackageStorage;
 use rampage\nexus\entities\ApplicationVersion;
 
@@ -86,7 +86,7 @@ class PackageTypeManager
      * @param \rampage\nexus\entities\ApplicationInstance $application
      * @return ApplicationPackageInterface
      */
-    public function createFromApplication(ApplicationInstance $application)
+    public function createFromApplication(Application $application)
     {
         $version = $application->getCurrentVersion();
 

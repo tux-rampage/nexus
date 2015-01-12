@@ -27,7 +27,7 @@ if (version_compare(PHP_VERSION, '5.5', '<')) {
 
 // Dev environment?
 if (isset($_SERVER['APPLICATION_DEVELOPMENT']) && $_SERVER['APPLICATION_DEVELOPMENT']) {
-    define('APPLICATION_DEVELOPMENT', (bool)Phar::running());
+    define('APPLICATION_DEVELOPMENT', !Phar::running());
 } else {
     define('APPLICATION_DEVELOPMENT', false);
 }
@@ -47,6 +47,3 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 // Register the final exception handler
 rampage\core\Application::registerExceptionHandler(true);
-
-// Register the error to exception handler
-//rampage\core\Application::registerDevelopmentErrorHandler(true);

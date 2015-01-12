@@ -25,7 +25,7 @@ namespace rampage\nexus\zs;
 use rampage\nexus\api\ServerApiInterface;
 
 use rampage\nexus\entities\Server;
-use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\entities\Application;
 
 use Zend\Stdlib\Parameters;
 use Zend\Uri\Http as HttpUri;
@@ -42,19 +42,19 @@ class ZendServerApi implements ServerApiInterface
      * @var Parameters
      */
     protected $statusMap = array(
-        'uploadError' => ApplicationInstance::STATE_ERROR,
-        'staging' => ApplicationInstance::STATE_STAGING,
-        'stageError' => ApplicationInstance::STATE_ERROR,
-        'activating' => ApplicationInstance::STATE_ACTIVATING,
-        'deployed' => ApplicationInstance::STATE_DEPLOYED,
-        'activateError' => ApplicationInstance::STATE_ERROR,
-        'deactivating' => ApplicationInstance::STATE_DEACTIVATING,
-        'deactivateError' => ApplicationInstance::STATE_ERROR,
-        'unstaging' => ApplicationInstance::STATE_REMOVING,
-        'unstageError' => ApplicationInstance::STATE_ERROR,
-        'rollingBack' => ApplicationInstance::STATE_STAGING,
-        'rollbackError' => ApplicationInstance::STATE_ERROR,
-        'partially deployed' => ApplicationInstance::STATE_STAGING
+        'uploadError' => Application::STATE_ERROR,
+        'staging' => Application::STATE_STAGING,
+        'stageError' => Application::STATE_ERROR,
+        'activating' => Application::STATE_ACTIVATING,
+        'deployed' => Application::STATE_DEPLOYED,
+        'activateError' => Application::STATE_ERROR,
+        'deactivating' => Application::STATE_DEACTIVATING,
+        'deactivateError' => Application::STATE_ERROR,
+        'unstaging' => Application::STATE_REMOVING,
+        'unstageError' => Application::STATE_ERROR,
+        'rollingBack' => Application::STATE_STAGING,
+        'rollbackError' => Application::STATE_ERROR,
+        'partially deployed' => Application::STATE_STAGING
     );
 
     /**
@@ -109,7 +109,7 @@ class ZendServerApi implements ServerApiInterface
         return $this;
     }
 
-    public function deployNew(Server $server, ApplicationInstance $instance)
+    public function deployNew(Server $server, Application $instance)
     {
         $this->client->setUri($server->getUrl());
         $this->client->deployApplication();
@@ -118,7 +118,7 @@ class ZendServerApi implements ServerApiInterface
     /**
      * @see \rampage\nexus\api\ServerApiInterface::deploy()
      */
-    public function deploy(Server $server, ApplicationInstance $instance)
+    public function deploy(Server $server, Application $instance)
     {
         $this->client->setUri($server->getUrl());
         $appId = $this->client->findDeployedApplicationId($instance->getName());
@@ -151,7 +151,7 @@ class ZendServerApi implements ServerApiInterface
     /**
      * @see \rampage\nexus\api\ServerApiInterface::remove()
      */
-    public function remove(Server $server, ApplicationInstance $application)
+    public function remove(Server $server, Application $application)
     {
         $this->client->setUri($server->getUrl());
 
@@ -167,14 +167,14 @@ class ZendServerApi implements ServerApiInterface
     /**
      * @see \rampage\nexus\api\ServerApiInterface::status()
      */
-    public function status(Server $server, ApplicationInstance $application)
+    public function status(Server $server, Application $application)
     {
         $this->client->setUri($server->getUrl());
         $info = $this->client->applicationGetStatusByName($application->getName());
         $status = (string)$info->status;
 
         return array(
-            'state' => $this->statusMap[$status]? : ApplicationInstance::STATE_UNKNOWN,
+            'state' => $this->statusMap[$status]? : Application::STATE_UNKNOWN,
             'version' => (string)$info->deployedVersions->deployedVersion
         );
     }

@@ -13,6 +13,9 @@
       <php>
         <min>5.5</min>
       </php>
+      <library>
+        <name>PHP Syslib</name>
+      </library>
     </required>
   </dependencies>
     <parameters>

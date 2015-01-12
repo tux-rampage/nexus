@@ -22,7 +22,7 @@
 
 namespace rampage\nexus\forms;
 
-use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\entities\Application;
 use rampage\nexus\PackageInstallerInterface;
 use rampage\nexus\DeployParameter;
 
@@ -41,10 +41,10 @@ class UserParamsFormBuilder
     protected $application = null;
 
     /**
-     * @param ApplicationInstance $application
+     * @param Application $application
      * @return self
      */
-    public function setApplication(ApplicationInstance $application)
+    public function setApplication(Application $application)
     {
         $this->application = $application;
         return $this;
