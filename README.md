@@ -16,7 +16,8 @@ A tool to manage your php application deployments. It should be the glue between
 
 ## Future Features
 
-* [ ] Cloud Automation (AWS, Rackspace, Rightscale)
+* [ ] Cloud automation (AWS, Rackspace, Rightscale)
+* [ ] Support for additional ci tools.
 
 ## License
 
