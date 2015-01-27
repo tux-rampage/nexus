@@ -1,7 +1,8 @@
 # Rampage Nexus
 
-A tool to manage your php application deployments. It should be the glue between your CI-Tool and you PHP-Servers
-This application is work in progress.
+A tool to manage your php application deployments. It should be the glue between your CI-Tool and your PHP-Servers.
+
+> __INFO__: This application is work in progress.
 
 ## Planned Key-Features
 
