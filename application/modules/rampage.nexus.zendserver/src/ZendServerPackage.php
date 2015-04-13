@@ -27,7 +27,7 @@ use rampage\core\xml\SimpleXmlElement;
 use rampage\nexus\DeployParameter;
 use rampage\nexus\DeployEvent;
 use rampage\nexus\entities\Application;
-use rampage\nexus\package\AbstractApplicationPackage;
+use rampage\nexus\package\AbstractInstaller;
 
 use Zend\EventManager\ListenerAggregateInterface;
 use Zend\EventManager\ListenerAggregateTrait;
@@ -40,7 +40,7 @@ use RuntimeException;
 use SplFileInfo;
 
 
-class ZendServerPackage extends AbstractApplicationPackage implements ListenerAggregateInterface
+class ZendServerPackage extends AbstractInstaller implements ListenerAggregateInterface
 {
     use ListenerAggregateTrait;
 

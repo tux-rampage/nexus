@@ -23,33 +23,24 @@
 
 namespace rampage\nexus\package;
 
-use rampage\nexus\entities\Application;
+use rampage\nexus\entities;
+use rampage\nexus\DeployStrategyInterface;
+use rampage\nexus\PackageInterface;
 
 use SplFileInfo;
-use rampage\nexus\DeployStrategyInterface;
-
 
 /**
  * Interface for implementing application packages
  */
-interface ApplicationPackageInterface
+interface InstallerInterface
 {
     /**
      * Check if this installer supports the given package
      *
-     * @param string|SplFileInfo $archive
+     * @param ApplicationInstance $package
      * @return boolean
      */
-    public function supports(SplFileInfo $archive);
-
-    /**
-     * Create a new package instance from the given package file
-     *
-     * @param string|SplFileInfo $archive
-     * @throws Exception
-     * @return ApplicationPackageInterface
-     */
-    public function create(SplFileInfo $archive);
+    public function supports(PackageInterface $package);
 
     /**
      * @param DeployStrategyInterface $strategy
@@ -66,66 +57,43 @@ interface ApplicationPackageInterface
     public function getTypeName();
 
     /**
-     * Returns the application name
-     */
-    public function getName();
-
-    /**
-     * Returns the version number of this package
+     * Creates a new application package entity from a package file
      *
-     * @return string
+     * @param SplFileInfo $archive
+     * @return entities\ApplicationPackage
+     * @throws \Exception When creating the package entity fails
      */
-    public function getVersion();
-
-    /**
-     * Returns the defined deplyoment parameters
-     *
-     * @return DeployParameter[]
-     */
-    public function getParameters();
-
-    /**
-     * Returns the icon for the application
-     *
-     * @return resource|\SplFileInfo|string|false
-     */
-    public function getIcon();
-
-    /**
-     * Returns the license for this application
-     *
-     * @return string|resource|\SplFileInfo|false
-     */
-    public function getLicense();
-
-    /**
-     * Returns the hash of this package file
-     *
-     * @return string
-     */
-    public function getHash();
+    public function createEntityFromPackageFile(SplFileInfo $archive);
 
     /**
      * Returns the relative web root path.
      *
      * If the return value is NULL or empty, the deploy strategy may assume that the application directory is the web root.
      *
+     * @param entities\ApplicationInstance
      * @return string|null
      */
-    public function getWebRoot();
+    public function getWebRoot(entities\ApplicationInstance $application);
 
     /**
      * Install this application package for the given application
      *
-     * @param Application $application
+     * @param entities\ApplicationInstance $application
      * @return self
      */
-    public function install(Application $application);
+    public function install(entities\ApplicationInstance $application);
 
     /**
      * Remove this application
      *
      * @param entities\ApplicationInstance $application
      */
-    public function remove(Application $application);
+    public function remove(entities\ApplicationInstance $application);
+
+    /**
+     * Remove this application
+     *
+     * @param entities\ApplicationInstance $application
+     */
+    public function rollback(entities\ApplicationInstance $application);
 }

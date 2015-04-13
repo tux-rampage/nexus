@@ -229,7 +229,7 @@ class ApplicationPackage implements PackageInterface
     }
 
     /**
-     * @param \Doctrine\MongoDB\GridFSFile $file
+     * @param \SplFileInfo|string $file
      * @return self
      */
     public function setFile($file)

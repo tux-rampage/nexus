@@ -14,6 +14,12 @@ return [
     'di' => include __DIR__ . '/module.d/di.conf.php',
 
     'rampage' => [
+        'themes' => [
+            'rampage.nexus' => [
+                'path' => __DIR__ . '/../theme',
+                'fallbacks' => [ 'rampage.gui' ],
+            ],
+        ],
         'resources' => [
             'rampage.nexus' => dirname(__DIR__) . '/resources',
         ],

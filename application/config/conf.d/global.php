@@ -16,8 +16,8 @@ return [
         'layout' => 'layout',
 
         'display_exceptions' => true,
-        'exception_template' => 'error/500',
         'display_not_found_reason' => true,
+        'exception_template' => 'error/500',
         'not_found_template' => 'error/404',
     ]
 ];

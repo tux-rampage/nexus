@@ -65,7 +65,9 @@ class PackageParameter
      */
     public function __construct($name = null)
     {
-
+        if ($name !== null) {
+            $this->setName($name);
+        }
     }
 
     /**

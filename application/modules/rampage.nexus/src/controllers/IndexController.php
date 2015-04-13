@@ -36,6 +36,6 @@ class IndexController extends AbstractActionController
      */
     public function indexAction()
     {
-        return new TemplateViewModel('rampage.nexus/index');
+        return new TemplateViewModel('@rampage.nexus/index');
     }
 }

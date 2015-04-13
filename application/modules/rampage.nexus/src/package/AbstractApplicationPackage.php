@@ -23,32 +23,15 @@
 namespace rampage\nexus\package;
 
 use rampage\nexus\DeployStrategyInterface;
+use rampage\nexus\PackageInterface;
 
 
-abstract class AbstractApplicationPackage implements ApplicationPackageInterface
+abstract class AbstractInstaller implements InstallerInterface
 {
-    /**
-     * Package type name
-     */
-    const TYPE_NAME = '';
-
     /**
      * @var DeployStrategyInterface
      */
     protected $deployStrategy = null;
-
-    /**
-     * {@inheritdoc}
-     * @see \rampage\nexus\package\ApplicationPackageInterface::getTypeName()
-     */
-    public function getTypeName()
-    {
-        if (static::TYPE_NAME == '') {
-            return get_class($this);
-        }
-
-        return static::TYPE_NAME;
-    }
 
     /**
      * {@inheritdoc}
@@ -58,5 +41,13 @@ abstract class AbstractApplicationPackage implements ApplicationPackageInterface
     {
         $this->deployStrategy = $strategy;
         return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function supports(PackageInterface $instance)
+    {
+        return ($instance->getType() == $this->getTypeName());
     }
 }
