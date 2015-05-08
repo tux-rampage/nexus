@@ -45,8 +45,8 @@ class ApplicationPackage implements PackageInterface
     protected $filename = null;
 
     /**
-     * @odm\File
-     * @var GridFSFile
+     * @odm\ReferenceOne(targetDocument="PakageFile", simple=true)
+     * @var PackageFile|null
      */
     protected $file = null;
 

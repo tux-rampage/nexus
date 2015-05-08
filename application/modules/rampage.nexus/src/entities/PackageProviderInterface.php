@@ -22,56 +22,18 @@
 
 namespace rampage\nexus\entities;
 
-use Doctrine\ODM\MongoDB\Mapping\Annotations as odm;
-
 /**
- * @odm\Document
- * @odm\InheritanceType("SINGLE_COLLECTION")
- * @odm\DiscriminatorField("type")
+ * Package provider interface
  */
-class DeployTarget
+interface PackageProviderInterface
 {
     /**
-     * @odm\Id
-     * @var \MongoId
+     * @param Application $application
      */
-    private $id = null;
+    public function updatePackages(Application $application);
 
     /**
-     * @odm\String
-     * @var string
+     * @param ApplicationPackage $application
      */
-    protected $name = null;
-
-    /**
-     * @odm\ReferenceMany(targetDocument=Node)
-     * @var Node
-     */
-    protected $nodes = [];
-
-    /**
-     * @return MongoId
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    /**
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * @param string $name
-     * @return self
-     */
-    public function setName($name)
-    {
-        $this->name = (string)$name;
-        return $this;
-    }
+    public function downloadPackage(ApplicationPackage $application);
 }

@@ -25,53 +25,17 @@ namespace rampage\nexus\entities;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as odm;
 
 /**
- * @odm\Document
- * @odm\InheritanceType("SINGLE_COLLECTION")
- * @odm\DiscriminatorField("type")
+ * The default deploy target
  */
-class DeployTarget
+class DefaultDeployTarget extends DeployTarget
 {
-    /**
-     * @odm\Id
-     * @var \MongoId
-     */
-    private $id = null;
+
 
     /**
-     * @odm\String
-     * @var string
+     * @return Server[]
      */
-    protected $name = null;
-
-    /**
-     * @odm\ReferenceMany(targetDocument=Node)
-     * @var Node
-     */
-    protected $nodes = [];
-
-    /**
-     * @return MongoId
-     */
-    public function getId()
+    public function getServers()
     {
-        return $this->id;
-    }
 
-    /**
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * @param string $name
-     * @return self
-     */
-    public function setName($name)
-    {
-        $this->name = (string)$name;
-        return $this;
     }
 }

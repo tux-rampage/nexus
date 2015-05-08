@@ -23,34 +23,38 @@
 namespace rampage\nexus\entities;
 
 use Doctrine\ODM\MongoDB\Mapping\Annotations as odm;
+use Zend\Form\Annotation as form;
 
 /**
- * @odm\Document
- * @odm\InheritanceType("SINGLE_COLLECTION")
- * @odm\DiscriminatorField("type")
+ * @odm\Document(collection="servers")
+ * @form\Hydrator("Zend\Stdlib\Hydrator\ClassMethods")
  */
-class DeployTarget
+class Server
 {
     /**
      * @odm\Id
+     * @form\Exclude()
      * @var \MongoId
      */
     private $id = null;
 
     /**
      * @odm\String
+     * @form\Type("text")
      * @var string
      */
     protected $name = null;
 
     /**
-     * @odm\ReferenceMany(targetDocument=Node)
-     * @var Node
+     * @odm\String()
+     * @form\Type("text")
+     * @form\Validator({"type": "uri"})
+     * @var string
      */
-    protected $nodes = [];
+    protected $url = null;
 
     /**
-     * @return MongoId
+     * @return \MongoId
      */
     public function getId()
     {
@@ -58,7 +62,7 @@ class DeployTarget
     }
 
     /**
-     * @return string
+     * @return \rampage\nexus\entities\string
      */
     public function getName()
     {
@@ -66,12 +70,11 @@ class DeployTarget
     }
 
     /**
-     * @param string $name
-     * @return self
+     * @param \rampage\nexus\entities\string $name
      */
     public function setName($name)
     {
-        $this->name = (string)$name;
+        $this->name = $name;
         return $this;
     }
 }

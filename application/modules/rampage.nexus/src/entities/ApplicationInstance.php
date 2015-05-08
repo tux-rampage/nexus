@@ -91,12 +91,7 @@ class ApplicationInstance implements FormProviderInterface
     protected $previousPackage = null;
 
     /**
-     * @form\Type("text")
-     * @form\Atributes({
-     *  "type": "deployTargetSelector"
-     * })
-     *
-     * @odm\ReferenceOne(targetEntity="DeployTarget")
+     * @form\Exclude
      * @var DeployTarget
      */
     protected $target = null;
