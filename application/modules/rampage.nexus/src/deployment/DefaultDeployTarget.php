@@ -62,15 +62,11 @@ class DefaultDeployTarget implements ClusterTargetInterface
      */
     public function addNode(Node $node)
     {
-        if ($node->getDeployTarget()) {
-            throw new exceptions\InvalidArgumentException(sprintf(
-                'The node %s is already assigned to a deployment taget',
-                $node->getName()
-            ));
+        try {
+            $this->api->attach($node);
+        } catch (exceptions\NodeApiException $e) {
+            $node->setState(Node::STATE_FAILURE);
         }
-
-        // TODO: trigger add node api
-        $node->setDeployTarget($this->entity);
 
         return $this;
     }
@@ -80,8 +76,26 @@ class DefaultDeployTarget implements ClusterTargetInterface
      */
     public function removeNode(Node $node)
     {
-        // TODO: trigger detatch via node api
-        $node->setDeployTarget(null);
+        $this->api->detatch($node);
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function canDeploy()
+    {
+        $hasNotes = false;
+
+        foreach ($this->entity->getNodes() as $node) {
+            $hasNotes = true;
+
+            if ($node->getState() != Node::STATE_READY) {
+                return false;
+            }
+        }
+
+        return $hasNotes;
     }
 
     /**
@@ -90,10 +104,23 @@ class DefaultDeployTarget implements ClusterTargetInterface
     public function deploy(ApplicationInstance $instance)
     {
         foreach ($this->entity->getNodes() as $node) {
+            if ($node->getState() != Node::STATE_READY) {
+                continue;
+            }
+
             $this->api->requestDeploy($node, $instance);
         }
 
         return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function remove(\rampage\nexus\entities\ApplicationInstance $instance)
+    {
+        // TODO Auto-generated method stub
+
     }
 
     /**

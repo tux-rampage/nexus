@@ -22,6 +22,7 @@
 
 namespace rampage\nexus\deployment;
 
+use rampage\nexus\exceptions;
 use rampage\nexus\entities\ApplicationInstance;
 use rampage\nexus\entities\Node;
 
@@ -30,7 +31,6 @@ use Zend\Crypt\PublicKey\Rsa;
 use Zend\Http\Client as HttpClient;
 use Zend\Http\Request as HttpRequest;
 use Zend\Http\Header\Date as DateHeader;
-use Zend\Http\Header\Zend\Http\Header;
 
 
 class NodeApi
@@ -79,6 +79,7 @@ class NodeApi
     {
         $uri = $request->getUri();
         $data = [
+            $request->getMethod(),
             $uri->getPath(),
             $uri->getHost(),
             $request->getHeader('User-Agent')->getFieldValue(),
@@ -97,9 +98,11 @@ class NodeApi
      */
     private function send(HttpRequest $request)
     {
+        $this->sign($request);
+
         $response = $this->client->send($request);
         if (!$response->isSuccess()) {
-            // TODO: Exception
+            throw new exceptions\NodeApiException($response->getReasonPhrase());
         }
 
         return json_decode($response->getContent(), true);
@@ -120,15 +123,57 @@ class NodeApi
         return $this->send($request);
     }
 
+    /**
+     * @param Node $node
+     * @param string $path
+     */
     protected function get(Node $node, $path)
     {
-        // TODO: Implement POST request
+        $request = $this->prepareRequest($node, $path);
+        $request->setMethod(HttpRequest::METHOD_GET);
+
+        return $this->send($request);
     }
 
+    /**
+     * @param Node $node
+     */
+    public function detatch(Node $node)
+    {
+        return $this;
+    }
 
+    /**
+     * @param Node $node
+     */
+    public function attach(Node $node)
+    {
+        $request = $this->prepareRequest($node, 'rebuild');
+        return $this->send($request);
+    }
+
+    /**
+     * @param Node $node
+     * @param ApplicationInstance $instance
+     * @return self
+     */
     public function requestDeploy(Node $node, ApplicationInstance $instance)
     {
         $this->post($node, 'deploy', [
+            'instanceId' => $instance->getId()
+        ]);
+
+        return $this;
+    }
+
+    /**
+     * @param Node $node
+     * @param ApplicationInstance $instance
+     * @return self
+     */
+    public function requestRemove(Node $node, ApplicationInstance $instance)
+    {
+        $this->post($node, 'remove', [
             'instanceId' => $instance->getId()
         ]);
 
@@ -143,7 +188,8 @@ class NodeApi
     public function update(Node $node)
     {
         $data = $this->get($node, 'status');
+        $node->setServerInfo($data['serverInfo']);
 
-        // TODO: Hydrate data to node
+        return $this;
     }
 }

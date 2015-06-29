@@ -39,12 +39,27 @@ interface DeployTargetInterface
     public function setEntity(DeployTarget $entity);
 
     /**
+     * Check whether the target can deploy or not
+     *
+     * @return bool
+     */
+    public function canDeploy();
+
+    /**
      * Deploy the given application instance
      *
      * @param ApplicationInstance $instance
      * @return self Fluid Interface
      */
     public function deploy(ApplicationInstance $instance);
+
+    /**
+     * Remove the given application instance
+     *
+     * @param ApplicationInstance $instance
+     * @return self Fluid Interface
+     */
+    public function remove(ApplicationInstance $instance);
 
     /**
      * Refresh the deployment target status

@@ -22,8 +22,11 @@
 
 namespace rampage\nexus\entities;
 
+use rampage\nexus\exceptions;
+
 use Doctrine\ODM\MongoDB\Mapping\Annotations as odm;
 use Zend\Form\Annotation as form;
+use rampage\core\ArrayConfig;
 
 /**
  * @odm\Document(collection="nodes")
@@ -31,6 +34,11 @@ use Zend\Form\Annotation as form;
  */
 class Node
 {
+    const STATE_FAILURE = 'failure';
+    const STATE_BUILDING = 'building';
+    const STATE_READY = 'ready';
+    const STATE_UNINITIALIZED = 'uninitialized';
+
     /**
      * @odm\Id
      * @form\Exclude()
@@ -59,6 +67,34 @@ class Node
      * @var string
      */
     protected $url = null;
+
+    /**
+     * @odm\String
+     * @form\Exclude
+     * @var string
+     */
+    protected $state = self::STATE_UNINITIALIZED;
+
+    /**
+     * @odm\String
+     * @form\Exclude
+     * @var string
+     */
+    protected $certificate = null;
+
+    /**
+     * @odm\Hash
+     * @form\Exclude
+     * @var array
+     */
+    protected $serverInfo = [];
+
+    /**
+     * @form\Exclude
+     * @odm\NotSaved
+     * @var ArrayConfig
+     */
+    protected $info = null;
 
     /**
      * @return \MongoId
@@ -99,6 +135,77 @@ class Node
     public function setDeployTarget(DeployTarget $deployTarget)
     {
         $this->deployTarget = $deployTarget;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getState()
+    {
+        return $this->state;
+    }
+
+    /**
+     * @param string $state
+     * @return self
+     */
+    public function setState($state)
+    {
+        $this->state = $state;
+        return $this;
+    }
+
+    /**
+     * @return ArrayConfig|mixed
+     */
+    public function getServerInfo($key = null)
+    {
+        if (!$this->info) {
+            $this->info = new ArrayConfig($this->serverInfo);
+        }
+
+        if ($key !== null) {
+            $this->info->get($key);
+        }
+
+        return $this->info;
+    }
+
+    /**
+     * @param array $serverInfo
+     * @return self
+     */
+    public function setServerInfo($serverInfo)
+    {
+        if (!is_array($serverInfo) || !($serverInfo instanceof \ArrayAccess)) {
+            throw new exceptions\InvalidArgumentException(sprintf(
+                '$servrInfo must be an array or implement ArrayAccess, [%s] given',
+                is_object($serverInfo)? get_class($serverInfo) : gettype($serverInfo)
+            ));
+        }
+
+        $this->serverInfo = $serverInfo;
+        $this->info = null;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCertificate()
+    {
+        return $this->certificate;
+    }
+
+    /**
+     * @param string $certificate
+     * @return self
+     */
+    public function setCertificate($certificate)
+    {
+        $this->certificate = $certificate? (string)$certificate : null;
         return $this;
     }
 }
