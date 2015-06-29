@@ -26,10 +26,10 @@ use Doctrine\ODM\MongoDB\Mapping\Annotations as odm;
 use Zend\Form\Annotation as form;
 
 /**
- * @odm\Document(collection="servers")
+ * @odm\Document(collection="nodes")
  * @form\Hydrator("Zend\Stdlib\Hydrator\ClassMethods")
  */
-class Server
+class Node
 {
     /**
      * @odm\Id
@@ -44,6 +44,13 @@ class Server
      * @var string
      */
     protected $name = null;
+
+    /**
+     * @odm\ReferenceOne(targetDocument="DeployTarget");
+     * @form\Name("deploy_target")
+     * @var DeployTarget
+     */
+    protected $deployTarget = null;
 
     /**
      * @odm\String()
@@ -75,6 +82,23 @@ class Server
     public function setName($name)
     {
         $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @return \rampage\nexus\entities\DeployTarget
+     */
+    public function getDeployTarget()
+    {
+        return $this->deployTarget;
+    }
+
+    /**
+     * @param \rampage\nexus\entities\DeployTarget $deployTarget
+     */
+    public function setDeployTarget(DeployTarget $deployTarget)
+    {
+        $this->deployTarget = $deployTarget;
         return $this;
     }
 }

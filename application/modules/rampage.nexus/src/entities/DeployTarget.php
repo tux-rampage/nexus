@@ -25,12 +25,13 @@ namespace rampage\nexus\entities;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as odm;
 
 /**
- * @odm\Document
- * @odm\InheritanceType("SINGLE_COLLECTION")
- * @odm\DiscriminatorField("type")
+ * @odm\Document(collection="deploytargets")
  */
 class DeployTarget
 {
+    const TYPE_RAMPAGE = 'rampage';
+    const TYPE_ZENDSERVER = 'zendserver';
+
     /**
      * @odm\Id
      * @var \MongoId
@@ -44,8 +45,14 @@ class DeployTarget
     protected $name = null;
 
     /**
-     * @odm\ReferenceMany(targetDocument=Node)
-     * @var Node
+     * @odm\String
+     * @var string
+     */
+    protected $type = self::TYPE_RAMPAGE;
+
+    /**
+     * @odm\ReferenceMany(targetDocument=Node, mappedBy="deployTarget")
+     * @var Node[]
      */
     protected $nodes = [];
 
@@ -73,5 +80,21 @@ class DeployTarget
     {
         $this->name = (string)$name;
         return $this;
+    }
+
+    /**
+     * @return
+     */
+    public function getTypeInstance()
+    {
+
+    }
+
+    /**
+     * @return Node[]
+     */
+    public function getNodes()
+    {
+        return $this->nodes;
     }
 }

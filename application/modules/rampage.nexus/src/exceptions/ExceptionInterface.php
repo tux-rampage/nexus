@@ -20,22 +20,8 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\entities;
+namespace rampage\nexus\exceptions;
 
-use Doctrine\ODM\MongoDB\Mapping\Annotations as odm;
-
-/**
- * The default deploy target
- */
-class DefaultDeployTarget extends DeployTarget
+interface ExceptionInterface
 {
-
-
-    /**
-     * @return Server[]
-     */
-    public function getServers()
-    {
-
-    }
 }
