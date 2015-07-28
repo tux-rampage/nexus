@@ -26,8 +26,11 @@ use rampage\nexus\PackageInterface;
 use rampage\nexus\entities\PackageParameter;
 use Zend\Filter\Boolean;
 
+
 class ZpkPackage implements PackageInterface
 {
+    const TYPE_ZPK = 'zpk';
+
     /**
      * @var \SimpleXMLElement
      */
@@ -76,11 +79,64 @@ class ZpkPackage implements PackageInterface
     protected function buildParameters()
     {
         $boolFilter = new Boolean();
+        $this->parameters = [];
 
         foreach ($this->descriptor->xpath('./parameters/parameter') as $parameterXml) {
             $name = (string)$parameterXml['id'];
-            $label = (string)$parameterXml['display'];
+            $label = (string)$parameterXml['display']? : $name;
+            $type = (string)$parameterXml['type'];
+            $readonly = (string)$parameterXml['readonly'];
+            $required = (string)$parameterXml['required'];
+            $default = (string)$parameterXml->defaultvalue;
 
+            if (!$name || !$type) {
+                continue;
+            }
+
+            $required = $boolFilter->filter($required);
+            $readonly = $boolFilter->filter($readonly);
+            $param = new PackageParameter($name);
+
+            $param->setRequired($required)
+                ->setDefault($default)
+                ->setLabel($label)
+                ->addOption('readonly', $readonly);
+
+            switch ($type) {
+                case 'choice':
+                    $options = [];
+
+                    foreach ($parameterXml->xpath('./validation/enums/enum') as $enum) {
+                        $value = (string)$enum;
+                        $options[$value] = $value;
+                    }
+
+                    $param->setType('select');
+                    $param->setOptions('values', $options);
+                    break;
+
+                case 'password':
+                    $param->setType('password');
+                    break;
+
+                case 'email':
+                    $param->addOption('validator', 'EmailAddress');
+                    break;
+
+                case 'checkbox':
+                    $param->setType('checkbox');
+                    break;
+
+                case 'number':
+                    $param->addOption('validator', 'Number');
+                    break;
+
+                case 'hostname':
+                    $param->addOption('validator', 'Hostname');
+                    break;
+            }
+
+            $this->parameters[] = $param;
         }
     }
 
@@ -101,7 +157,7 @@ class ZpkPackage implements PackageInterface
      */
     public function getType()
     {
-        return 'zpk';
+        return self::TYPE_ZPK;
     }
 
     /**
@@ -109,6 +165,22 @@ class ZpkPackage implements PackageInterface
      */
     public function getVersion()
     {
-        return $this->descriptor->version;
+        return (string)$this->descriptor->version;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAppDir()
+    {
+        return (string)$this->descriptor->appdir;
+    }
+
+    /**
+     * @return string
+     */
+    public function getScriptsDir()
+    {
+        return (string)$this->descriptor->scriptsdir;
     }
 }

@@ -22,6 +22,7 @@
 
 namespace rampage\nexus\entities;
 
+use rampage\nexus\exceptions;
 use rampage\nexus\PackageInterface;
 
 use Doctrine\ODM\MongoDB\Mapping\Annotations as odm;
@@ -92,6 +93,28 @@ class ApplicationPackage implements PackageInterface
     public function getId()
     {
         return $this->id;
+    }
+
+    /**
+     * Copy information from the given package
+     *
+     * @param PackageInterface $package
+     * @return self
+     */
+    public function copy(PackageInterface $package)
+    {
+        if ($this->getType() && ($package->getType() != $this->getType())) {
+            throw new exceptions\RuntimeException('Incompatible package types');
+        }
+
+        $this->setDocumentRoot($package->getDocumentRoot())
+            ->setExtra($package->getExtra())
+            ->setName($package->getName())
+            ->setParameters($package->getParameters())
+            ->setVersion($package->getVersion())
+            ->setType($package->getType());
+
+        return $this;
     }
 
     /**

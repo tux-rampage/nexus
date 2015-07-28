@@ -22,25 +22,60 @@
 
 namespace rampage\nexus\package;
 
-use rampage\nexus\DeployStrategyInterface;
+use rampage\nexus\exceptions;
 use rampage\nexus\PackageInterface;
+
+use SplFileInfo;
+use PharData;
 
 
 abstract class AbstractInstaller implements InstallerInterface
 {
     /**
-     * @var DeployStrategyInterface
+     * @var SplFileInfo
      */
-    protected $deployStrategy = null;
+    protected $targetDirectory = null;
+
+    /**
+     * @var PharData
+     */
+    protected $archive;
+
+    /**
+     * @var SplFileInfo
+     */
+    protected $archiveInfo = null;
+
+    /**
+     * @throws exceptions\LogicException
+     */
+    protected function assertArchive()
+    {
+        if (!$this->archive || !$this->archiveInfo) {
+            throw new exceptions\LogicException('Cannot operate on archive without archive reference.');
+        }
+    }
 
     /**
      * {@inheritdoc}
      * @see \rampage\nexus\package\ApplicationPackageInterface::setDeployStrategy()
      */
-    public function setDeployStrategy(DeployStrategyInterface $strategy)
+    public function setTargetDirectory(SplFileInfo $dir)
     {
-        $this->deployStrategy = $strategy;
+        $this->targetDirectory = $dir;
         return $this;
+    }
+
+    /**
+     * @see \rampage\nexus\package\InstallerInterface::setPackageFile()
+     */
+    public function setPackageFile(SplFileInfo $file)
+    {
+        if (!$file->isFile()) {
+            throw new exceptions\InvalidArgumentException('No such archive: ' . $file->getPathname());
+        }
+
+        $this->archive = new PharData($file->getPathname());
     }
 
     /**

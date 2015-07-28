@@ -31,10 +31,16 @@ use Doctrine\ODM\MongoDB\Mapping\Annotations as odm;
 class PackageParameter
 {
     /**
-     * @odm\String
+     * @odm\String(nullable=false)
      * @var string
      */
     protected $name;
+
+    /**
+     * @odm\String()
+     * @var string
+     */
+    protected $label;
 
     /**
      * @odm\String
@@ -125,6 +131,26 @@ class PackageParameter
     }
 
     /**
+     * @return string
+     */
+    public function getLabel()
+    {
+        return $this->label;
+    }
+
+
+    /**
+     * @param string $label
+     * @return self
+     */
+    public function setLabel($label)
+    {
+        $this->label = $label;
+        return $this;
+    }
+
+
+ /**
      * @return multitype:
      */
     public function getOptions()

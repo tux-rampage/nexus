@@ -38,7 +38,7 @@ interface DependencyInterface
     public function getName();
 
     /**
-     * @return ConstraintInterface
+     * @return constraint\ConstraintInterface
      */
     public function getConstraint();
 }

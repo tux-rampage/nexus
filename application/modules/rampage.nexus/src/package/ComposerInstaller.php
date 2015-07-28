@@ -23,6 +23,7 @@
 
 namespace rampage\nexus\package;
 
+use rampage\nexus\exceptions;
 use rampage\nexus\entities\ApplicationInstance;
 use rampage\nexus\entities\ApplicationPackage;
 use rampage\nexus\entities\PackageParameter;
@@ -39,7 +40,51 @@ use RuntimeException;
 
 class ComposerInstaller extends AbstractInstaller
 {
-    const TYPE_NAME = 'composer';
+    const TYPE_NAME = ComposerPackage::TYPE_COMPOSER;
+
+    /**
+     * @var PharData
+     */
+    protected $archive = null;
+
+    /**
+     * @see \rampage\nexus\package\InstallerInterface::setPackageFile()
+     */
+    public function setPackageFile(SplFileInfo $file)
+    {
+        if (!$file->isFile()) {
+            throw new exceptions\InvalidArgumentException('No such archive: ' . $file->getPathname());
+        }
+
+        $this->archive = new PharData($file->getPathname());
+    }
+
+    /**
+     * @see \rampage\nexus\package\InstallerInterface::getPackage()
+     */
+    public function getPackage()
+    {
+        if (!isset($this->archive['composer.json'])) {
+            throw new RuntimeException(sprintf('Could not find composer.json in package file "%s"', $this->archive->getAlias()));
+        }
+
+        $json = Json::decode($this->archive['composer.json']->getContents(), Json::TYPE_ARRAY);
+
+        if (isset($json['extra']['deployment']) && is_string($json['extra']['deployment'])) {
+            $deploymentFile = $json['extra']['deployment'];
+
+            if (!isset($this->archive[$deploymentFile])) {
+                throw new RuntimeException(sprintf(
+                    'Could not find referenced deployment file "%s" in package file "%s"',
+                    $this->archive->getAlias()
+                ));
+            }
+
+            $json['extra']['deployment'] = Json::decode($this->archive[$deploymentFile]->getContents(), Json::TYPE_ARRAY);
+        }
+
+        return new ComposerPackage($json);
+    }
 
     /**
      * {@inheritdoc}
@@ -48,72 +93,6 @@ class ComposerInstaller extends AbstractInstaller
     public function getTypeName()
     {
         return static::TYPE_NAME;
-    }
-
-    /**
-     * @param array $parameters
-     * @return PackageParameter[]
-     */
-    protected function hydrateParameters(array $parameters)
-    {
-        $result = [];
-
-        foreach ($parameters as $name => $param) {
-            if (!is_string($name) || ($name == '')) {
-                continue;
-            }
-
-            $parameter = new PackageParameter();
-            $parameter->setName($name);
-
-            if (is_string($param)) {
-                $parameter->setType($param);
-            }
-
-            if (is_array($param)) {
-                unset($param['name']);
-                (new ClassMethodHydrator())->hydrate($param, $parameter);
-            }
-
-            $result[] = $parameter;
-        }
-
-        return $result;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function createEntityFromPackageFile(SplFileInfo $archive)
-    {
-        $phar = new PharData($archive->getPathname());
-
-        if (!isset($phar['composer.json'])) {
-            throw new RuntimeException(sprintf('Could not find composer.json in package file "%s"', $archive->getFilename()));
-        }
-
-        $json = Json::decode($phar['composer.json']->getContents(), Json::TYPE_ARRAY);
-        $wrapper = new GracefulArrayAccess($json? : array());
-
-        if (!$json || !$wrapper->get('name') || !$wrapper->get('version')) {
-            throw new RuntimeException(sprintf('Invalid composer.json in package file "%s"', $archive->getFilename()));
-        }
-
-        $entity = new ApplicationPackage();
-        $entity->setName($json['name'])
-            ->setVersion($json['version'])
-            ->setDocumentRoot(isset($json['extra']['deployment']['docroot'])? $json['extra']['deployment']['docroot'] : null)
-            ->setType($this->getTypeName());
-
-        if (isset($json['extra']) && is_array($json['extra'])) {
-            $entity->setExtra($json['extra']);
-        }
-
-        if (isset($json['extra']['deployment']['parameters']) && is_array($json['extra']['deployment']['parameters'])) {
-            $entity->setParameters($this->hydrateParameters($json['extra']['deployment']['parameters']));
-        }
-
-        return $entity;
     }
 
     /**

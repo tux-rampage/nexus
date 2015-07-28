@@ -26,11 +26,7 @@ class ConstraintBuilder
 {
     public function createConstraint($string)
     {
-        $options = explode(',', $string);
-        $alternatives = [];
-
-        foreach ($options as $optString) {
-
-        }
+        // TODO: Implement cversion constraint builder
+        return new AnyVersionConstraint();
     }
 }

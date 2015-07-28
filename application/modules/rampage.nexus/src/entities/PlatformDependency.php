@@ -24,6 +24,7 @@ namespace rampage\nexus\entities;
 
 use rampage\nexus\package\DependencyInterface;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as odm;
+use rampage\nexus\package\constraint\ConstraintBuilder;
 
 
 /**
@@ -60,7 +61,7 @@ class PlatformDependency implements DependencyInterface
      */
     public function getConstraint()
     {
-        // FIXME: Implement get constraint
+        return (new ConstraintBuilder())->createConstraint($this->constraint);
     }
 
     /**

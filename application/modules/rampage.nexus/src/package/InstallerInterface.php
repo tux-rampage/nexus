@@ -24,7 +24,6 @@
 namespace rampage\nexus\package;
 
 use rampage\nexus\entities;
-use rampage\nexus\DeployStrategyInterface;
 use rampage\nexus\PackageInterface;
 
 use SplFileInfo;
@@ -43,9 +42,25 @@ interface InstallerInterface
     public function supports(PackageInterface $package);
 
     /**
-     * @param DeployStrategyInterface $strategy
+     * Set the package file/archive to operate on
+     *
+     * @param SplFileInfo $file
      */
-    public function setDeployStrategy(DeployStrategyInterface $strategy);
+    public function setPackageFile(SplFileInfo $file);
+
+    /**
+     * Returns the package by reading it from the package file
+     *
+     * @return PackageInterface
+     */
+    public function getPackage();
+
+    /**
+     * Set the target directory to install to
+     *
+     * @param SplFileInfo $dir
+     */
+    public function setTargetDirectory(SplFileInfo $dir);
 
     /**
      * Returns the common name of this package type
@@ -55,15 +70,6 @@ interface InstallerInterface
      * @return string
      */
     public function getTypeName();
-
-    /**
-     * Creates a new application package entity from a package file
-     *
-     * @param SplFileInfo $archive
-     * @return entities\ApplicationPackage
-     * @throws \Exception When creating the package entity fails
-     */
-    public function createEntityFromPackageFile(SplFileInfo $archive);
 
     /**
      * Returns the relative web root path.

@@ -57,6 +57,12 @@ class DeployTarget
     protected $nodes = [];
 
     /**
+     * @odm\ReferenceMany(targetDocument="ApplicationInstance", mappedBy="target")
+     * @var ApplicationInstance[]
+     */
+    protected $applications = [];
+
+    /**
      * @return MongoId
      */
     public function getId()

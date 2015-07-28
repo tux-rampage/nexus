@@ -23,8 +23,6 @@
 
 namespace rampage\nexus\entities;
 
-use rampage\nexus\forms\FormProviderInterface;
-
 use Doctrine\ODM\MongoDB\Mapping\Annotations as odm;
 
 use Zend\Form\Annotation as form;
@@ -35,7 +33,7 @@ use Zend\Stdlib\Guard\ArrayOrTraversableGuardTrait;
  * @odm\Document(collection="applicationInstances")
  * @form\Hydrator("Zend\Stdlib\Hydrator\ClassMethods")
  */
-class ApplicationInstance implements FormProviderInterface
+class ApplicationInstance
 {
     const STATE_DEPLOYED = 'deployed';
     const STATE_ERROR = 'deployed';
@@ -91,6 +89,7 @@ class ApplicationInstance implements FormProviderInterface
     protected $previousPackage = null;
 
     /**
+     * @odm\ReferenceOne(targetDocument="DeployTarget", nullable=false)
      * @form\Exclude
      * @var DeployTarget
      */
@@ -112,25 +111,17 @@ class ApplicationInstance implements FormProviderInterface
     /**
      * Construct
      */
-    public function __construct()
+    public function __construct(DeployTarget $target = null)
     {
+        $this->target = null;
     }
 
     /**
-     * @return int
+     * @return string
      */
     public function getId()
     {
         return $this->id;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getForm()
-    {
-        // TODO Auto-generated method stub
-
     }
 
     /**
