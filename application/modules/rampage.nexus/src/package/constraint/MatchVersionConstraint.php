@@ -20,20 +20,38 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\entities;
+namespace rampage\nexus\package\constraint;
 
 /**
- * Package provider interface
+ * Match a specific version constraint
  */
-interface PackageProviderInterface
+class MatchVersionConstraint implements ConstraintInterface
 {
     /**
-     * @param Application $application
+     * @var string
      */
-    public function updatePackages(Application $application);
+    protected $version;
 
     /**
-     * @param ApplicationPackage $application
+     * @var string
      */
-    public function downloadPackage(ApplicationPackage $application);
+    protected $operator;
+
+    /**
+     * @param string $version
+     * @param string $operator
+     */
+    public function __construct($version, $operator)
+    {
+        $this->version = $version;
+        $this->operator = $operator;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function match($version)
+    {
+        return version_compare($version, $this->version, $this->operator);
+    }
 }

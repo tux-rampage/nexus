@@ -20,49 +20,15 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus;
+namespace rampage\nexus\package\constraint;
 
-/**
- * Application Package Interface
- */
-interface PackageInterface
+class AnyVersionConstraint implements ConstraintInterface
 {
     /**
-     * @return string
+     * {@inheritdoc}
      */
-    public function getName();
-
-    /**
-     * @return string
-     */
-    public function getVersion();
-
-    /**
-     * Returns the package type
-     *
-     * @return string
-     */
-    public function getType();
-
-    /**
-     * Returns the relative path to the document root
-     *
-     * @return string
-     */
-    public function getDocumentRoot();
-
-    /**
-     * Returns defined package parameters
-     *
-     * @return entities\PackageParameter[]
-     */
-    public function getParameters();
-
-    /**
-     * Returns extra package information
-     *
-     * @param string $name Omit to return all extra options
-     * @return array|string
-     */
-    public function getExtra($name = null);
+    public function match($version)
+    {
+        return true;
+    }
 }

@@ -117,14 +117,17 @@ class DefaultDeployTarget implements ClusterTargetInterface
     /**
      * {@inheritdoc}
      */
-    public function remove(\rampage\nexus\entities\ApplicationInstance $instance)
+    public function remove(ApplicationInstance $instance)
     {
-        // TODO Auto-generated method stub
+        foreach ($this->entity->getNodes() as $node) {
+            $this->api->requestRemove($node, $instance);
+        }
 
+        return $this;
     }
 
     /**
-     * @see \rampage\nexus\deployment\DeployTargetInterface::refreshStatus()
+     * @see DeployTargetInterface::refreshStatus()
      */
     public function refreshStatus()
     {

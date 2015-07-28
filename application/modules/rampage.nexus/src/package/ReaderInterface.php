@@ -20,49 +20,28 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus;
+namespace rampage\nexus\package;
 
-/**
- * Application Package Interface
- */
-interface PackageInterface
+use SplFileInfo;
+
+use rampage\nexus\PackageInterface;
+
+
+interface ReaderInterface
 {
     /**
-     * @return string
-     */
-    public function getName();
-
-    /**
-     * @return string
-     */
-    public function getVersion();
-
-    /**
-     * Returns the package type
+     * Read the application package information from the archive
      *
-     * @return string
+     * @param SplFileInfo $archive The archive file
+     * @return PackageInterface
      */
-    public function getType();
+    public function readFromPackage(SplFileInfo $archive);
 
     /**
-     * Returns the relative path to the document root
+     * Read the application package from the descriptor string
      *
-     * @return string
+     * @param string $descriptor
+     * @return PackageInterface
      */
-    public function getDocumentRoot();
-
-    /**
-     * Returns defined package parameters
-     *
-     * @return entities\PackageParameter[]
-     */
-    public function getParameters();
-
-    /**
-     * Returns extra package information
-     *
-     * @param string $name Omit to return all extra options
-     * @return array|string
-     */
-    public function getExtra($name = null);
+    public function readFromDescriptor($descriptor);
 }

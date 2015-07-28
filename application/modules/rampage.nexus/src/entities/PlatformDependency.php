@@ -20,49 +20,62 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus;
+namespace rampage\nexus\entities;
+
+use rampage\nexus\package\DependencyInterface;
+use Doctrine\ODM\MongoDB\Mapping\Annotations as odm;
+
 
 /**
- * Application Package Interface
+ * @odm\EmbeddedDocument()
  */
-interface PackageInterface
+class PlatformDependency implements DependencyInterface
 {
-    /**
-     * @return string
-     */
-    public function getName();
+    const TYPE_PLATFORM = 'platform';
 
     /**
-     * @return string
+     * @odm\String(nullable=false)
+     * @var string
      */
-    public function getVersion();
+    protected $name = null;
 
     /**
-     * Returns the package type
-     *
-     * @return string
+     * @odm\String(nullable=false)
+     * @var string
      */
-    public function getType();
+    protected $constraint = null;
 
     /**
-     * Returns the relative path to the document root
-     *
-     * @return string
+     * @param string $name
+     * @param string $constraint
      */
-    public function getDocumentRoot();
+    public function __construct($name = null, $constraint = '*')
+    {
+        $this->name = $name;
+        $this->constraint = $constraint;
+    }
 
     /**
-     * Returns defined package parameters
-     *
-     * @return entities\PackageParameter[]
+     * {@inheritdoc}
      */
-    public function getParameters();
+    public function getConstraint()
+    {
+        // FIXME: Implement get constraint
+    }
 
     /**
-     * Returns extra package information
-     *
-     * @param string $name Omit to return all extra options
-     * @return array|string
+     * {@inheritdoc}
      */
-    public function getExtra($name = null);
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getType()
+    {
+        return self::TYPE_PLATFORM;
+    }
 }

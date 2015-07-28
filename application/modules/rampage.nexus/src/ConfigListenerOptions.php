@@ -47,11 +47,9 @@ class ConfigListenerOptions implements ListenerAggregateInterface
         $confDir = $confDir? : APPLICATION_DIR . 'config';
         $local = APPLICATION_DEVELOPMENT? 'dev' : 'local';
 
-        return array(
-            $confDir . '/conf.d/{,*.}{global,' . $local . '}.php',
-            RAMPAGE_PREFIX . '/etc/conf.d/*.conf',
-            '/etc/rampage-nexus/conf.d/*.conf',
-        );
+        return [
+            $confDir . '/conf.d/{,*.}{global,' . $local . '}.php'
+        ];
     }
 
     /**
@@ -59,16 +57,7 @@ class ConfigListenerOptions implements ListenerAggregateInterface
      */
     public static function getStaticPaths()
     {
-        $paths = array(
-            RAMPAGE_PREFIX . '/etc/rampage-nexus.conf',
-            '/etc/rampage-nexus/deployment.conf',
-        );
-
-        $existingFileFilter = function($file) {
-            return file_exists($file) && is_readable($file);
-        };
-
-        return array_filter($paths, $existingFileFilter);
+        return [];
     }
 
     /**
@@ -77,7 +66,7 @@ class ConfigListenerOptions implements ListenerAggregateInterface
      */
     public function attach(EventManagerInterface $events)
     {
-        $this->listeners[] = $events->attach(ModuleEvent::EVENT_LOAD_MODULES, array($this, 'onLoadModules'), 100);
+        $this->listeners[] = $events->attach(ModuleEvent::EVENT_LOAD_MODULES, [$this, 'onLoadModules'], 100);
     }
 
     /**
@@ -120,6 +109,9 @@ class ConfigListenerOptions implements ListenerAggregateInterface
     }
 
     /**
+     * Add conf.d configs to the config listener when running in a Phar
+     * since glob paths won't work
+     *
      * @param ZendConfigListener $listener
      */
     public function addConfigs(ZendConfigListener $listener)

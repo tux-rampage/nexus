@@ -23,46 +23,17 @@
 namespace rampage\nexus;
 
 /**
- * Application Package Interface
+ * Package provider interface
  */
-interface PackageInterface
+interface PackageProviderInterface
 {
     /**
-     * @return string
+     * @param Application $application
      */
-    public function getName();
+    public function updatePackages(Application $application);
 
     /**
-     * @return string
+     * @param ApplicationPackage $application
      */
-    public function getVersion();
-
-    /**
-     * Returns the package type
-     *
-     * @return string
-     */
-    public function getType();
-
-    /**
-     * Returns the relative path to the document root
-     *
-     * @return string
-     */
-    public function getDocumentRoot();
-
-    /**
-     * Returns defined package parameters
-     *
-     * @return entities\PackageParameter[]
-     */
-    public function getParameters();
-
-    /**
-     * Returns extra package information
-     *
-     * @param string $name Omit to return all extra options
-     * @return array|string
-     */
-    public function getExtra($name = null);
+    public function downloadPackage(ApplicationPackage $application);
 }

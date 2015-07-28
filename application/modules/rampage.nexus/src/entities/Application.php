@@ -50,7 +50,7 @@ class Application
     protected $icon = null;
 
     /**
-     * @odm\ReferenceMany(targetDocument="ApplicationPackage", mappedBy="application", simple=true)
+     * @odm\ReferenceMany(targetDocument="ApplicationPackage", mappedBy="application")
      * @var ApplicationPackage[]
      */
     protected $packages = null;

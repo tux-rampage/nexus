@@ -54,10 +54,10 @@ class Module implements ConfigProviderInterface,
         ConfigFactory::registerReader('conf', 'ini');
         ConfigFactory::registerWriter('conf', 'ini');
 
-//         $this->serviceManager = $manager->getEvent()->getParam('ServiceManager');
+        $this->serviceManager = $manager->getEvent()->getParam('ServiceManager');
 //         $serviceListener = $this->serviceManager->get('ServiceListener');
 
-//         $manager->getEventManager()->attach(new ConfigListenerOptions());
+        $manager->getEventManager()->attach(new ConfigListenerOptions());
 //         $manager->getEventManager()->attach(ModuleEvent::EVENT_LOAD_MODULES_POST, array($this, 'addModulePackeTypes'));
 
 //         // Add service listeners
