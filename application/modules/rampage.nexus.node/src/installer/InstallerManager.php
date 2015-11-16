@@ -7,7 +7,7 @@
  * @license   $license$
  */
 
-namespace rampage\nexus\package;
+namespace rampage\nexus\node\installer;
 
 use Zend\Stdlib\SplPriorityQueue;
 use rampage\nexus\PackageInterface;

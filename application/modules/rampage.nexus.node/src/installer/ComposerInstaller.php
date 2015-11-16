@@ -21,10 +21,11 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\package;
+namespace rampage\nexus\node\installer;
 
 use rampage\nexus\exceptions;
 use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\package\ComposerPackage;
 use rampage\nexus\entities\ApplicationPackage;
 use rampage\nexus\entities\PackageParameter;
 

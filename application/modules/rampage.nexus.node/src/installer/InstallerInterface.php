@@ -21,7 +21,7 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\package;
+namespace rampage\nexus\node\installer;
 
 use rampage\nexus\entities;
 use rampage\nexus\PackageInterface;

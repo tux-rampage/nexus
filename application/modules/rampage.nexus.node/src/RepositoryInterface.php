@@ -22,7 +22,8 @@
 
 namespace rampage\nexus\node;
 
-use rampage\nexus\entities;
+use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\PackageInterface;
 
 
 /**
@@ -31,20 +32,22 @@ use rampage\nexus\entities;
 interface RepositoryInterface
 {
     /**
-     * Deployed applications
+     * Find all applications for this node
      *
-     * @return entities\Application[]
-     */
-    public function findDeployedApplications();
-
-    /**
-     * @return entities\Application[]
+     * @return ApplicationInstance[]
      */
     public function findAllApplications();
 
     /**
      * @param string $id
-     * @return entities\Application
+     * @return ApplicationInstance
      */
     public function findApplication($id);
+
+    /**
+     * @param ApplicationInstance $application
+     * @return PackageInterface
+     */
+    public function findPackage(ApplicationInstance $application);
+
 }
