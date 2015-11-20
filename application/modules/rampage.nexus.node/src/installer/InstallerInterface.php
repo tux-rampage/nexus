@@ -23,10 +23,9 @@
 
 namespace rampage\nexus\node\installer;
 
-use rampage\nexus\entities;
 use rampage\nexus\PackageInterface;
-
 use SplFileInfo;
+
 
 /**
  * Interface for implementing application packages
@@ -76,30 +75,23 @@ interface InstallerInterface
      *
      * If the return value is NULL or empty, the deploy strategy may assume that the application directory is the web root.
      *
-     * @param entities\ApplicationInstance
+     * @param array|ArrayAccess
      * @return string|null
      */
-    public function getWebRoot(entities\ApplicationInstance $application);
+    public function getWebRoot($params);
 
     /**
-     * Install this application package for the given application
+     * Install the current application package
      *
-     * @param entities\ApplicationInstance $application
+     * @param array|ArrayAccess $params
      * @return self
      */
-    public function install(entities\ApplicationInstance $application);
+    public function install($params);
 
     /**
-     * Remove this application
+     * Remove the current application package
      *
-     * @param entities\ApplicationInstance $application
+     * @param array|ArrayAccess $params
      */
-    public function remove(entities\ApplicationInstance $application);
-
-    /**
-     * Remove this application
-     *
-     * @param entities\ApplicationInstance $application
-     */
-    public function rollback(entities\ApplicationInstance $application);
+    public function remove($params);
 }

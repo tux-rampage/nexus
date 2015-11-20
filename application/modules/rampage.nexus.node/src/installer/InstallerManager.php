@@ -24,6 +24,13 @@ class InstallerManager
     protected $packageTypes;
 
     /**
+     * Installer by type cache
+     *
+     * @var InstallerInterface[]
+     */
+    protected $cache = [];
+
+    /**
      * @param PackageStorage $packageStorage
      */
     public function __construct()
@@ -38,6 +45,8 @@ class InstallerManager
     public function addPackageType(InstallerInterface $type, $priority = 10)
     {
         $this->packageTypes->insert($type, $priority);
+        $this->cache = [];
+
         return $this;
     }
 
@@ -47,8 +56,15 @@ class InstallerManager
      */
     public function getInstaller(PackageInterface $package)
     {
+        $type = $package->getType();
+
+        if (isset($this->cache[$type])) {
+            return $this->cache[$type];
+        }
+
         foreach (clone $this->packageTypes as $installer) {
             if ($installer->supports($package)) {
+                $this->cache[$type] = $installer;
                 return $installer;
             }
         }

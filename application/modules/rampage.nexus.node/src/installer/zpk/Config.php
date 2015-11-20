@@ -20,28 +20,55 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\zs;
+namespace rampage\nexus\node\installer\zpk;
 
-use rampage\nexus\ArrayConfig;
+use rampage\core\ArrayConfig;
 
 
+/**
+ * ZPK Configuration
+ */
 class Config extends ArrayConfig
 {
     /**
      * @return string
      */
+    public function getScriptCommand()
+    {
+        return $this->get('installer.php_command', 'php');
+    }
+
+    /**
+     * @return string
+     */
+    public function getDirCreateMode()
+    {
+        return $this->get('installer.dir_create_mode', 0755);
+    }
+
+    /**
+     * @return string
+     */
     public function getWebserverType()
     {
-        @list($name) = explode('/', $_SERVER['SERVER_SOFTWARE']);
-        return $this->get('installer.webserver.type', $name);
+        $default = 'undefined';
+
+        if (isset($_SERVER['SERVER_SOFTWARE'])) {
+            @list($default) = explode('/', $_SERVER['SERVER_SOFTWARE']);
+        }
+
+        return $this->get('installer.webserver.type', $default);
     }
 
     public function getWebserverVersion()
     {
-        @list($name, $version) = explode('/', $_SERVER['SERVER_SOFTWARE']);
-        unset($name);
+        $default = 'undefined';
 
-        return $this->get('installer.webserver.version', $version);
+        if (isset($_SERVER['SERVER_SOFTWARE'])) {
+            @list(, $default) = explode('/', $_SERVER['SERVER_SOFTWARE']);
+        }
+
+        return $this->get('installer.webserver.version', $default);
     }
 
     /**
@@ -66,13 +93,5 @@ class Config extends ArrayConfig
     public function getWebserverGroupId()
     {
         return $this->get('installer.webserver.groupid', posix_getgid());
-    }
-
-    /**
-     * @return bool
-     */
-    public function isRunOnceNode()
-    {
-        return (bool)$this->get('installer.node.runonce', true);
     }
 }

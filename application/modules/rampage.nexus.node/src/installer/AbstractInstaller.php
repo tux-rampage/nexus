@@ -57,6 +57,20 @@ abstract class AbstractInstaller implements InstallerInterface
     }
 
     /**
+     * @param bool $checkExistence
+     */
+    protected function assertTargetDirectory($checkExistence = false)
+    {
+        if (!$this->targetDirectory) {
+            throw new exceptions\LogicException('Cannot operate on archive without target directory.');
+        }
+
+        if ($checkExistence && !$this->targetDirectory->isDir()) {
+            throw new exceptions\RuntimeException(sprintf('The target directory "%s" does not exist or is not a directory.', (string)$this->targetDirectory));
+        }
+    }
+
+    /**
      * {@inheritdoc}
      * @see \rampage\nexus\package\ApplicationPackageInterface::setDeployStrategy()
      */

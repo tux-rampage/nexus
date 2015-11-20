@@ -20,32 +20,9 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\node;
-
-use rampage\nexus\entities\ApplicationInstance;
+namespace rampage\nexus\exceptions;
 
 
-/**
- * Application repository
- */
-interface RepositoryInterface
+class LogicException extends \LogicException implements ExceptionInterface
 {
-    /**
-     * Find all applications for this node
-     *
-     * @return ApplicationInstance[]
-     */
-    public function findAllApplications();
-
-    /**
-     * @param string $id
-     * @return ApplicationInstance
-     */
-    public function findApplication($id);
-
-    /**
-     * @param   ApplicationInstance  $application
-     * @return  \SplFileInfo
-     */
-    public function findPackageArchive(ApplicationInstance $application);
 }

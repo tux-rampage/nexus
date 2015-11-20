@@ -24,49 +24,47 @@
 namespace rampage\nexus\node\installer;
 
 use rampage\nexus\exceptions;
-use rampage\nexus\entities\ApplicationInstance;
 use rampage\nexus\package\ComposerPackage;
-use rampage\nexus\entities\ApplicationPackage;
-use rampage\nexus\entities\PackageParameter;
-
-use rampage\core\GracefulArrayAccess;
 
 use Zend\Json\Json;
-use Zend\Stdlib\Hydrator\ClassMethods as ClassMethodHydrator;
 
-use SplFileInfo;
-use PharData;
-use RuntimeException;
+use rampage\nexus\PackageInterface;
+use rampage\nexus\Executable;
+use rampage\nexus\exceptions\StageScriptException;
 
 
-class ComposerInstaller extends AbstractInstaller
+/**
+ * Implements the installer for composer packages
+ */
+class ComposerInstaller extends AbstractInstaller implements StageSubscriberInterface
 {
     const TYPE_NAME = ComposerPackage::TYPE_COMPOSER;
 
-    /**
-     * @var PharData
-     */
-    protected $archive = null;
+    const STAGE_INSTALL         = 'stage';
+    const STAGE_REMOVE          = 'remove';
+    const STAGE_PRE_ACTIVATE    = 'pre-activate';
+    const STAGE_POST_ACTIVATE   = 'post-activate';
+    const STAGE_PRE_DEACTIVATE  = 'pre-deactivate';
+    const STAGE_POST_DEACTIVATE = 'post-deactivate';
+    const STAGE_PRE_ROLLBACK    = 'pre-rollback';
+    const STAGE_POST_ROLLBACK   = 'post-rollback';
 
     /**
-     * @see \rampage\nexus\package\InstallerInterface::setPackageFile()
+     * @var PackageInterface
      */
-    public function setPackageFile(SplFileInfo $file)
-    {
-        if (!$file->isFile()) {
-            throw new exceptions\InvalidArgumentException('No such archive: ' . $file->getPathname());
-        }
-
-        $this->archive = new PharData($file->getPathname());
-    }
+    protected $package;
 
     /**
      * @see \rampage\nexus\package\InstallerInterface::getPackage()
      */
     public function getPackage()
     {
+        if ($this->package !== null) {
+            return $this->package;
+        }
+
         if (!isset($this->archive['composer.json'])) {
-            throw new RuntimeException(sprintf('Could not find composer.json in package file "%s"', $this->archive->getAlias()));
+            throw new exceptions\RuntimeException(sprintf('Could not find composer.json in package file "%s"', $this->archive->getAlias()));
         }
 
         $json = Json::decode($this->archive['composer.json']->getContents(), Json::TYPE_ARRAY);
@@ -75,7 +73,7 @@ class ComposerInstaller extends AbstractInstaller
             $deploymentFile = $json['extra']['deployment'];
 
             if (!isset($this->archive[$deploymentFile])) {
-                throw new RuntimeException(sprintf(
+                throw new exceptions\RuntimeException(sprintf(
                     'Could not find referenced deployment file "%s" in package file "%s"',
                     $this->archive->getAlias()
                 ));
@@ -84,7 +82,8 @@ class ComposerInstaller extends AbstractInstaller
             $json['extra']['deployment'] = Json::decode($this->archive[$deploymentFile]->getContents(), Json::TYPE_ARRAY);
         }
 
-        return new ComposerPackage($json);
+        $this->package = new ComposerPackage($json);
+        return $this->package;
     }
 
     /**
@@ -99,36 +98,135 @@ class ComposerInstaller extends AbstractInstaller
     /**
      * {@inheritdoc}
      */
-    public function getWebRoot(ApplicationInstance $application)
+    public function getWebRoot($params)
     {
-        // TODO Auto-generated method stub
+        $this->assertTargetDirectory();
+        $path = $this->targetDirectory->getPathname();
 
+        if ($root = $this->getPackage()->getDocumentRoot()) {
+            $path = rtrim($path, '/') . '/' . ltrim($root, '/');
+        }
+
+        return $path;
+    }
+
+    /**
+     * Calls the deploy script of this package (if it exists)
+     *
+     * If this (shell) call results in a non-zero response, an axception is thrown.
+     *
+     * @throws exceptions\StageScriptException  Thrown if the stage script exited with non-zero
+     * @param  string  $type    The script type to trigger
+     * @param  array   $params  User parameters
+     * @param  array   $env     Additional environment variables
+     */
+    protected function triggerDeployScript($type, $params, array $env = [])
+    {
+        $dir = $this->getPackage()->getExtra('scripts_dir');
+        $script = $dir . '/' . $type . '.php';
+
+        if (!$dir || !is_readable($script)) {
+            return;
+        }
+
+        $invoker = new Executable('php');
+        $invoker->addArg('-f')
+            ->addArg($script);
+
+        foreach ($params as $key => $value) {
+            $key = preg_replace('~[^a-z0-9]+~i', '_', trim($key));
+            $invoker->setEnv('DP_' . strtoupper($key), $value);
+        }
+
+        $invoker->setEnv($env);
+        $invoker->setEnv('DEPLOYMENT_APP_BASEDIR', $this->targetDirectory->getPathname());
+        $invoker->setEnv('DEPLOYMENT_WEB_ROOT', $this->getWebRoot($params));
+
+        if (!$invoker->execute(true)) {
+            throw new exceptions\StageScriptException(sprintf('%s stage script failed', $type));
+        }
     }
 
     /**
      * {@inheritdoc}
      */
-    public function install(ApplicationInstance $application)
+    public function install($params)
     {
-        // TODO Auto-generated method stub
+        if (!$this->targetDirectory || !$this->targetDirectory->isDir()) {
+            throw new exceptions\RuntimeException(sprintf('Invalid darget directory: "%s"', (string)$this->targetDirectory));
+        }
 
+        $this->assertArchive();
+        $this->archive->extractTo($this->targetDirectory);
+        $this->triggerDeployScript(self::STAGE_INSTALL, $params);
+
+        return $this;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function remove(ApplicationInstance $application)
+    public function remove($params)
     {
-        // TODO Auto-generated method stub
+        $this->triggerDeployScript(self::STAGE_REMOVE, $params);
+        return $this;
+    }
 
+    /**
+     * @see \rampage\nexus\node\installer\StageSubscriberInterface::afterActivate()
+     */
+    public function afterActivate($params)
+    {
+        $this->triggerDeployScript(self::STAGE_POST_ACTIVATE, $params);
+        return $this;
+    }
+
+    /**
+     * @see \rampage\nexus\node\installer\StageSubscriberInterface::afterRollback()
+     */
+    public function afterRollback($params, $isRollbackTarget)
+    {
+        $this->triggerDeployScript(self::STAGE_POST_ROLLBACK, $params, [
+            'DEPLOYMENT_ROLLBACK_TARGET' => $isRollbackTarget? 1 : 0
+        ]);
+
+        return $this;
+    }
+
+    /**
+     * @see \rampage\nexus\node\installer\StageSubscriberInterface::beforeActivate()
+     */
+    public function beforeActivate($params)
+    {
+        $this->triggerDeployScript(self::STAGE_PRE_ACTIVATE, $params);
+        return $this;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function rollback(ApplicationInstance $application)
+    public function beforeRollback($params, $isRollbackTarget)
     {
-        // TODO Auto-generated method stub
+        $this->triggerDeployScript(self::STAGE_PRE_ROLLBACK, $params, [
+            'DEPLOYMENT_ROLLBACK_TARGET' => $isRollbackTarget? 1 : 0
+        ]);
 
+        return $this;
+    }
+
+    /**
+     * @see \rampage\nexus\node\installer\StageSubscriberInterface::afterDeactivate()
+     */
+    public function afterDeactivate($params)
+    {
+        $this->triggerDeployScript(self::STAGE_PRE_DEACTIVATE, $params);
+    }
+
+    /**
+     * @see \rampage\nexus\node\installer\StageSubscriberInterface::beforeDeactivate()
+     */
+    public function beforeDeactivate($params)
+    {
+        $this->triggerDeployScript(self::STAGE_POST_DEACTIVATE, $params);
     }
 }

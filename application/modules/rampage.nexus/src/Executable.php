@@ -22,7 +22,6 @@
 
 namespace rampage\nexus;
 
-use RuntimeException;
 use BadMethodCallException;
 
 class Executable
@@ -206,6 +205,7 @@ class Executable
 
     /**
      * @throws BadMethodCallException
+     * @return int
      */
     protected function close()
     {
@@ -222,6 +222,22 @@ class Executable
         $this->pipes = array();
 
         return $this->returnCode;
+    }
+
+    /**
+     * @param resource|string $stream
+     */
+    public function setOutput($stream = null)
+    {
+        if (is_string($stream)) {
+            $stream = fopen($stream, 'w+', false);
+        }
+
+        if (!is_resource($stream)) {
+            throw new exceptions\InvalidArgumentException('Output must be a valid stream resource!');
+        }
+
+        $this->output = $stream;
     }
 
     /**

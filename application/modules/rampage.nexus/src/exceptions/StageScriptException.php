@@ -20,32 +20,8 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\node;
+namespace rampage\nexus\exceptions;
 
-use rampage\nexus\entities\ApplicationInstance;
-
-
-/**
- * Application repository
- */
-interface RepositoryInterface
+class StageScriptException extends RuntimeException
 {
-    /**
-     * Find all applications for this node
-     *
-     * @return ApplicationInstance[]
-     */
-    public function findAllApplications();
-
-    /**
-     * @param string $id
-     * @return ApplicationInstance
-     */
-    public function findApplication($id);
-
-    /**
-     * @param   ApplicationInstance  $application
-     * @return  \SplFileInfo
-     */
-    public function findPackageArchive(ApplicationInstance $application);
 }

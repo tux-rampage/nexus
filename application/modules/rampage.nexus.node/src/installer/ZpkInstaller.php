@@ -22,16 +22,28 @@
 namespace rampage\nexus\node\installer;
 
 use rampage\nexus\exceptions;
-use rampage\nexus\entities\ApplicationInstance;
 use rampage\nexus\package\ZpkPackage;
 
-use PharData;
 use SimpleXMLElement;
-use SplFileInfo;
+use rampage\nexus\node\FileSystem;
 
 
-class ZpkInstaller extends AbstractInstaller
+/**
+ * Implements an instaler for ZendServer Packages
+ */
+class ZpkInstaller extends AbstractInstaller implements StageSubscriberInterface
 {
+    const STAGE_PRE_INSTALL     = 'pre_stage';
+    const STAGE_POST_INSTALL    = 'post_stage';
+    const STAGE_PRE_ACTIVATE    = 'pre_activate';
+    const STAGE_POST_ACTIVATE   = 'post_activate';
+    const STAGE_PRE_DEACTIVATE  = 'pre_deactivate';
+    const STAGE_POST_DEACTIVATE = 'post_deactivate';
+    const STAGE_PRE_REMOVE      = 'pre_remove';
+    const STAGE_POST_REMOVE     = 'post_remove';
+    const STAGE_PRE_ROLLBACK    = 'pre_rollback';
+    const STAGE_POST_ROLLBACK   = 'post_rollback';
+
     /**
      * @var ZpkPackage
      */
@@ -41,6 +53,35 @@ class ZpkInstaller extends AbstractInstaller
      * @var string
      */
     protected $extractedScriptsPath = null;
+
+    /**
+     * @var zpk\Config
+     */
+    protected $config;
+
+    /**
+     * @var FileSystem
+     */
+    protected $filesystem;
+
+    /**
+     * @param zpk\Config $config
+     */
+    public function __construct(zpk\Config $config = null)
+    {
+        $this->config = $config? : new zpk\Config();
+        $this->filesystem = new FileSystem();
+    }
+
+    /**
+     * Destruct
+     */
+    public function __destruct()
+    {
+        if ($this->extractedScriptsPath) {
+            $this->filesystem->delete($this->extractedScriptsPath);
+        }
+    }
 
     /**
      * {@inheritdoc}
@@ -73,67 +114,178 @@ class ZpkInstaller extends AbstractInstaller
     /**
      * @see \rampage\nexus\package\InstallerInterface::getWebRoot()
      */
-    public function getWebRoot(ApplicationInstance $application)
+    public function getWebRoot($params)
     {
+        $this->assertTargetDirectory();
+
         $package = $this->getPackage();
-        $docRoot = trim($package->getDocumentRoot(), '/');
-        $appDir = trim($package->getAppDir(), '/');
+        $docRoot = $package->getDocumentRoot();
+        $appDir =  trim($package->getAppDir(), '/');
 
         if (strpos($docRoot, $appDir . '/') === 0) {
             $docRoot = substr($docRoot, strlen($appDir) + 1);
         }
 
-        return $docRoot;
-    }
-
-    protected function runHookScript(ApplicationInstance $application, $name)
-    {
-        // TODO: Implement hooks
+        return rtrim($this->targetDirectory->getPathname()) . '/' . ltrim($docRoot);
     }
 
     /**
-     * @see \rampage\nexus\package\InstallerInterface::install()
+     * @param string $targetDir
+     * @param string $subDir
      */
-    public function install(ApplicationInstance $application)
+    protected function extract($targetDir, $subDir = null)
     {
-        $package = $this->getPackage();
-        $appDir = trim($package->getAppDir(), '/');
-        $prefix = 'phar://' . $this->archiveInfo->getPathname() . '/' . $appDir . '/';
-        $iterator = new \RecursiveIteratorIterator($this->archive, \RecursiveIteratorIterator::SELF_FIRST);
+        if (!$subDir) {
+            $this->archive->extractTo($targetDir);
+        }
 
-        // TODO: extract
+        $mode = $this->config->getDirCreateMode();
+        $targetDir = rtrim($targetDir, '/');
+        $prefix = 'phar://' . $this->archive->getRealPath() . '/' . trim($subDir, '/') . '/';
+        $prefixLen = strlen($prefix);
+        $prefixFilter = function(\PharFileInfo $file, $key, $iterator) use ($subDir, $prefix) {
+            return (strpos($file->getPathname(), $prefix) === 0);
+        };
+
+        $iterator = new \CallbackFilterIterator(new \RecursiveIteratorIterator($this->archive, \RecursiveIteratorIterator::SELF_FIRST), $prefixFilter);
 
         /* @var $file \PharFileInfo */
-        foreach ($iterator as $filename => $file) {
-            if (strpos($filename, $prefix) !== 0) {
-                continue;
-            }
-
-            $target = $this->targetDirectory->getPathname() . '/'
-                    . substr($filename, strlen($prefix));
+        foreach ($iterator as $file) {
+            $relativePath = substr($file->getPathname(), $prefixLen);
+            $targetPath   = $targetDir . '/' . $relativePath;
 
             if ($file->isDir()) {
-                mkdir($target, 0755, true);
+                if (!is_dir($targetPath) && !mkdir($targetPath, $mode, true)) {
+                    throw new exceptions\RuntimeException(sprintf('Failed to create directory: "%s"', $targetPath));
+                }
+
                 continue;
             }
 
-            file_put_contents($target, $file->getContent());
+            $targetDirPath = dirname($targetPath);
+            if (!is_dir($targetDirPath) && !mkdir($targetDirPath, $mode, true)) {
+                throw new exceptions\RuntimeException(sprintf('Failed to create directory: "%s"', $targetDirPath));
+            }
+
+            file_put_contents($targetPath, $file->getContent());
         }
     }
 
     /**
-     * @see \rampage\nexus\package\InstallerInterface::remove()
+     * @return self
      */
-    public function remove(ApplicationInstance $application)
+    protected function extractScriptsDir()
     {
-        // TODO Auto-generated method stub
+        if ($this->extractedScriptsPath !== null) {
+            return $this;
+        }
+
+        $scripts = $this->getPackage()->getScriptsDir();
+        $dir = sys_get_temp_dir();
+
+        $this->extractedScriptsPath = tempnam($dir, 'zpk.scripts');
+        $this->extract($this->extractedScriptsPath, $scripts);
+
+        return $this;
+    }
+
+
+    /**
+     * Execute a hook script if it exists
+     *
+     * @param string  $name
+     * @param array   $params
+     */
+    protected function runHookScript($name, $params)
+    {
+        $this->extractScriptsDir();
+
+        $path = $this->extractedScriptsPath . '/' . $name . '.php';
+
+        if (!is_readable($path)) {
+            return;
+        }
+
+        $invoker = new zpk\StageScript($path, $this->config, $params, $this->targetDirectory->getPathname(), $this->getPackage()->getVersion());
+
+        if (!$invoker->execute(true)) {
+            throw new exceptions\StageScriptException(sprintf('Stage script "%s" failed.', $name));
+        }
     }
 
     /**
-     * @see \rampage\nexus\package\InstallerInterface::rollback()
+     * {@inheritdoc}
      */
-    public function rollback(ApplicationInstance $application)
+    public function install($params)
     {
-        // TODO Auto-generated method stub
+        $this->runHookScript(self::STAGE_PRE_INSTALL, $params);
+
+        $package = $this->getPackage();
+        $appDir = trim($package->getAppDir(), '/');
+
+        $this->extract($this->targetDirectory->getPathname(), $appDir);
+
+        $this->runHookScript(self::STAGE_POST_INSTALL, $params);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function remove($params)
+    {
+        $this->runHookScript(self::STAGE_PRE_REMOVE, $params);
+        $this->runHookScript(self::STAGE_POST_REMOVE, $params);
+    }
+
+    /**
+     * @see \rampage\nexus\node\installer\StageSubscriberInterface::afterActivate()
+     */
+    public function afterActivate($params)
+    {
+        $this->runHookScript(self::STAGE_POST_ACTIVATE, $params);
+    }
+
+    /**
+     * @see \rampage\nexus\node\installer\StageSubscriberInterface::afterDeactivate()
+     */
+    public function afterDeactivate($params)
+    {
+        $this->runHookScript(self::STAGE_POST_DEACTIVATE, $params);
+    }
+
+    /**
+     * @see \rampage\nexus\node\installer\StageSubscriberInterface::afterRollback()
+     */
+    public function afterRollback($params, $isRollbackTarget)
+    {
+        if ($isRollbackTarget) {
+            $this->runHookScript(self::STAGE_POST_ROLLBACK, $params);
+        }
+    }
+
+    /**
+     * @see \rampage\nexus\node\installer\StageSubscriberInterface::beforeActivate()
+     */
+    public function beforeActivate($params)
+    {
+        $this->runHookScript(self::STAGE_PRE_ACTIVATE, $params);
+    }
+
+    /**
+     * @see \rampage\nexus\node\installer\StageSubscriberInterface::beforeDeactivate()
+     */
+    public function beforeDeactivate($params)
+    {
+        $this->runHookScript(self::STAGE_PRE_DEACTIVATE, $params);
+    }
+
+    /**
+     * @see \rampage\nexus\node\installer\StageSubscriberInterface::beforeRollback()
+     */
+    public function beforeRollback($params, $isRollbackTarget)
+    {
+        if ($isRollbackTarget) {
+            $this->runHookScript(self::STAGE_PRE_ROLLBACK, $params);
+        }
     }
 }

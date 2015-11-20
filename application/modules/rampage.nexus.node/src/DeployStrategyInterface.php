@@ -9,25 +9,41 @@ namespace rampage\nexus\node;
 use rampage\nexus\entities\ApplicationInstance;
 
 
+/**
+ * Interface for deploy strategies.
+ */
 interface DeployStrategyInterface
 {
     /**
+     * Remove everythig to allow building from scratch
+     */
+    public function purge();
+
+    /**
+     * Stage the given application instance and prepare it for activation
+     *
      * @param ApplicationInstance $instance
      */
     public function stage(ApplicationInstance $instance);
 
     /**
+     * Activate the given application instance
+     *
      * @param ApplicationInstance $instance
      */
     public function activate(ApplicationInstance $instance);
 
     /**
+     * Remove the given application instance
+     *
      * @param ApplicationInstance $instance
      */
     public function remove(ApplicationInstance $instance);
 
     /**
-     * @param ApplicationInstance $instance
+     * Roll back to the given instance
+     *
+     * @param ApplicationInstance $toInstance
      */
-    public function rollback(ApplicationInstance $instance);
+    public function rollback(ApplicationInstance $toInstance);
 }

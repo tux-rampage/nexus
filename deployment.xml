@@ -8,6 +8,7 @@
     </version>
     <appdir>application</appdir>
     <docroot>application/public</docroot>
+    <scriptsdir>scripts</scriptsdir>
     <dependencies>
     <required>
       <php>

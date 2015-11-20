@@ -6,9 +6,6 @@
 
 namespace rampage\nexus\node;
 
-use Zend\Db\Adapter\AdapterInterface as DbAdapterInterface;
-use Zend\Db\Sql\Sql;
-
 use Zend\Http\Client as HttpClient;
 use Zend\Uri\Http as HttpUri;
 
@@ -17,16 +14,6 @@ use Zend\Uri\Http as HttpUri;
  */
 class RemoteRepository implements RepositoryInterface
 {
-    /**
-     * @var Sql
-     */
-    protected $sql;
-
-    /**
-     * @var DbAdapterInterface
-     */
-    protected $db;
-
     /**
      * @var HttpUri
      */
@@ -41,10 +28,8 @@ class RemoteRepository implements RepositoryInterface
      * @param string $uri The Remote server URI
      * @param DbAdapter $db
      */
-    public function __construct($uri, DbAdapterInterface $db)
+    public function __construct($uri)
     {
-        $this->db = $db;
-        $this->sql = new Sql($db);
         $this->uri = ($uri instanceof HttpUri)? $uri : new HttpUri($uri);
         $this->httpClient = new HttpClient();
     }
@@ -68,13 +53,11 @@ class RemoteRepository implements RepositoryInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @see \rampage\nexus\node\RepositoryInterface::findPackageArchive()
      */
-    public function findDeployedApplications()
+    public function findPackageArchive(\rampage\nexus\entities\ApplicationInstance $application)
     {
         // TODO Auto-generated method stub
 
     }
-
-
 }

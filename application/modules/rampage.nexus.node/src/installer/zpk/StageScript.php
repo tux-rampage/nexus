@@ -20,12 +20,14 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\zs;
+namespace rampage\nexus\node\installer\zpk;
 
 use rampage\nexus\Executable;
-use rampage\nexus\entities\Application;
 
 
+/**
+ * Stage script wrapper
+ */
 class StageScript extends Executable
 {
     /**
@@ -34,31 +36,39 @@ class StageScript extends Executable
      * @param Config $options
      * @param array $variables
      */
-    public function __construct($file, Application $application, Config $options, array $variables = array())
+    public function __construct($file, Config $options, array $params, $baseDir, $version, array $variables = array())
     {
-        parent::__construct('php');
+        parent::__construct($options->getScriptCommand());
 
         $this->addArg('-f')
             ->addArg($file);
+
+        foreach ($variables as $name => $value) {
+            $this->setEnv($this->prepareParamName($name, false), $value);
+        }
+
+        foreach ($params as $param => $value) {
+            $param = $this->prepareParamName($param);
+            $this->setEnv($param, $value);
+        }
 
         $this->setEnv('ZS_WEBSERVER_TYPE', $options->getWebserverType())
             ->setEnv('ZS_WEBSERVER_VERSION', $options->getWebserverVersion())
             ->setEnv('ZS_WEBSERVER_UID', $options->getWebserverUserId())
             ->setEnv('ZS_WEBSERVER_GID', $options->getWebserverGroupId())
             ->setEnv('ZS_PHP_VERSION', $options->getPHPVersion())
-            ->setEnv('ZS_APPLICATION_BASE_DIR', $application->getDeployStrategy()->getTargetDirectory())
-            ->setEnv('ZS_CURRENT_APP_VERSION', $application->getCurrentVersion()->getVersion())
-            ->setEnv('ZS_PREVIOUS_APP_VERSION', $application->getPreviousVersion()->getVersion())
-            ->setEnv('ZS_RUN_ONCE_NODE', ($options->isRunOnceNode())? '1' : '0');
+            ->setEnv('ZS_APPLICATION_BASE_DIR', $baseDir)
+            ->setEnv('ZS_CURRENT_APP_VERSION', $version)
+            ->setEnv('ZS_RUN_ONCE_NODE', '0');
+    }
 
-        foreach ($variables as $name => $value) {
-            $this->setEnv($this->prepareParamName($name, false), $value);
-        }
-
-        foreach ($application->getCurrentVersion()->getUserParameters(true) as $param => $value) {
-            $param = $this->prepareParamName($param);
-            $this->setEnv($param, $value);
-        }
+    /**
+     * @param bool $flag
+     * @return self
+     */
+    public function setIsRunOnceNode($flag)
+    {
+        $this->setEnv('ZS_RUN_ONCE_NODE', ($flag)? '1' : '0');
     }
 
     /**
