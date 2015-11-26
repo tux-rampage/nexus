@@ -109,6 +109,12 @@ class ApplicationInstance
     protected $userParameters = [];
 
     /**
+     * @odm\Hash()
+     * @var array
+     */
+    protected $previousParameters = null;
+
+    /**
      * Construct
      */
     public function __construct(DeployTarget $target = null)
@@ -248,6 +254,23 @@ class ApplicationInstance
         $this->guardForArrayOrTraversable($parameters, 'user parameters');
         $this->userParameters = $parameters;
 
+        return $this;
+    }
+
+    /**
+     * @return array|null
+     */
+    public function getPreviousParameters()
+    {
+        return $this->previousParameters;
+    }
+
+    /**
+     * @param array $previousParameters
+     */
+    public function setPreviousParameters($previousParameters)
+    {
+        $this->previousParameters = $previousParameters;
         return $this;
     }
 }

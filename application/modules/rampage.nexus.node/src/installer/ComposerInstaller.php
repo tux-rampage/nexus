@@ -24,13 +24,13 @@
 namespace rampage\nexus\node\installer;
 
 use rampage\nexus\exceptions;
-use rampage\nexus\package\ComposerPackage;
-
-use Zend\Json\Json;
-
+use rampage\nexus\exceptions\StageScriptException;
 use rampage\nexus\PackageInterface;
 use rampage\nexus\Executable;
-use rampage\nexus\exceptions\StageScriptException;
+use rampage\nexus\package\ComposerPackage;
+use rampage\nexus\node\StageSubscriberInterface;
+
+use Zend\Json\Json;
 
 
 /**

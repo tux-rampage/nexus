@@ -27,6 +27,11 @@ interface DeployStrategyInterface
     public function stage(ApplicationInstance $instance);
 
     /**
+     * @param ApplicationInstance $instance
+     */
+    public function prepareActivation(ApplicationInstance $instance);
+
+    /**
      * Activate the given application instance
      *
      * @param ApplicationInstance $instance

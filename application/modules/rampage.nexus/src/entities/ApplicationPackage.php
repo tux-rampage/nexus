@@ -40,7 +40,7 @@ class ApplicationPackage implements PackageInterface
     private $id = null;
 
     /**
-     * @odm\String
+     * @odm\Field(type="string")
      * @var string
      */
     protected $filename = null;
@@ -52,25 +52,25 @@ class ApplicationPackage implements PackageInterface
     protected $file = null;
 
     /**
-     * @odm\String
+     * @odm\Field(type="string")
      * @var string
      */
     protected $name = null;
 
     /**
-     * @odm\Version
+     * @odm\Field(type="string")
      * @var string
      */
     protected $version = null;
 
     /**
-     * @odm\String
+     * @odm\Field(type="string")
      * @var string
      */
     protected $type = null;
 
     /**
-     * @odm\String
+     * @odm\Field(type="string")
      * @var string
      */
     protected $documentRoot = null;

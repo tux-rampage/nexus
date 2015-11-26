@@ -22,10 +22,13 @@
 namespace rampage\nexus\node\installer;
 
 use rampage\nexus\exceptions;
+
+use rampage\nexus\node\FileSystem;
+use rampage\nexus\node\StageSubscriberInterface;
+
 use rampage\nexus\package\ZpkPackage;
 
 use SimpleXMLElement;
-use rampage\nexus\node\FileSystem;
 
 
 /**

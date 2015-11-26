@@ -26,17 +26,23 @@ use rampage\nexus\exceptions;
 use rampage\nexus\entities\ApplicationInstance;
 
 use Zend\Stdlib\Hydrator\AbstractHydrator;
+use rampage\nexus\entities\ApplicationPackage;
 
 
 class LocalStateHydrator extends AbstractHydrator
 {
     protected $idReflection;
 
+    protected $packageIdReflection;
+
     public function __construct()
     {
         $reflection = new \ReflectionClass(ApplicationInstance::class);
         $this->idReflection = $reflection->getProperty('id');
         $this->idReflection->setAccessible(true);
+
+        $this->packageIdReflection = (new \ReflectionClass(ApplicationPackage::class))->getProperty('id');
+        $this->packageIdReflection->setAccessible(true);
     }
 
     /**
@@ -58,8 +64,10 @@ class LocalStateHydrator extends AbstractHydrator
             'name' => $object->getName(),
             'path' => $object->getPath(),
             'state' => $object->getState(),
-            'userParameters' => $object->getUserParameters()
+            'userParameters' => $object->getUserParameters(),
+            'packageId' => $object->getPackage()->getId(),
         ];
+
 
         return $data;
     }
@@ -87,6 +95,11 @@ class LocalStateHydrator extends AbstractHydrator
             ->setPath($data['path'])
             ->setState($data['state'])
             ->setUserParameters($data['userParameters']);
+
+        if ($data['packageId']) {
+            $package = new ApplicationPackage();
+            $this->packageIdReflection->setValue($package, $data['packageId']);
+        }
 
         return $object;
     }

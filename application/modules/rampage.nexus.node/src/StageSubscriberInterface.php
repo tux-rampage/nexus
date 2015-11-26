@@ -20,7 +20,7 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\node\installer;
+namespace rampage\nexus\node;
 
 
 interface StageSubscriberInterface

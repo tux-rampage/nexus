@@ -9,19 +9,17 @@
     "zendframework/zend-http" : "2.*",
     "zendframework/zend-mvc" : "2.*"
   },
-  "repositories" : [ {
-    "type" : "git",
-    "url" : "https://github.com/tux-rampage/rampage-gui"
-  } ],
   "require-dev" : {
-    "rampage-php/framework" : "1.2.*@dev"
+    "rampage-php/framework" : "1.2.*@dev",
+    "phpunit/phpunit" : "4.*",
+    "php-vfs/php-vfs" : "1.*"
   },
   "license" : "GPL-3.0+",
   "keywords" : [ "rampage", "saas" ],
   "autoload" : {
     "psr-4" : {
       "rampage\\nexus\\" : "application/modules/rampage.nexus/src/",
-      "rampage\\nexus\\zs\\" : "application/modules/rampage.nexus.zendserver/src/"
+      "rampage\\nexus\\node\\" : "application/modules/rampage.nexus.node/src/"
     }
   },
   "type" : "application",
