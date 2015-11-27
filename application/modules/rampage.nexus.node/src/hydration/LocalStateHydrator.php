@@ -68,7 +68,6 @@ class LocalStateHydrator extends AbstractHydrator
             'packageId' => $object->getPackage()->getId(),
         ];
 
-
         return $data;
     }
 
