@@ -20,22 +20,20 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\node\json;
+namespace rampage\nexus\node;
 
-use rampage\nexus\entities;
-use rampage\nexus\json\AbstractStrategy;
+use rampage\nexus\entities\VHost;
 
 
-class ApplicationStrategy extends AbstractStrategy
+interface VHostDeployStrategyInterface
 {
     /**
-     * {@inheritdoc}
-     * @var entities\Application $model
+     * @param VHost $vhost
      */
-    public function toArray()
-    {
-        return [
-            // TODO: Implement JSON-Strategy
-        ];
-    }
+    public function deployVHost(VHost $vhost);
+
+    /**
+     * @param VHost $vhost
+     */
+    public function removeVHost(VHost $vhost);
 }

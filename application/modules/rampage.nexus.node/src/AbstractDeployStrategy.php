@@ -22,19 +22,23 @@
 
 namespace rampage\nexus\node;
 
+use rampage\nexus\node\installer\InstallerInterface;
 
+
+/**
+ * Abstract deploy strategy
+ */
 abstract class AbstractDeployStrategy implements DeployStrategyInterface
 {
-    const EVENT_INSTALL    = 'stage';
-    const EVENT_REMOVE     = 'remove';
-    const EVENT_ACTIVATE   = 'activate';
-    const EVENT_DEACTIVATE = 'deactivate';
-    const EVENT_ROLLBACK   = 'rollback';
-
     /**
      * @var StageSubscriberList
      */
     protected $subscribers;
+
+    /**
+     * @var InstallerInterface
+     */
+    protected $installer = null;
 
     /**
      *
@@ -45,7 +49,10 @@ abstract class AbstractDeployStrategy implements DeployStrategyInterface
     }
 
     /**
+     * Add a stage subscriber
+     *
      * @param StageSubscriberInterface $subscriber
+     * @return self
      */
     public function addStageSubscriber(StageSubscriberInterface $subscriber)
     {
@@ -54,58 +61,33 @@ abstract class AbstractDeployStrategy implements DeployStrategyInterface
     }
 
     /**
-     * @see \rampage\nexus\node\DeployStrategyInterface::activate()
+     * Remove a stage subscriber
+     *
+     * @param StageSubscriberInterface $subscriber
+     * @return self
      */
-    public function activate(\rampage\nexus\entities\ApplicationInstance $instance)
+    public function removeStageSubscriber(StageSubscriberInterface $subscriber)
     {
-        // TODO Auto-generated method stub
+        $this->subscribers->remove($subscriber);
+        return $this;
     }
 
     /**
-     * @see \rampage\nexus\node\DeployStrategyInterface::prepareActivation()
+     * @param InstallerInterface $installer
+     * @return self
      */
-    public function prepareActivation(\rampage\nexus\entities\ApplicationInstance $instance)
+    public function setInstaller(InstallerInterface $installer)
     {
-        // TODO Auto-generated method stub
+        if ($this->installer instanceof StageSubscriberInterface) {
+            $this->removeStageSubscriber($this->installer);
+        }
 
+        $this->installer = $installer;
+
+        if ($installer instanceof StageSubscriberInterface) {
+            $this->addStageSubscriber($installer);
+        }
+
+        return $this;
     }
-
-    /**
-     * @see \rampage\nexus\node\DeployStrategyInterface::purge()
-     */
-    public function purge()
-    {
-        // TODO Auto-generated method stub
-
-    }
-
-    /**
-     * @see \rampage\nexus\node\DeployStrategyInterface::remove()
-     */
-    public function remove(\rampage\nexus\entities\ApplicationInstance $instance)
-    {
-        // TODO Auto-generated method stub
-
-    }
-
-    /**
-     * @see \rampage\nexus\node\DeployStrategyInterface::rollback()
-     */
-    public function rollback(\rampage\nexus\entities\ApplicationInstance $toInstance)
-    {
-        // TODO Auto-generated method stub
-
-    }
-
-    /**
-     * @see \rampage\nexus\node\DeployStrategyInterface::stage()
-     */
-    public function stage(\rampage\nexus\entities\ApplicationInstance $instance)
-    {
-        // TODO Auto-generated method stub
-
-    }
-
-
-
 }

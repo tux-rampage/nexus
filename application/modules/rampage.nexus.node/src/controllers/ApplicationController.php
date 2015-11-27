@@ -22,25 +22,27 @@
 
 namespace rampage\nexus\node\controllers;
 
-use rampage\nexus\node\json;
-use rampage\nexus\node\RepositoryInterface;
+use rampage\nexus\node\LocalStateProvider;
+use rampage\nexus\node\StateProviderInterface;
+use rampage\nexus\node\hydration\LocalStateHydrator;
 
 use Zend\Mvc\Controller\AbstractRestfulController;
+use Zend\View\Model\JsonModel;
 
 
 class ApplicationController extends AbstractRestfulController
 {
     /**
-     * @var RepositoryInterface
+     * @var StateProviderInterface
      */
-    protected $repository = null;
+    protected $localStateProvider = null;
 
     /**
-     * @param RepositoryInterface $repo
+     * @param StateProviderInterface $repo
      */
-    public function __construct(RepositoryInterface $repo)
+    public function __construct(StateProviderInterface $localStateProvider)
     {
-        $this->repository = $repo;
+        $this->localStateProvider = $localStateProvider;
     }
 
     /**
@@ -48,7 +50,15 @@ class ApplicationController extends AbstractRestfulController
      */
     public function getList()
     {
-        $result = $this->repository->findDeployedApplications();
-        return new json\ApplicationListStrategy($result);
+        $items = [];
+        $hydrator = new LocalStateHydrator();
+
+        foreach ($this->localStateProvider->getInstalledApplications() as $application) {
+            $items[] = $hydrator->extract($application);
+        }
+
+        return new JsonModel([
+            'installedApplications' => $items
+        ]);
     }
 }

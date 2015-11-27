@@ -7,6 +7,7 @@
 namespace rampage\nexus\node;
 
 use rampage\nexus\entities\ApplicationInstance;
+use rampage\nexus\node\installer\InstallerInterface;
 
 
 /**
@@ -14,6 +15,11 @@ use rampage\nexus\entities\ApplicationInstance;
  */
 interface DeployStrategyInterface
 {
+    /**
+     * @param InstallerInterface $installer
+     */
+    public function setInstaller(InstallerInterface $installer);
+
     /**
      * Remove everythig to allow building from scratch
      */

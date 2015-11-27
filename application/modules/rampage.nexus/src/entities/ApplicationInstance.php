@@ -96,11 +96,27 @@ class ApplicationInstance
     protected $target = null;
 
     /**
+     * The vhost within the teploy target
+     *
+     * @odm\Field(type="string")
+     * @var string
+     */
+    protected $vhost = null;
+
+    /**
      * @form\Type("text")
-     * @odm\String
+     * @odm\Field(type="string")
      * @var string
      */
     protected $path = null;
+
+    /**
+     * The application flavor used by the deploy strategy to optimize the created config
+     *
+     * @odm\Field(type="string")
+     * @var string
+     */
+    protected $flavor = null;
 
     /**
      * @odm\Hash
@@ -109,17 +125,20 @@ class ApplicationInstance
     protected $userParameters = [];
 
     /**
-     * @odm\Hash()
-     * @var array
-     */
-    protected $previousParameters = null;
-
-    /**
      * Construct
      */
     public function __construct(DeployTarget $target = null)
     {
         $this->target = null;
+    }
+
+    /**
+     * @return VHost
+     */
+    public function getVHost()
+    {
+        // FIXME: Return the corresponding vhost instance?
+        return $this->vhost;
     }
 
     /**

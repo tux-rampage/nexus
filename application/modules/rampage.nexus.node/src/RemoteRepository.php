@@ -8,6 +8,7 @@ namespace rampage\nexus\node;
 
 use Zend\Http\Client as HttpClient;
 use Zend\Uri\Http as HttpUri;
+use rampage\nexus\entities\ApplicationInstance;
 
 /**
  * Remote repository
@@ -55,7 +56,7 @@ class RemoteRepository implements RepositoryInterface
     /**
      * @see \rampage\nexus\node\RepositoryInterface::findPackageArchive()
      */
-    public function findPackageArchive(\rampage\nexus\entities\ApplicationInstance $application)
+    public function findPackageArchive(ApplicationInstance $application)
     {
         // TODO Auto-generated method stub
 
