@@ -21,10 +21,5 @@
  */
 
 return [
-    'service_manager' => require __DIR__ . '/module.d/services.conf.php',
-    'deployment_node' => require __DIR__ . '/module.d/node.conf.php',
-
-    'router' => [
-        'routes' => require __DIR__ . '/module.d/routes.conf.php',
-    ]
+    '/etc/deployment/conf.d'
 ];

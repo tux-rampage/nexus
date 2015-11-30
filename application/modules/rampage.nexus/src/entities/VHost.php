@@ -49,6 +49,24 @@ class VHost
     protected $aliases = [];
 
     /**
+     * @odm\Field(type="string")
+     * @var string
+     */
+    protected $sslCert = null;
+
+    /**
+     * @odm\Field(type="string")
+     * @var string
+     */
+    protected $sslKey = null;
+
+    /**
+     * @odm\Field(type="string")
+     * @var string
+     */
+    protected $sslChain = null;
+
+    /**
      * @param string $name
      */
     public function __construct($name)
@@ -78,6 +96,57 @@ class VHost
     public function setFlavor($flavor)
     {
         $this->flavor = ($flavor !== null)? (string)$flavor : null;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSslCert()
+    {
+        return $this->sslCert;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSslKey()
+    {
+        return $this->sslKey;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSslChain()
+    {
+        return $this->sslChain;
+    }
+
+    /**
+     * @param string $sslCert
+     */
+    public function setSslCert($sslCert)
+    {
+        $this->sslCert = $sslCert;
+        return $this;
+    }
+
+    /**
+     * @param string $sslKey
+     */
+    public function setSslKey($sslKey)
+    {
+        $this->sslKey = $sslKey;
+        return $this;
+    }
+
+    /**
+     * @param string $sslChain
+     */
+    public function setSslChain($sslChain)
+    {
+        $this->sslChain = $sslChain;
         return $this;
     }
 

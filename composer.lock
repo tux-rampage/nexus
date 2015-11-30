@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "f85e75de0d8226bf4fbd2c5e80397e63",
-    "content-hash": "ae7e0ff92f23f0f446478a562fae655a",
+    "hash": "765063a923789c0f27e613c8beffd93f",
+    "content-hash": "c290185ad122f946da41becf0129eb37",
     "packages": [
         {
             "name": "container-interop/container-interop",
@@ -833,12 +833,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tux-rampage/rampage-php.git",
-                "reference": "b23841c58353be0069ad47eb4e5271919c346686"
+                "reference": "673750748415754536fde13d5565a347a8047088"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tux-rampage/rampage-php/zipball/b23841c58353be0069ad47eb4e5271919c346686",
-                "reference": "b23841c58353be0069ad47eb4e5271919c346686",
+                "url": "https://api.github.com/repos/tux-rampage/rampage-php/zipball/673750748415754536fde13d5565a347a8047088",
+                "reference": "673750748415754536fde13d5565a347a8047088",
                 "shasum": ""
             },
             "require": {
@@ -902,7 +902,7 @@
                 "rampage",
                 "zf2"
             ],
-            "time": "2015-07-27 14:54:07"
+            "time": "2015-11-27 19:41:51"
         },
         {
             "name": "symfony/console",
@@ -1248,6 +1248,60 @@
                 "zf2"
             ],
             "time": "2015-06-03 15:32:00"
+        },
+        {
+            "name": "zendframework/zend-db",
+            "version": "2.6.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zendframework/zend-db.git",
+                "reference": "ecfd5cf4eb223f7374f7b05f40d0c97eed197de3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zendframework/zend-db/zipball/ecfd5cf4eb223f7374f7b05f40d0c97eed197de3",
+                "reference": "ecfd5cf4eb223f7374f7b05f40d0c97eed197de3",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.5",
+                "zendframework/zend-stdlib": "~2.7"
+            },
+            "require-dev": {
+                "fabpot/php-cs-fixer": "1.7.*",
+                "phpunit/phpunit": "~4.0",
+                "zendframework/zend-eventmanager": "~2.5",
+                "zendframework/zend-hydrator": "~1.0",
+                "zendframework/zend-mvc": "~2.5",
+                "zendframework/zend-servicemanager": "~2.5"
+            },
+            "suggest": {
+                "zendframework/zend-eventmanager": "Zend\\EventManager component",
+                "zendframework/zend-hydrator": "Zend\\Hydrator component for using HydratingResultSets",
+                "zendframework/zend-servicemanager": "Zend\\ServiceManager component"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.6-dev",
+                    "dev-develop": "2.7-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Zend\\Db\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "homepage": "https://github.com/zendframework/zend-db",
+            "keywords": [
+                "db",
+                "zf2"
+            ],
+            "time": "2015-10-14 20:26:01"
         },
         {
             "name": "zendframework/zend-di",
@@ -2871,16 +2925,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "4.8.18",
+            "version": "4.8.19",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "fa33d4ad96481b91df343d83e8c8aabed6b1dfd3"
+                "reference": "b2caaf8947aba5e002d42126723e9d69795f32b4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/fa33d4ad96481b91df343d83e8c8aabed6b1dfd3",
-                "reference": "fa33d4ad96481b91df343d83e8c8aabed6b1dfd3",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/b2caaf8947aba5e002d42126723e9d69795f32b4",
+                "reference": "b2caaf8947aba5e002d42126723e9d69795f32b4",
                 "shasum": ""
             },
             "require": {
@@ -2939,7 +2993,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2015-11-11 11:32:49"
+            "time": "2015-11-30 08:18:59"
         },
         {
             "name": "phpunit/phpunit-mock-objects",

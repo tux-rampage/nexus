@@ -41,7 +41,7 @@ return array(
         // An array of paths from which to glob configuration files after
         // modules are loaded. These effectively override configuration
         // provided by modules themselves. Paths may use GLOB_BRACE notation.
-        'config_glob_paths' => ConfigListenerOptions::getGlobPaths(__DIR__),
+        'config_glob_paths' => require __DIR__ . '/glob-paths.conf.php',
         'config_static_paths' => ConfigListenerOptions::getStaticPaths(),
     ),
 );

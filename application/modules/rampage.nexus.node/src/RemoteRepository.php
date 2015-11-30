@@ -40,7 +40,11 @@ class RemoteRepository implements RepositoryInterface
      */
     public function findAllApplications()
     {
-        // TODO Auto-generated method stub
+        $uri = clone $this->uri;
+        $uri->setPath($uri->getPath() . '/applications');
+
+        $this->httpClient->setUri($uri);
+        // TODO: Implement find all
 
     }
 

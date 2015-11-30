@@ -20,11 +20,12 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-return [
-    'service_manager' => require __DIR__ . '/module.d/services.conf.php',
-    'deployment_node' => require __DIR__ . '/module.d/node.conf.php',
+namespace rampage\nexus;
 
-    'router' => [
-        'routes' => require __DIR__ . '/module.d/routes.conf.php',
+return [
+    'node' => [
+        'db' => [
+            'database' => '/var/lib/deployment/deployment.db'
+        ]
     ]
 ];

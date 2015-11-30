@@ -22,9 +22,10 @@
 
 namespace rampage\nexus\node;
 
+use rampage\nexus\Executable;
 use rampage\nexus\entities\ApplicationInstance;
 use rampage\nexus\entities\VHost;
-use rampage\nexus\Executable;
+use rampage\nexus\exceptions\RuntimeException;
 
 
 class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrategyInterface, VHostDeployStrategyInterface
@@ -33,7 +34,11 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
 
     const TEMPLATE_SERVER = 'server';
     const TEMPLATE_LOCATION = 'location';
+    const TEMPLATE_MAINTENANCE = 'maintenance';
     const TEMPLATE_GLOBAL = 'global';
+
+    const DIR_LOCATIONS = 'locations.d';
+    const DIR_GLOBAL = 'global.d';
 
     /**
      * @var config\TemplateLocatorInterface
@@ -108,6 +113,16 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
     }
 
     /**
+     * @param ApplicationInstance $instance
+     * @return string
+     */
+    protected function getApplicationSymlinkPath(ApplicationInstance $instance)
+    {
+        $path = sprintf('%s/%s/current', $this->applicationsPath, $instance->getId());
+        return $path;
+    }
+
+    /**
      * @param VHost $vhost
      * @return string
      */
@@ -133,15 +148,16 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
         return $path;
     }
 
-    /**
-     * @param ApplicationInstance $instance
-     */
-    protected function createAndWriteConfig(ApplicationInstance $instance)
+    protected function createLocationConfig(ApplicationInstance $instance, $template = null)
     {
+        if (!$template) {
+            $template = self::TEMPLATE_LOCATION;
+        }
+
         $appPath = $this->getApplicationPath($instance);
         $docRoot = $appPath . '/' . trim((string)$this->installer->getWebRoot($instance->getUserParameters()), '/');
-        $configPath = $this->getConfigPath($instance, 'locations.d');
-        $template = new config\TemplateConfigProcessor($this->templateLocator->getConfigTemplate(self::TYPE, self::TEMPLATE_LOCATION), $configPath);
+        $configPath = $this->getConfigPath($instance, self::DIR_LOCATIONS);
+        $template = new config\TemplateConfigProcessor($this->templateLocator->getConfigTemplate(self::TYPE, $template, $instance->getFlavor()), $configPath);
 
         $this->filesystem->ensureDirectory(dirname($configPath), 0755);
         $template->process([
@@ -153,16 +169,39 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
     }
 
     /**
+     * @param ApplicationInstance $instance
+     */
+    protected function createAndWriteConfig(ApplicationInstance $instance)
+    {
+        $this->createLocationConfig($instance);
+        return $this;
+    }
+
+    /**
+     * @param ApplicationInstance $instance
+     */
+    protected function createAndWriteMaintenanceConfig(ApplicationInstance $instance)
+    {
+        $this->createLocationConfig($instance, self::TEMPLATE_MAINTENANCE);
+        return $this;
+    }
+
+    /**
      * Remove the config for the given application instance
      *
      * @param ApplicationInstance $instance
      */
     protected function removeConfig(ApplicationInstance $instance)
     {
-        $configPath = $this->getConfigPath($instance, 'locations.d');
+        $configPaths = [
+            $this->getConfigPath($instance, self::DIR_LOCATIONS),
+            $this->getConfigPath($instance, self::DIR_GLOBAL)
+        ];
 
-        if (file_exists($configPath)) {
-            $this->filesystem->delete($configPath);
+        foreach ($configPaths as $configPath) {
+            if (file_exists($configPath)) {
+                $this->filesystem->delete($configPath);
+            }
         }
 
         return $this;
@@ -174,7 +213,14 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
      */
     protected function updateSymlink(ApplicationInstance $instance)
     {
-        // TODO: implement symlink update
+        $path = $this->getApplicationSymlinkPath($instance);
+
+        if (file_exists($path) && !unlink($path)) {
+            throw new RuntimeException('Failed to remove existing symlink: ' . $path);
+        }
+
+        symlink($this->getApplicationPath($instance), $path);
+
         return $this;
     }
 
@@ -184,7 +230,12 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
      */
     protected function removeSymlink(ApplicationInstance $instance)
     {
-        // TODO: implement symlink removal
+        $path = $this->getApplicationSymlinkPath($instance);
+
+        if (file_exists($path) && !unlink($path)) {
+            throw new RuntimeException('Failed to remove existing symlink: ' . $path);
+        }
+
         return $this;
     }
 
@@ -222,7 +273,10 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
      */
     public function prepareActivation(ApplicationInstance $instance)
     {
-        // TODO Auto-generated method stub
+        $this->createAndWriteMaintenanceConfig($instance);
+        $this->reloadService();
+
+        return $this;
     }
 
     /**
@@ -310,12 +364,44 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
         return $this;
     }
 
+    protected function getVHostAliasDirectives(VHost $vhost)
+    {
+        $directives = array();
+
+        foreach ($vhost->getAliases() as $alias) {
+            $directives[] = 'server_name ' . $alias . ';';
+        }
+
+        return implode("\n" . str_repeat(' ', 8), $directives);
+    }
+
     /**
      * @see \rampage\nexus\node\VHostDeployStrategyInterface::deployVHost()
      */
     public function deployVHost(VHost $vhost)
     {
-        // TODO Auto-generated method stub
+        $configPath = $this->getVHostConfigPath($vhost);
+        $template = new config\TemplateConfigProcessor($this->templateLocator->getConfigTemplate(self::TYPE, self::TEMPLATE_SERVER, $vhost->getFlavor()), $configPath);
+
+        $params = [
+            'global_configs' => sprintf('%s/%s/global.d/*.conf', $this->configsPath, $vhost->getName()),
+            'location_configs' => sprintf('%s/%s/locations.d/*conf', $this->configsPath, $vhost->getName()),
+            'servername' => $vhost->getName(),
+            'server_aliases' => $this->getVHostAliasDirectives($vhost),
+            'ssl_cert_file' => $vhost->getSslCert(),
+            'ssl_key_file' => $vhost->getSslKey(),
+            'ssl_chain_file' => $vhost->getSslChain(),
+            'ssl_chain_directive' => '',
+        ];
+
+        if ($vhost->getSslChain()) {
+            $params['ssl_chain_directive'] = 'include "' . $vhost->getSslChain() . '";';
+        }
+
+        $template->process($params);
+        $this->reloadService();
+
+        return $this;
     }
 
     /**
@@ -323,6 +409,13 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
      */
     public function removeVHost(VHost $vhost)
     {
-        // TODO Auto-generated method stub
+        $configFile = $this->getVHostConfigPath($vhost);
+        $configDir  = sprintf('%s/%s', $this->configsPath, $vhost->getName());
+
+        $this->filesystem->delete($configFile);
+        $this->filesystem->delete($configDir);
+        $this->reloadService();
+
+        return $this;
     }
 }

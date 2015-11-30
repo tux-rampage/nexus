@@ -20,11 +20,18 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-return [
-    'service_manager' => require __DIR__ . '/module.d/services.conf.php',
-    'deployment_node' => require __DIR__ . '/module.d/node.conf.php',
+namespace rampage\nexus\node;
 
-    'router' => [
-        'routes' => require __DIR__ . '/module.d/routes.conf.php',
+return [
+    'deploystrategy' => NginxDeployStrategy::class,
+    'nginx' => [
+        'config_path' => '/home/deployment/etc/nginx',
+        'applications_path' => '/home/deployment/apps',
+        'service_command' => 'service nginx reload'
+    ],
+
+    'db' => [
+        'driver' => 'pdo_sqlite',
+        'database' => RAMPAGE_PREFIX . '/var/deployment.db',
     ]
 ];

@@ -20,11 +20,22 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-return [
-    'service_manager' => require __DIR__ . '/module.d/services.conf.php',
-    'deployment_node' => require __DIR__ . '/module.d/node.conf.php',
+namespace rampage\nexus\node\services;
 
-    'router' => [
-        'routes' => require __DIR__ . '/module.d/routes.conf.php',
-    ]
-];
+use rampage\nexus\node\NodeConfig;
+
+use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
+
+
+class NodeConfigFactory implements FactoryInterface
+{
+    /**
+     * @see \Zend\ServiceManager\FactoryInterface::createService()
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        $config = $serviceLocator->get('config');
+        return new NodeConfig($config['node']);
+    }
+}

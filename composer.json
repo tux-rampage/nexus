@@ -7,7 +7,9 @@
     "doctrine/mongodb-odm" : "1.0.*@beta",
     "zendframework/zend-filter" : "2.*",
     "zendframework/zend-http" : "2.*",
-    "zendframework/zend-mvc" : "2.*"
+    "zendframework/zend-mvc" : "2.*",
+    "zendframework/zend-db" : "2.*",
+    "zendframework/zend-di" : "2.*"
   },
   "require-dev" : {
     "rampage-php/framework" : "1.2.*@dev",

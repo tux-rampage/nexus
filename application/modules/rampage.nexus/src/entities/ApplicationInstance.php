@@ -257,6 +257,23 @@ class ApplicationInstance
     }
 
     /**
+     * @return string
+     */
+    public function getFlavor()
+    {
+        return $this->flavor;
+    }
+
+    /**
+     * @param string $flavor
+     */
+    public function setFlavor($flavor)
+    {
+        $this->flavor = ($flavor !== null)? (string)$flavor : null;
+        return $this;
+    }
+
+    /**
      * @return array|\Traversable
      */
     public function getUserParameters()

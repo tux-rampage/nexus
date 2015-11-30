@@ -66,7 +66,22 @@ class ConfigListenerOptions implements ListenerAggregateInterface
      */
     public function attach(EventManagerInterface $events)
     {
-        $this->listeners[] = $events->attach(ModuleEvent::EVENT_LOAD_MODULES, [$this, 'onLoadModules'], 100);
+        $this->listeners[] = $events->attach(ModuleEvent::EVENT_LOAD_MODULES, [$this, 'onLoadModules'], 1000);
+    }
+
+    protected function isDebian()
+    {
+        $info = (string)@file_get_contents('/etc/issue');
+
+        if (stripos($info, 'debian') !== false) {
+            return true;
+        }
+
+        if (stripos($info, 'ubuntu') !== false) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -77,12 +92,16 @@ class ConfigListenerOptions implements ListenerAggregateInterface
         $dirIterator = new DirectoryIterator(APPLICATION_DIR . 'config/conf.d/');
         $local = APPLICATION_DEVELOPMENT? 'dev' : 'local';
         $prepend = array();
-        $filters = array(
+        $filters = [
             '^global\.php$',
             '^' . $local . '\.php$',
             '\.global\.php$',
             '\.' . $local . '\.php$',
-        );
+        ];
+
+        if ($this->isDebian()) {
+            $filters[] = '^debian\.php$';
+        }
 
         foreach ($filters as $regex) {
             $fileFilter = function(\SplFileInfo $file) use ($regex) {

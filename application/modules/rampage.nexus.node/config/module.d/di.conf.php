@@ -20,11 +20,24 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-return [
-    'service_manager' => require __DIR__ . '/module.d/services.conf.php',
-    'deployment_node' => require __DIR__ . '/module.d/node.conf.php',
+namespace rampage\nexus\node;
 
-    'router' => [
-        'routes' => require __DIR__ . '/module.d/routes.conf.php',
+use Zend\Db\Adapter\AdapterInterface as DbAdapterInterface;
+use Zend\Db\Adapter\Adapter as DbAdapter;
+
+
+return [
+    'instance' => [
+        'aliases' => [
+            'DeployStrategy' => DeployStrategyInterface::class,
+            'NodeRepository' => RemoteRepository::class,
+        ],
+        'preferences' => [
+            DeployStrategyInterface::class => 'DeployStrategy',
+            config\TemplateLocatorInterface::class => config\TemplateLocator::class,
+            RepositoryInterface::class => 'NodeRepository',
+            StateProviderInterface::class => LocalStateProvider::class,
+            DbAdapterInterface::class => DbAdapter::class,
+        ]
     ]
 ];
