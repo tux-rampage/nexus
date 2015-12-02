@@ -27,6 +27,8 @@ use rampage\nexus\exceptions;
 
 use Zend\Db\Adapter\AdapterInterface as DbAdapterInterface;
 use Zend\Db\Sql\Sql;
+use rampage\nexus\node\hydration\LocalStateHydrator;
+use rampage\nexus\node\hydration\HydratingArrayCollection;
 
 
 /**
@@ -50,6 +52,11 @@ class LocalStateProvider implements StateProviderInterface
     protected $sql;
 
     /**
+     * @var LocalStateHydrator
+     */
+    protected $hydrator;
+
+    /**
      * @var string $archiveDirectory
      */
     protected $archiveDirectory = null;
@@ -61,6 +68,7 @@ class LocalStateProvider implements StateProviderInterface
     {
         $this->db = $db;
         $this->sql = new Sql($db);
+        $this->hydrator = new LocalStateHydrator();
     }
 
     /**
@@ -86,7 +94,12 @@ class LocalStateProvider implements StateProviderInterface
      */
     public function updateApplicationState(ApplicationInstance $instance)
     {
-        // TODO: Update app instance
+        $update = $this->sql->update(self::TABLE_APPLICATIONS);
+        $update->set(['state' => $instance->getState()])
+            ->where([ 'id' => $instance->getId() ]);
+
+        $this->sql->prepareStatementForSqlObject($update)->execute();
+        return $this;
     }
 
     /**
@@ -100,12 +113,44 @@ class LocalStateProvider implements StateProviderInterface
     }
 
     /**
+     * @param string $id
+     * @return array
+     */
+    protected function loadUserParams($id)
+    {
+        $params = [];
+        $select = $this->sql->select(self::TABLE_APPLICATION_PARAMS);
+        $select->where
+            ->equalTo('application_id', $id);
+
+        $result = $this->sql->prepareStatementForSqlObject($select)->execute();
+
+        foreach ($result as $item) {
+            $key = $item['key'];
+            $params[$key] = $item['value'];
+        }
+
+        return $params;
+    }
+
+    /**
      * @see \rampage\nexus\node\StateProviderInterface::getInstalledApplications()
      */
     public function getInstalledApplications()
     {
-        // TODO Auto-generated method stub
+        $select = $this->sql->select(self::TABLE_APPLICATIONS)
+            ->where
+            ->notEqualTo('state', ApplicationInstance::STATE_REMOVED);
 
+        $result = $this->sql->prepareStatementForSqlObject($select)->execute();
+        $items = [];
+
+        foreach ($result as $item) {
+            $item['userParameters'] = $this->loadUserParams($item['id']);
+            $items[] = $item;
+        }
+
+        return new HydratingArrayCollection($items, $this->hydrator, new ApplicationInstance());
     }
 
     /**
