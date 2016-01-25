@@ -148,6 +148,13 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
         return $path;
     }
 
+    /**
+     * Create the nginx location config
+     *
+     * @param ApplicationInstance $instance
+     * @param string $template
+     * @return self
+     */
     protected function createLocationConfig(ApplicationInstance $instance, $template = null)
     {
         if (!$template) {

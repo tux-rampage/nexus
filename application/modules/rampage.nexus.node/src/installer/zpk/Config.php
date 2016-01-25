@@ -60,6 +60,9 @@ class Config extends ArrayConfig
         return $this->get('installer.webserver.type', $default);
     }
 
+    /**
+     * @return mixed
+     */
     public function getWebserverVersion()
     {
         $default = 'undefined';
