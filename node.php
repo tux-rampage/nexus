@@ -20,7 +20,10 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\node;
+namespace Rampage\Nexus;
 
-require __DIR__ . '/application/bootstrap.php';
-NodeApplication::init()->run();
+require __DIR__ . '/vendor/autoload.php';
+
+(new Bootstrap())
+    ->app(new Config\NodeConfigProvider())
+    ->run();
