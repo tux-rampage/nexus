@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "d8d6e45a9cc066541e3b6ddc331ece9d",
-    "content-hash": "abf1e07e8f55786c38e98c8207029590",
+    "hash": "ac4198e0e63a87a951f5d56755ffa61c",
+    "content-hash": "6e3cebd79d14dca89ae26f5e88cd1b35",
     "packages": [
         {
             "name": "container-interop/container-interop",
@@ -82,16 +82,16 @@
         },
         {
             "name": "nikic/fast-route",
-            "version": "v0.8.0",
+            "version": "v1.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nikic/FastRoute.git",
-                "reference": "5e1f431ed2afe2be5d2bd97fa69b0e99b9ba45e6"
+                "reference": "8ea928195fa9b907f0d6e48312d323c1a13cc2af"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nikic/FastRoute/zipball/5e1f431ed2afe2be5d2bd97fa69b0e99b9ba45e6",
-                "reference": "5e1f431ed2afe2be5d2bd97fa69b0e99b9ba45e6",
+                "url": "https://api.github.com/repos/nikic/FastRoute/zipball/8ea928195fa9b907f0d6e48312d323c1a13cc2af",
+                "reference": "8ea928195fa9b907f0d6e48312d323c1a13cc2af",
                 "shasum": ""
             },
             "require": {
@@ -121,7 +121,7 @@
                 "router",
                 "routing"
             ],
-            "time": "2016-03-25 23:46:52"
+            "time": "2016-06-12 19:08:51"
         },
         {
             "name": "psr/http-message",
@@ -499,20 +499,20 @@
         },
         {
             "name": "zendframework/zend-expressive-fastroute",
-            "version": "1.1.1",
+            "version": "1.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zend-expressive-fastroute.git",
-                "reference": "2a359a97d13bd6db59cacd6b7ffaf640ffd13b6a"
+                "reference": "2d08527ee8b4ac8709a9dae626f868eaaa1d84e6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zend-expressive-fastroute/zipball/2a359a97d13bd6db59cacd6b7ffaf640ffd13b6a",
-                "reference": "2a359a97d13bd6db59cacd6b7ffaf640ffd13b6a",
+                "url": "https://api.github.com/repos/zendframework/zend-expressive-fastroute/zipball/2d08527ee8b4ac8709a9dae626f868eaaa1d84e6",
+                "reference": "2d08527ee8b4ac8709a9dae626f868eaaa1d84e6",
                 "shasum": ""
             },
             "require": {
-                "nikic/fast-route": "^0.8.0",
+                "nikic/fast-route": "^1.0.0",
                 "php": "^5.5 || ^7.0",
                 "psr/http-message": "^1.0",
                 "zendframework/zend-expressive-router": "^1.0"
@@ -546,7 +546,7 @@
                 "psr",
                 "psr-7"
             ],
-            "time": "2016-05-03 18:00:32"
+            "time": "2016-06-16 13:37:19"
         },
         {
             "name": "zendframework/zend-expressive-helpers",
@@ -707,6 +707,66 @@
             "time": "2016-01-28 15:44:23"
         },
         {
+            "name": "zendframework/zend-filter",
+            "version": "2.7.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zendframework/zend-filter.git",
+                "reference": "84c50246428efb0a1e52868e162dab3e149d5b80"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zendframework/zend-filter/zipball/84c50246428efb0a1e52868e162dab3e149d5b80",
+                "reference": "84c50246428efb0a1e52868e162dab3e149d5b80",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^5.5 || ^7.0",
+                "zendframework/zend-stdlib": "^2.7 || ^3.0"
+            },
+            "require-dev": {
+                "fabpot/php-cs-fixer": "1.7.*",
+                "pear/archive_tar": "^1.4",
+                "phpunit/phpunit": "~4.0",
+                "zendframework/zend-crypt": "^2.6",
+                "zendframework/zend-servicemanager": "^2.7.5 || ^3.0.3",
+                "zendframework/zend-uri": "^2.5"
+            },
+            "suggest": {
+                "zendframework/zend-crypt": "Zend\\Crypt component, for encryption filters",
+                "zendframework/zend-i18n": "Zend\\I18n component for filters depending on i18n functionality",
+                "zendframework/zend-servicemanager": "Zend\\ServiceManager component, for using the filter chain functionality",
+                "zendframework/zend-uri": "Zend\\Uri component, for the UriNormalize filter"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.7-dev",
+                    "dev-develop": "2.8-dev"
+                },
+                "zf": {
+                    "component": "Zend\\Filter",
+                    "config-provider": "Zend\\Filter\\ConfigProvider"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Zend\\Filter\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": "provides a set of commonly needed data filters",
+            "homepage": "https://github.com/zendframework/zend-filter",
+            "keywords": [
+                "filter",
+                "zf2"
+            ],
+            "time": "2016-04-18 18:32:43"
+        },
+        {
             "name": "zendframework/zend-servicemanager",
             "version": "3.1.0",
             "source": {
@@ -857,6 +917,77 @@
                 "psr-7"
             ],
             "time": "2016-03-24 22:10:30"
+        },
+        {
+            "name": "zendframework/zend-validator",
+            "version": "2.8.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zendframework/zend-validator.git",
+                "reference": "f956581bc5fa4cf3f2933fe24e77deded8d1937b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zendframework/zend-validator/zipball/f956581bc5fa4cf3f2933fe24e77deded8d1937b",
+                "reference": "f956581bc5fa4cf3f2933fe24e77deded8d1937b",
+                "shasum": ""
+            },
+            "require": {
+                "container-interop/container-interop": "^1.1",
+                "php": "^5.5 || ^7.0",
+                "zendframework/zend-stdlib": "^2.7 || ^3.0"
+            },
+            "require-dev": {
+                "fabpot/php-cs-fixer": "1.7.*",
+                "phpunit/phpunit": "^4.0",
+                "zendframework/zend-cache": "^2.6.1",
+                "zendframework/zend-config": "^2.6",
+                "zendframework/zend-db": "^2.7",
+                "zendframework/zend-filter": "^2.6",
+                "zendframework/zend-http": "^2.5.4",
+                "zendframework/zend-i18n": "^2.6",
+                "zendframework/zend-math": "^2.6",
+                "zendframework/zend-servicemanager": "^2.7.5 || ^3.0.3",
+                "zendframework/zend-session": "^2.6.2",
+                "zendframework/zend-uri": "^2.5"
+            },
+            "suggest": {
+                "zendframework/zend-db": "Zend\\Db component",
+                "zendframework/zend-filter": "Zend\\Filter component, required by the Digits validator",
+                "zendframework/zend-i18n": "Zend\\I18n component to allow translation of validation error messages as well as to use the various Date validators",
+                "zendframework/zend-i18n-resources": "Translations of validator messages",
+                "zendframework/zend-math": "Zend\\Math component",
+                "zendframework/zend-servicemanager": "Zend\\ServiceManager component to allow using the ValidatorPluginManager and validator chains",
+                "zendframework/zend-session": "Zend\\Session component",
+                "zendframework/zend-uri": "Zend\\Uri component, required by the Uri and Sitemap\\Loc validators"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.8-dev",
+                    "dev-develop": "2.9-dev"
+                },
+                "zf": {
+                    "component": "Zend\\Validator",
+                    "config-provider": "Zend\\Validator\\ConfigProvider"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Zend\\Validator\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": "provides a set of commonly needed validators",
+            "homepage": "https://github.com/zendframework/zend-validator",
+            "keywords": [
+                "validator",
+                "zf2"
+            ],
+            "time": "2016-05-16 13:39:40"
         }
     ],
     "packages-dev": [
@@ -1721,16 +1852,16 @@
         },
         {
             "name": "sebastian/exporter",
-            "version": "1.2.1",
+            "version": "1.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/exporter.git",
-                "reference": "7ae5513327cb536431847bcc0c10edba2701064e"
+                "reference": "42c4c2eec485ee3e159ec9884f95b431287edde4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/exporter/zipball/7ae5513327cb536431847bcc0c10edba2701064e",
-                "reference": "7ae5513327cb536431847bcc0c10edba2701064e",
+                "url": "https://api.github.com/repos/sebastianbergmann/exporter/zipball/42c4c2eec485ee3e159ec9884f95b431287edde4",
+                "reference": "42c4c2eec485ee3e159ec9884f95b431287edde4",
                 "shasum": ""
             },
             "require": {
@@ -1738,12 +1869,13 @@
                 "sebastian/recursion-context": "~1.0"
             },
             "require-dev": {
+                "ext-mbstring": "*",
                 "phpunit/phpunit": "~4.4"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.2.x-dev"
+                    "dev-master": "1.3.x-dev"
                 }
             },
             "autoload": {
@@ -1783,7 +1915,7 @@
                 "export",
                 "exporter"
             ],
-            "time": "2015-06-21 07:55:53"
+            "time": "2016-06-17 09:04:28"
         },
         {
             "name": "sebastian/global-state",
@@ -2099,50 +2231,6 @@
                 "validate"
             ],
             "time": "2015-08-24 13:29:44"
-        },
-        {
-            "name": "zendframework/zend-component-installer",
-            "version": "0.2.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/zendframework/zend-component-installer.git",
-                "reference": "a8364d76ccadf5096b81b27740a618eae7f78a01"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zend-component-installer/zipball/a8364d76ccadf5096b81b27740a618eae7f78a01",
-                "reference": "a8364d76ccadf5096b81b27740a618eae7f78a01",
-                "shasum": ""
-            },
-            "require": {
-                "composer-plugin-api": "^1.0",
-                "php": "^5.5 || ^7.0"
-            },
-            "require-dev": {
-                "composer/composer": ">=1.0.0-alpha10",
-                "mikey179/vfsstream": "^1.6",
-                "phpunit/phpunit": "^4.7",
-                "roave/security-advisories": "dev-master",
-                "squizlabs/php_codesniffer": "^2.5"
-            },
-            "type": "composer-plugin",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0-dev"
-                },
-                "class": "Zend\\ComponentInstaller\\ComponentInstaller"
-            },
-            "autoload": {
-                "psr-4": {
-                    "Zend\\ComponentInstaller\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "description": "Composer plugin for automating component registration in zend-mvc and Expressive applications",
-            "time": "2016-06-02 17:44:01"
         }
     ],
     "aliases": [
