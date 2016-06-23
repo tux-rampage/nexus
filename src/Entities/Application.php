@@ -55,7 +55,7 @@ class Application implements Api\ArrayExchangeInterface
     /**
      * @var ApplicationPackage[]
      */
-    protected $packages = null;
+    protected $packages = [];
 
     /**
      * Returns the unique identifier of this application
@@ -104,6 +104,21 @@ class Application implements Api\ArrayExchangeInterface
     }
 
     /**
+     * Find a package by id
+     *
+     * @param string $packageId
+     * @return PackageInterface
+     */
+    public function findPackage($packageId)
+    {
+        if (!isset($this->packages[$packageId])) {
+            return null;
+        }
+
+        return $this->packages[$packageId];
+    }
+
+    /**
      * Add a package to this application
      *
      * @param   PackageInterface    $package
@@ -117,6 +132,17 @@ class Application implements Api\ArrayExchangeInterface
 
         $this->packages[$package->getId()] = $package;
         return $this;
+    }
+
+    /**
+     * Check if this application has the requested package
+     *
+     * @param PackageInterface $package
+     * @return bool
+     */
+    public function hasPackage(PackageInterface $package)
+    {
+        return (isset($this->packages[$package->getId()]));
     }
 
     /**
@@ -140,10 +166,14 @@ class Application implements Api\ArrayExchangeInterface
      */
     public function toArray()
     {
-        return [
+        $array = [
             'id' => $this->id,
             'name' => $this->name,
-            'packageCount' => count($this->packages)
+            'packages' => [],
         ];
+
+        foreach ($this->packages as $package) {
+            $array['packages'][] = $package->toArray();
+        }
     }
 }

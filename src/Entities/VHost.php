@@ -22,56 +22,59 @@
 
 namespace Rampage\Nexus\Entities;
 
-use Doctrine\ODM\MongoDB\Mapping\Annotations as odm;
 
+use Zend\Stdlib\Parameters;
+use Rampage\Nexus\Exception\UnexpectedValueException;
 
 /**
  * Vhost definition
  */
-class VHost
+class VHost implements Api\ArrayExchangeInterface
 {
     /**
-     * @odm\Id(strategy="NONE")
+     * The name for the default vhost
+     */
+    const DEFAULT_VHOST = '*';
+
+    /**
+     * Regex for valid server names
+     */
+    const VALID_NAME_REGEX = '~^[a-z0-9_-]+(\.[a-z0-9_-]+)*$~';
+
+    /**
      * @var string
      */
     protected $name;
 
     /**
-     * @odm\Field(type="string")
+     * The default flavour for this host
+     *
      * @var string
      */
     protected $flavor = null;
 
     /**
-     * @odm\Hash()
+     * Contains aliases for this vhost
+     *
      * @var string[]
      */
     protected $aliases = [];
 
     /**
-     * @odm\Field(type="string")
-     * @var string
+     * Flag if SSL should be enabled
+     *
+     * The result depends on the corresponding flavor.
+     *
+     * @var bool
      */
-    protected $sslCert = null;
-
-    /**
-     * @odm\Field(type="string")
-     * @var string
-     */
-    protected $sslKey = null;
-
-    /**
-     * @odm\Field(type="string")
-     * @var string
-     */
-    protected $sslChain = null;
+    protected $enableSsl = false;
 
     /**
      * @param string $name
      */
     public function __construct($name)
     {
-        $this->name = $name;
+        $this->setName($name);
     }
 
     /**
@@ -80,6 +83,24 @@ class VHost
     public function getName()
     {
         return $this->name;
+    }
+
+    /**
+     * @param string $name
+     * @return self
+     */
+    public function setName($name)
+    {
+        if ($name == '') {
+            throw new UnexpectedValueException('The VHost name must not be empty');
+        }
+
+        if (!preg_match(self::VALID_NAME_REGEX, $name) && ($name != self::DEFAULT_VHOST)) {
+            throw new UnexpectedValueException(sprintf('Invalid vhost name: "%s"', $name));
+        }
+
+        $this->name = $name;
+        return $this;
     }
 
     /**
@@ -100,62 +121,37 @@ class VHost
     }
 
     /**
-     * @return string
-     */
-    public function getSslCert()
-    {
-        return $this->sslCert;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSslKey()
-    {
-        return $this->sslKey;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSslChain()
-    {
-        return $this->sslChain;
-    }
-
-    /**
-     * @param string $sslCert
-     */
-    public function setSslCert($sslCert)
-    {
-        $this->sslCert = $sslCert;
-        return $this;
-    }
-
-    /**
-     * @param string $sslKey
-     */
-    public function setSslKey($sslKey)
-    {
-        $this->sslKey = $sslKey;
-        return $this;
-    }
-
-    /**
-     * @param string $sslChain
-     */
-    public function setSslChain($sslChain)
-    {
-        $this->sslChain = $sslChain;
-        return $this;
-    }
-
-    /**
      * @return string[]
      */
     public function getAliases()
     {
         return $this->aliases;
+    }
+
+    /**
+     * @param multitype:\Rampage\Nexus\Entities\string  $aliases
+     * @return self
+     */
+    public function setAliases($aliases)
+    {
+        $this->clearAliases();
+
+        foreach ($aliases as $alias) {
+            $this->addAlias($alias);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Remove all aliases for this vhost
+     *
+     * @return self
+     */
+    public function clearAliases()
+    {
+        $this->aliases = [];
+        return $this;
     }
 
     /**
@@ -184,5 +180,52 @@ class VHost
         }
 
         return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isSslEnabled()
+    {
+        return $this->enableSsl;
+    }
+
+    /**
+     * @param boolean $enableSsl
+     * @return self
+     */
+    public function setEnableSsl($enableSsl)
+    {
+        $this->enableSsl = (bool)$enableSsl;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Entities\Api\ArrayExchangeInterface::exchangeArray()
+     */
+    public function exchangeArray(array $array)
+    {
+        $data = new Parameters($array);
+
+        $this->setName($data->get('name'));
+        $this->setFlavor($data->get('flavor'));
+        $this->setAliases($data->get('aliases'));
+        $this->setEnableSsl($data->get('enableSsl'));
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Entities\Api\ArrayExportableInterface::toArray()
+     */
+    public function toArray()
+    {
+        return [
+            'name' => $this->name,
+            'isDefault' => ($this->name == self::DEFAULT_VHOST),
+            'flavor' => $this->flavor,
+            'aliases' => $this->aliases,
+            'enableSsl' => $this->enableSsl
+        ];
     }
 }

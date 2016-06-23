@@ -20,28 +20,24 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Entities;
-
-use rampage\nexus\package\DependencyInterface;
-use Doctrine\ODM\MongoDB\Mapping\Annotations as odm;
-use rampage\nexus\package\constraint\ConstraintBuilder;
-
+namespace Rampage\Nexus\Package;
 
 /**
- * @odm\EmbeddedDocument()
+ * Implements a platform dependency
  */
 class PlatformDependency implements DependencyInterface
 {
+    /**
+     * Typename for platforms
+     */
     const TYPE_PLATFORM = 'platform';
 
     /**
-     * @odm\String(nullable=false)
      * @var string
      */
     protected $name = null;
 
     /**
-     * @odm\String(nullable=false)
      * @var string
      */
     protected $constraint = null;
@@ -50,7 +46,7 @@ class PlatformDependency implements DependencyInterface
      * @param string $name
      * @param string $constraint
      */
-    public function __construct($name = null, $constraint = '*')
+    public function __construct($name, $constraint = '*')
     {
         $this->name = $name;
         $this->constraint = $constraint;
@@ -61,7 +57,7 @@ class PlatformDependency implements DependencyInterface
      */
     public function getConstraint()
     {
-        return (new ConstraintBuilder())->createConstraint($this->constraint);
+        return (new Constraint\ConstraintBuilder())->createConstraint($this->constraint);
     }
 
     /**

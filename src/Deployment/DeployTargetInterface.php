@@ -23,21 +23,25 @@
 namespace Rampage\Nexus\Deployment;
 
 use Rampage\Nexus\Entities\ApplicationInstance;
-use Rampage\Nexus\Entities\Node;
-use Zend\Stdlib\ArraySerializableInterface;
 use Rampage\Nexus\Entities\VHost;
+use Rampage\Nexus\Entities\Api\ArrayExchangeInterface;
 use Rampage\Nexus\Exception\RuntimeException;
 
 
 /**
  * Interface for deployment target implementations
  */
-interface DeployTargetInterface extends ArraySerializableInterface
+interface DeployTargetInterface extends ArrayExchangeInterface
 {
     /**
      * @return string
      */
     public function getId();
+
+    /**
+     * @return bool
+     */
+    public function canManageVHosts();
 
     /**
      * Returns all defined vhosts
@@ -80,48 +84,41 @@ interface DeployTargetInterface extends ArraySerializableInterface
     public function getName();
 
     /**
-     * The deployment node
+     * Returns all nodes in the deploy target
      *
-     * @return Node
+     * @return NodeInterface[]
      */
-    public function getNode();
+    public function getNodes();
 
     /**
-     * Add a node to the deploy target
+     * Returns all application instances for this target
      *
-     * @param NodeInterface $node
+     * @return ApplicationInstance
      */
-    public function addNode(NodeInterface $node);
+    public function getApplications();
 
     /**
-     * Remove a node from the deploy target
+     * Add an application instance
      *
-     * @param NodeInterface $node
+     * @param ApplicationInstance $application
+     * @return self
      */
-    public function removeNode(NodeInterface $node);
+    public function addApplication(ApplicationInstance $application);
 
     /**
-     * Check whether the target can deploy or not
-     *
-     * @return bool
-     */
-    public function canDeploy();
-
-    /**
-     * Deploy the given application instance
+     * Removes an application instance from this tartget
      *
      * @param ApplicationInstance $instance
-     * @return self Fluid Interface
      */
-    public function deploy(ApplicationInstance $instance);
+    public function removeApplication(ApplicationInstance $instance);
 
     /**
-     * Remove the given application instance
+     * Find an application instance by its identifier
      *
-     * @param ApplicationInstance $instance
-     * @return self Fluid Interface
+     * @param string $id
+     * @return ApplicationInstance|null
      */
-    public function remove(ApplicationInstance $instance);
+    public function findApplication($id);
 
     /**
      * Refresh the deployment target status

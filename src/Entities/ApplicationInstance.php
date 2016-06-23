@@ -23,9 +23,13 @@
 
 namespace Rampage\Nexus\Entities;
 
-use Zend\Stdlib\Guard\ArrayOrTraversableGuardTrait;
 use Rampage\Nexus\Package\PackageInterface;
-use Rampage\Nexus\Deployment\DeployTargetInterface;
+
+use Rampage\Nexus\Exception\LogicException;
+use Rampage\Nexus\Exception\UnexpectedValueException;
+
+use Zend\Stdlib\Guard\ArrayOrTraversableGuardTrait;
+use Zend\Stdlib\Parameters;
 
 
 /**
@@ -34,7 +38,7 @@ use Rampage\Nexus\Deployment\DeployTargetInterface;
 class ApplicationInstance implements Api\ArrayExchangeInterface
 {
     const STATE_DEPLOYED = 'deployed';
-    const STATE_ERROR = 'deployed';
+    const STATE_ERROR = 'error';
     const STATE_PENDING = 'pending';
     const STATE_STAGING = 'staging';
     const STATE_ACTIVATING = 'activating';
@@ -91,15 +95,9 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
     private $previousPackage = null;
 
     /**
-     *
-     * @var DeployTargetInterface
-     */
-    protected $target = null;
-
-    /**
      * The vhost within the teploy target
      *
-     * @var string
+     * @var VHost
      */
     private $vhost = null;
 
@@ -125,14 +123,23 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
     protected $userParameters = [];
 
     /**
+     * Pervious user parameters
+     *
+     * @var array
+     */
+    protected $previousUserParameters = null;
+
+    /**
      * Construct
      */
-    public function __construct(DeployTargetInterface $target = null)
+    public function __construct($id)
     {
-        $this->target = $target;
+        $this->id = $id;
     }
 
     /**
+     * Returns the application identifier
+     *
      * @return string
      */
     public function getId()
@@ -143,9 +150,9 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
     /**
      * @return string
      */
-    public function getName()
+    public function getLabel()
     {
-        return $this->name;
+        return $this->label;
     }
 
     /**
@@ -155,7 +162,7 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
      */
     public function getVHost()
     {
-        return $this->target->getVHost($this->vhost);
+        return $this->vhost;
     }
 
     /**
@@ -196,9 +203,14 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
      * @param PackageInterface $package
      * @return self
      */
-    public function setPackage($package)
+    public function setPackage(PackageInterface $package)
     {
+        if (!$this->application->hasPackage($package)) {
+            throw new LogicException(sprintf('Package %s does not provide application %s', $this->package->getId(), $this->application->getName()));
+        }
+
         $this->previousPackage = $this->package;
+        $this->previousUserParameters = $this->userParameters;
         $this->package = $package;
 
         return $this;
@@ -210,14 +222,6 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
     public function getPreviousPackage()
     {
         return $this->previousPackage;
-    }
-
-    /**
-     * @return DeployTarget
-     */
-    public function getTarget()
-    {
-        return $this->target;
     }
 
     /**
@@ -271,7 +275,30 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
      */
     public function exchangeArray(array $array)
     {
-        // TODO Auto-generated method stub
+        $data = new Parameters($array);
+        $packageId = $data->get('package');
+
+        $this->label = $data->get('label');
+        $this->flavor = $data->get('flavor');
+        $this->path = $data->get('path');
+
+        $this->setUserParameters($data->get('userParameters'));
+
+        if ($packageId) {
+            $package = $this->application->findPackage($packageId);
+
+            if (!$packageId) {
+                throw new UnexpectedValueException(sprintf(
+                    'The package id %s does not exist for Application %s',
+                    $packageId,
+                    $this->application->getName()
+                ));
+            }
+
+            $this->setPackage($package);
+        }
+
+        return $this;
     }
 
     /**
@@ -280,6 +307,19 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
      */
     public function toArray()
     {
-        // TODO Auto-generated method stub
+        return [
+            'id' => $this->id,
+            'label' => $this->label,
+            'application' => [
+                'id' => $this->application->getId(),
+                'package' => $this->package->getId(),
+                'previousPackage' => $this->previousPackage? $this->previousPackage->getId() : null,
+            ],
+            'flavor' => $this->flavor,
+            'path' => $this->path,
+            'state' => $this->state,
+            'userParameters' => $this->userParameters,
+            'vhost' => $this->vhost->getName()
+        ];
     }
 }

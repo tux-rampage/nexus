@@ -22,8 +22,9 @@
 
 namespace Rampage\Nexus\Package;
 
-use Zend\Stdlib\Hydrator\ClassMethods as ClassMethodHydrator;
-use Zend\Json\Json;
+use Rampage\Nexus\Exception\InvalidArgumentException;
+use Rampage\Nexus\Exception\UnexpectedValueException;
+use Rampage\Nexus\Entities\PackageParameter;
 
 
 /**
@@ -31,12 +32,24 @@ use Zend\Json\Json;
  */
 class ComposerPackage implements PackageInterface
 {
+    use ArrayExportableTrait;
+
+    /**
+     * Composer package type constant
+     */
     const TYPE_COMPOSER = 'composer';
 
     /**
-     * @var ArrayConfig
+     * @var string
      */
-    protected $composer;
+    private $buildId;
+
+    /**
+     * Data of composer.json
+     *
+     * @var array
+     */
+    protected $data;
 
     /**
      * @var PackageParameter[]
@@ -44,39 +57,127 @@ class ComposerPackage implements PackageInterface
     protected $parameters = null;
 
     /**
+     * @var string
+     */
+    protected $archive = null;
+
+    /**
      * @param array|string $json
      */
     public function __construct($json)
     {
-        if (is_string($json)) {
-            $json = Json::decode($json, Json::TYPE_ARRAY);
+        if (!is_string($json)) {
+            $json = json_decode($json, true);
         }
 
-        $this->composer = new ArrayConfig($json);
+        if (!is_array($json)) {
+            throw new InvalidArgumentException('The composer.json must be an array or a string containing valid json');
+        }
+
+        $this->data = $json;
+        $this->validate();
+        $this->setBuildId(null);
     }
 
     /**
-     * @see \rampage\nexus\PackageInterface::getDocumentRoot()
+     * @throws UnexpectedValueException
+     */
+    protected function validate()
+    {
+        $requiredFields = ['name', 'version'];
+
+        foreach ($requiredFields as $field) {
+            if (!isset($this->data[$field]) || ($this->data[$field] == '')) {
+                throw new UnexpectedValueException('Missing field in composer.json: ' . $field);
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Package\PackageInterface::getArchive()
+     */
+    public function getArchive()
+    {
+        return $this->archive;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Package\PackageInterface::getId()
+     */
+    public function getId()
+    {
+        return $this->buildId;
+    }
+
+    /**
+     * Sets the build identifier
+     *
+     * @param string $buildId
+     * @return self
+     */
+    public function setBuildId($buildId)
+    {
+        if ($buildId === null) {
+            $buildId = $this->getName() . '@' . $this->getVersion();
+        }
+
+        if ($buildId == '') {
+            throw new InvalidArgumentException('The build id must not be empty');
+        }
+
+        $this->buildId = $buildId;
+        return $this;
+    }
+
+    /**
+     * Sets the archive file
+     *
+     * @param string $archive
+     * @return self
+     */
+    public function setArchive($archive)
+    {
+        $this->archive = $archive? : null;
+        return $this;
+    }
+
+    /**
+     * Returns the configured document root
+     *
+     * @return string
      */
     public function getDocumentRoot()
     {
-        return $this->composer->get('extra.deployment.docroot');
+        if (!isset($this->data['extra']['deployment']['docroot'])) {
+            return null;
+        }
+
+        return (string)$this->data['extra']['deployment']['docroot'];
     }
 
     /**
-     * @see \rampage\nexus\PackageInterface::getExtra()
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Package\PackageInterface::getExtra()
      */
     public function getExtra($name = null)
     {
-        if ($name === null) {
-            return $this->composer->getSection('extra')->toArray();
+        if (!isset($this->data['extra'])) {
+            return null;
         }
 
-        return $this->composer->getSection('extra')->get($name);
+        if ($name !== null) {
+            return isset($this->data['extra'][$name])? $this->data['extra'][$name] : null;
+        }
+
+        return $this->data['extra'];
     }
 
     /**
-     * @see \rampage\nexus\PackageInterface::getName()
+     * Returns the package name
+     *
+     * @return string
      */
     public function getName()
     {
@@ -90,7 +191,12 @@ class ComposerPackage implements PackageInterface
     {
         $this->parameters = [];
 
-        foreach ($this->composer->getSection('extra.deployment.parameters') as $name => $param) {
+        if (!isset($this->data['extra']['deployment']['parameters'])
+            || !is_array($this->data['extra']['deployment']['parameters'])) {
+            return;
+        }
+
+        foreach ($this->data['extra']['deployment']['parameters'] as $name => $param) {
             if (!is_string($name) || ($name == '')) {
                 continue;
             }
@@ -99,18 +205,12 @@ class ComposerPackage implements PackageInterface
 
             if (is_string($param)) {
                 $parameter->setType($param);
+            } else {
+                $parameter->exchangeArray($param);
             }
 
-            if ($param instanceof ArrayConfig) {
-                $data = $param->toArray();
-                unset($data['name']);
-                (new ClassMethodHydrator())->hydrate($data, $parameter);
-            }
-
-            $this->parameters[] = $parameter;
+            $this->parameters[$parameter->getName()] = $parameter;
         }
-
-        return $this;
     }
 
     /**
@@ -138,6 +238,6 @@ class ComposerPackage implements PackageInterface
      */
     public function getVersion()
     {
-        return $this->composer->get('version');
+        return $this->data['version'];
     }
 }

@@ -23,6 +23,7 @@
 namespace Rampage\Nexus\Entities;
 
 use Rampage\Nexus\Package\ParameterInterface;
+use Zend\Stdlib\Parameters;
 
 /**
  * Implements a persistable package parameter
@@ -153,6 +154,10 @@ class PackageParameter implements ParameterInterface, Api\ArrayExchangeInterface
      */
     public function getLabel()
     {
+        if (!$this->label) {
+            return $this->getName();
+        }
+
         return $this->label;
     }
 
@@ -250,8 +255,20 @@ class PackageParameter implements ParameterInterface, Api\ArrayExchangeInterface
      */
     public function exchangeArray(array $array)
     {
-        // TODO Auto-generated method stub
+        $data = new Parameters($array);
 
+        $this->name = $data->get('name', $this->name);
+        $this->default = $data->get('default');
+        $this->label = $data->get('label');
+        $this->required = (bool)$data->get('required');
+        $this->type = $data->get('type');
+        $this->options = null;
+
+        $options = $data->get('options');
+
+        if (is_array($options)) {
+            $this->setOptions($options);
+        }
     }
 
     /**
@@ -260,10 +277,18 @@ class PackageParameter implements ParameterInterface, Api\ArrayExchangeInterface
      */
     public function toArray()
     {
-        // TODO Auto-generated method stub
+        $array = [
+            'name' => $this->getName(),
+            'label' => $this->getLabel(),
+            'default' => $this->getDefault(),
+            'type' => $this->getType(),
+            'required' => $this->isRequired(),
+        ];
 
+        if ($this->hasOptions()) {
+            $array['options'] = $this->getOptions();
+        }
+
+        return $array;
     }
-
-
-
 }

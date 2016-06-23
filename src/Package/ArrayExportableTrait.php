@@ -58,6 +58,7 @@ trait ArrayExportableTrait
                 'label' => $parameter->getLabel(),
                 'default' => $parameter->getDefault(),
                 'type' => $parameter->getType(),
+                'required' => $parameter->isRequired(),
             ];
 
             if ($parameter->hasOptions()) {

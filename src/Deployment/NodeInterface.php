@@ -22,13 +22,14 @@
 
 namespace Rampage\Nexus\Deployment;
 
-use Zend\Stdlib\ArraySerializableInterface;
+use Rampage\Nexus\Entities\ApplicationInstance;
+use Rampage\Nexus\Entities\Api\ArrayExportableInterface;
 
 
 /**
  * Defines the interface for deployment nodes
  */
-interface NodeInterface extends ArraySerializableInterface
+interface NodeInterface extends ArrayExportableInterface
 {
     /**
      * Node is in failure state
@@ -70,12 +71,26 @@ interface NodeInterface extends ArraySerializableInterface
     public function getDeployTarget();
 
     /**
+     * Checks whether the node is attached to a deploy target or not
+     *
+     * @return bool
+     */
+    public function isAttached();
+
+    /**
      * Attaches the node to the given teploy target
      *
      * @param   DeployTarget    $deployTarget
      * @return  self
      */
-    public function setDeployTarget(DeployTargetInterface $deployTarget);
+    public function attach(DeployTargetInterface $deployTarget);
+
+    /**
+     * Removes the node from its deploy target
+     *
+     * @return self
+     */
+    public function detach();
 
     /**
      * Returns the nodes state
@@ -83,6 +98,14 @@ interface NodeInterface extends ArraySerializableInterface
      * @return string
      */
     public function getState();
+
+    /**
+     * Returns the node's state of the given application
+     *
+     * @param ApplicationInstance $application
+     * @return string
+     */
+    public function getApplicationState(ApplicationInstance $application);
 
     /**
      * Returns the node's server info
@@ -97,4 +120,24 @@ interface NodeInterface extends ArraySerializableInterface
      * @return string
      */
     public function getPublicKey();
+
+    /**
+     * Check if this node accepts the given node as sibling in a cluster
+     *
+     * @param NodeInterface $node
+     * @return bool
+     */
+    public function acceptsClusterSibling(NodeInterface $node);
+
+    /**
+     * Sync changes to the node
+     */
+    public function sync();
+
+    /**
+     * Updates state information from the node
+     *
+     * @return self
+     */
+    public function refreshStatus();
 }

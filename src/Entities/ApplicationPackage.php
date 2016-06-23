@@ -135,7 +135,7 @@ class ApplicationPackage implements PackageInterface
         $this->version = $package->getVersion();
 
         foreach ($package->getParameters() as $param) {
-            $this->parameters[$param->getName()] = $param;
+            $this->parameters[$param->getName()] = new PackageParameter($param);
         }
 
         return $this;
