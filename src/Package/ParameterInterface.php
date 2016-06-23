@@ -67,15 +67,22 @@ interface ParameterInterface
      *
      * @return  bool
      */
-    public function hasOptions();
+    public function hasValueOptions();
 
     /**
      * Allowed values
      *
-     * This method will return an array with allowd values as keys and a human readable
+     * This method will return an array with allowed values as keys and a human readable
      * label as value.
      *
      * This can be used to build select options for example.
+     *
+     * @return array
+     */
+    public function getValueOptions();
+
+    /**
+     * Arbitary element options
      *
      * @return array
      */

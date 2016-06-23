@@ -23,8 +23,6 @@
 namespace Rampage\Nexus;
 
 
-use Zend\Diactoros\Stream;
-
 /**
  * Provides an object orient interface for executables
  *

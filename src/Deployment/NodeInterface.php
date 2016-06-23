@@ -52,6 +52,12 @@ interface NodeInterface extends ArrayExportableInterface
     const STATE_UNINITIALIZED = 'uninitialized';
 
     /**
+     * Node is not reachable
+     */
+    const STATE_UNREACHABLE = 'unreachable';
+
+
+    /**
      * The unique identifier of this deployment node
      */
     public function getId();

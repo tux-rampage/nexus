@@ -58,6 +58,11 @@ class PackageParameter implements ParameterInterface, Api\ArrayExchangeInterface
     protected $options = [];
 
     /**
+     * @var array
+     */
+    protected $valueOptions = [];
+
+    /**
      * @var bool
      */
     protected $required = false;
@@ -89,9 +94,10 @@ class PackageParameter implements ParameterInterface, Api\ArrayExchangeInterface
         $this->options = null;
         $this->required = $parameter->isRequired();
         $this->type = $parameter->getType();
+        $this->options = $parameter->getOptions();
 
-        if ($parameter->hasOptions()) {
-            $this->options = $parameter->getOptions();
+        if ($parameter->hasValueOptions()) {
+            $this->valueOptions = $parameter->getValueOptions();
         }
     }
 
@@ -174,11 +180,11 @@ class PackageParameter implements ParameterInterface, Api\ArrayExchangeInterface
 
     /**
      * {@inheritDoc}
-     * @see \Rampage\Nexus\Package\ParameterInterface::hasOptions()
+     * @see \Rampage\Nexus\Package\ParameterInterface::hasValueOptions()
      */
-    public function hasOptions()
+    public function hasValueOptions()
     {
-        return ($this->options !== null);
+        return ($this->valueOptions !== null);
     }
 
 
@@ -191,13 +197,22 @@ class PackageParameter implements ParameterInterface, Api\ArrayExchangeInterface
     }
 
     /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Package\ParameterInterface::getValueOptions()
+     */
+    public function getValueOptions()
+    {
+        return $this->valueOptions;
+    }
+
+    /**
      * Remove all options
      *
      * @return self
      */
-    public function removeOptions()
+    public function removeValueOptions()
     {
-        $this->options = null;
+        $this->valueOptions = null;
         return $this;
     }
 
@@ -205,7 +220,7 @@ class PackageParameter implements ParameterInterface, Api\ArrayExchangeInterface
      * @param string $option
      * @return self
      */
-    public function addOption($option, $label = null)
+    public function addValueOption($option, $label = null)
     {
         $option = (string)$option;
 
@@ -213,17 +228,39 @@ class PackageParameter implements ParameterInterface, Api\ArrayExchangeInterface
             $label = $option;
         }
 
-        if (!is_array($this->options)) {
-            $this->options = [];
+        if (!is_array($this->valueOptions)) {
+            $this->valueOptions = [];
         }
 
-        $this->options[$option] = (string)$label;
+        $this->valueOptions[$option] = (string)$label;
         return $this;
     }
 
     /**
      * @param array $options
      * @return self
+     */
+    public function setValueOptions(array $options)
+    {
+        $this->valueOptions = [];
+
+        foreach ($options as $key => $value) {
+            $this->addValueOption($key, $value);
+        }
+
+        return $this;
+    }
+
+    public function setOption($name, $value)
+    {
+        $this->options[$name] = $value;
+        return $this;
+    }
+
+    /**
+     * Set arbitary element options
+     *
+     * @param array $options
      */
     public function setOptions(array $options)
     {
@@ -262,12 +299,13 @@ class PackageParameter implements ParameterInterface, Api\ArrayExchangeInterface
         $this->label = $data->get('label');
         $this->required = (bool)$data->get('required');
         $this->type = $data->get('type');
-        $this->options = null;
+        $this->valueOptions = null;
+        $this->setOptions($data->get('options'));
 
-        $options = $data->get('options');
+        $valueOptions = $data->get('valueOptions');
 
-        if (is_array($options)) {
-            $this->setOptions($options);
+        if (is_array($valueOptions)) {
+            $this->setValueOptions($valueOptions);
         }
     }
 
@@ -283,10 +321,11 @@ class PackageParameter implements ParameterInterface, Api\ArrayExchangeInterface
             'default' => $this->getDefault(),
             'type' => $this->getType(),
             'required' => $this->isRequired(),
+            'options' => $this->getOptions(),
         ];
 
-        if ($this->hasOptions()) {
-            $array['options'] = $this->getOptions();
+        if ($this->hasValueOptions()) {
+            $array['valueOptions'] = $this->getValueOptions();
         }
 
         return $array;

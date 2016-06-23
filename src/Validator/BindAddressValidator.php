@@ -23,7 +23,7 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Validation;
+namespace Rampage\Nexus\Validator;
 
 use Zend\Validator\AbstractValidator;
 use Zend\Validator\Ip as IpValidator;

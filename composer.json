@@ -11,6 +11,7 @@
         "zendframework/zend-expressive": "^1.0",
         "zendframework/zend-expressive-helpers": "^2.0",
         "zendframework/zend-stdlib": "^3.0",
+        "zendframework/zend-http": "^2.5.4 | ^3.0",
         "zendframework/zend-validator": "^2.8 | ^3.0",
         "zendframework/zend-filter": "^2.7 | ^3.0",
         "zendframework/zend-expressive-fastroute": "^1.0",

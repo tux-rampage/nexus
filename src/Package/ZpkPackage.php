@@ -22,18 +22,28 @@
 
 namespace Rampage\Nexus\Package;
 
-use Zend\Filter\Boolean;
+use Rampage\Nexus\Exception\RuntimeException;
+use Zend\Filter\Boolean as BoolFilter;
 use SimpleXMLElement;
+use Rampage\Nexus\Entities\PackageParameter;
+use Zend\Stdlib\Parameters;
+
 
 /**
  * Implementation for ZendServer packages
  */
 class ZpkPackage implements PackageInterface
 {
+    use ArrayExportableTrait;
+    use BuildIdAwareTrait;
+
     const TYPE_ZPK = 'zpk';
 
+    const EXTRA_APP_DIR = 'app-dir';
+    const EXTRA_SCRIPTS_DIR = 'scripts-dir';
+
     /**
-     * @var \SimpleXMLElement
+     * @var SimpleXMLElement
      */
     protected $descriptor;
 
@@ -43,11 +53,59 @@ class ZpkPackage implements PackageInterface
     protected $parameters = null;
 
     /**
+     * @var string
+     */
+    protected $archive;
+
+    /**
      * @param SimpleXMLElement $descriptor
      */
     public function __construct(SimpleXMLElement $descriptor)
     {
         $this->descriptor = $descriptor;
+        $this->validate();
+        $this->setBuildId(null);
+    }
+
+    /**
+     * @throws RuntimeException
+     */
+    protected function validate()
+    {
+        $dom = new \DOMDocument();
+        $dom->loadXML($this->descriptor->asXML());
+
+        if (!$dom->schemaValidate(__DIR__ . '/../../resource/xsd/zend-package.xsd')) {
+            throw new RuntimeException('Invalid deployment descriptor');
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Package\PackageInterface::getId()
+     */
+    public function getId()
+    {
+        return $this->buildId;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Package\PackageInterface::getArchive()
+     */
+    public function getArchive()
+    {
+        return $this->archive;
+    }
+
+    /**
+     * @param string $archive
+     * @return self
+     */
+    public function setArchive($archive)
+    {
+        $this->archive = $archive;
+        return $this;
     }
 
     /**
@@ -63,7 +121,16 @@ class ZpkPackage implements PackageInterface
      */
     public function getExtra($name = null)
     {
-        return null;
+        $extra = [
+            self::EXTRA_APP_DIR => $this->getAppDir(),
+            self::EXTRA_SCRIPTS_DIR => $this->getScriptsDir()
+        ];
+
+        if ($name !== null) {
+            return (new Parameters($extra))->get($name);
+        }
+
+        return $extra;
     }
 
     /**
@@ -79,7 +146,7 @@ class ZpkPackage implements PackageInterface
      */
     protected function buildParameters()
     {
-        $boolFilter = new Boolean();
+        $boolFilter = new BoolFilter();
         $this->parameters = [];
 
         foreach ($this->descriptor->xpath('./parameters/parameter') as $parameterXml) {
@@ -94,11 +161,12 @@ class ZpkPackage implements PackageInterface
                 continue;
             }
 
-            $required = $boolFilter->filter($required);
-            $readonly = $boolFilter->filter($readonly);
+            $required = $boolFilter($required);
+            $readonly = $boolFilter($readonly);
             $param = new PackageParameter($name);
 
-            $param->setRequired($required)
+            $param->setType($type)
+                ->setRequired($required)
                 ->setDefault($default)
                 ->setLabel($label)
                 ->addOption('readonly', $readonly);
@@ -113,27 +181,7 @@ class ZpkPackage implements PackageInterface
                     }
 
                     $param->setType('select');
-                    $param->setOptions('values', $options);
-                    break;
-
-                case 'password':
-                    $param->setType('password');
-                    break;
-
-                case 'email':
-                    $param->addOption('validator', 'EmailAddress');
-                    break;
-
-                case 'checkbox':
-                    $param->setType('checkbox');
-                    break;
-
-                case 'number':
-                    $param->addOption('validator', 'Number');
-                    break;
-
-                case 'hostname':
-                    $param->addOption('validator', 'Hostname');
+                    $param->setValueOptions($options);
                     break;
             }
 

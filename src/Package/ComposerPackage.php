@@ -33,16 +33,12 @@ use Rampage\Nexus\Entities\PackageParameter;
 class ComposerPackage implements PackageInterface
 {
     use ArrayExportableTrait;
+    use BuildIdAwareTrait;
 
     /**
      * Composer package type constant
      */
     const TYPE_COMPOSER = 'composer';
-
-    /**
-     * @var string
-     */
-    private $buildId;
 
     /**
      * Data of composer.json
@@ -109,26 +105,6 @@ class ComposerPackage implements PackageInterface
     public function getId()
     {
         return $this->buildId;
-    }
-
-    /**
-     * Sets the build identifier
-     *
-     * @param string $buildId
-     * @return self
-     */
-    public function setBuildId($buildId)
-    {
-        if ($buildId === null) {
-            $buildId = $this->getName() . '@' . $this->getVersion();
-        }
-
-        if ($buildId == '') {
-            throw new InvalidArgumentException('The build id must not be empty');
-        }
-
-        $this->buildId = $buildId;
-        return $this;
     }
 
     /**

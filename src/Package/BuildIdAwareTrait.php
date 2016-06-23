@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2015 Axel Helmert
+ * Copyright (c) 2016 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,30 +16,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @author    Axel Helmert
- * @copyright Copyright (c) 2015 Axel Helmert
+ * @copyright Copyright (c) 2016 Axel Helmert
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus;
+namespace Rampage\Nexus\Package;
 
-use Zend\Http\Request as HttpRequest;
+use Rampage\Nexus\Exception\InvalidArgumentException;
 
-interface RequestSignatureInterface
+/**
+ * Trait for build id aware packages
+ */
+trait BuildIdAwareTrait
 {
     /**
-     * Create a request signature
-     *
-     * @param HttpRequest  $request  The request to sign
-     * @param array        $data     Additional request data to sign (Commonly used to add shared secrets)
+     * @var string
      */
-    public function sign(HttpRequest $request, array $data = null);
+    protected $buildId;
 
     /**
-     * Verify the request signature
+     * Sets the build identifier
      *
-     * @param HttpRequest  $request  The request to verify
-     * @param array        $data     Additional data (commonly used to provide shared secrets)
-     * @return bool
+     * @param string $buildId
+     * @return self
      */
-    public function verify(HttpRequest $request, array $data = null);
+    public function setBuildId($buildId)
+    {
+        if (($buildId === null) && ($this instanceof PackageInterface)) {
+            $buildId = $this->getName() . '@' . $this->getVersion();
+        }
+
+        if ($buildId == '') {
+            throw new InvalidArgumentException('The build id must not be empty');
+        }
+
+        $this->buildId = $buildId;
+        return $this;
+    }
 }
