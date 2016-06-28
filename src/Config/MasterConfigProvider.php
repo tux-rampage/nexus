@@ -45,9 +45,9 @@ class MasterConfigProvider implements ConfigProviderInterface
     {
         $configManager = new ConfigManager(
             [
-                function() { return require __DIR__ . '/../../config.php'; },
-                new PhpFileProvider(__DIR__ . '/../../conf.d/' . $this->key . '.php'),
-                new PhpFileProvider(__DIR__ . '/../../conf.d/*.local.php'),
+                function() { return require __DIR__ . '/../../config/config.php'; },
+                new PhpFileProvider(__DIR__ . '/../../config/' . $this->key . '.d/*.conf.php'),
+                new PhpFileProvider(__DIR__ . '/../../config/conf.d/*.local.php'),
             ],
             __DIR__ . '/_generated.' . $this->key . '.config.php'
         );
