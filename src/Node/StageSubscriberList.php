@@ -20,8 +20,13 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\node;
+namespace Rampage\Nexus\Node;
 
+use Rampage\Nexus\Deployment\StageSubscriberInterface;
+
+/**
+ * Implements a stage subscriber list
+ */
 class StageSubscriberList implements StageSubscriberInterface
 {
     /**
@@ -32,7 +37,7 @@ class StageSubscriberList implements StageSubscriberInterface
     /**
      * Constructor
      */
-    protected function __construct()
+    public function __construct()
     {
         $this->subscribers = new \SplObjectStorage();
     }

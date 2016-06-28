@@ -10,6 +10,7 @@
 namespace Rampage\Nexus\Package\Installer;
 
 use Rampage\Nexus\Package\ComposerPackage;
+use Rampage\Nexus\Package\ZpkPackage;
 use Rampage\Nexus\Package\PackageInterface;
 
 use Rampage\Nexus\Exception\RuntimeException;
@@ -21,7 +22,7 @@ use Interop\Container\ContainerInterface;
 /**
  * Application package manager to retrieve the installer implementation for a package file
  */
-class InstallerManager
+class InstallerManager implements InstallerProviderInterface
 {
     /**
      * @var string[]
@@ -49,7 +50,8 @@ class InstallerManager
     {
         $this->container = $container;
         $this->packageTypes = [
-            ComposerPackage::TYPE_COMPOSER => ComposerInstaller::class
+            ComposerPackage::TYPE_COMPOSER => ComposerInstaller::class,
+            ZpkPackage::TYPE_ZPK => ZpkInstaller::class,
         ];
     }
 

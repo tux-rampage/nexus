@@ -36,6 +36,11 @@ use PharData;
 abstract class AbstractInstaller implements InstallerInterface
 {
     /**
+     * @var PackageInterface
+     */
+    protected $package = null;
+
+    /**
      * @var SplFileInfo
      */
     protected $targetDirectory = null;

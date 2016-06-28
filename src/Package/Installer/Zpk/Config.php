@@ -20,15 +20,14 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\node\installer\zpk;
+namespace Rampage\Nexus\Package\Installer\Zpk;
 
-use rampage\core\ArrayConfig;
-
+use Rampage\Nexus\Config\ArrayConfig;
 
 /**
  * ZPK Configuration
  */
-class Config extends ArrayConfig
+class Config extends ArrayConfig implements ConfigInterface
 {
     /**
      * @return string

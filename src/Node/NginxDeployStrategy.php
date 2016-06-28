@@ -20,14 +20,11 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\node;
+namespace Rampage\Nexus\Node;
 
-use rampage\nexus\Executable;
-use rampage\nexus\entities\ApplicationInstance;
-use rampage\nexus\entities\VHost;
-use rampage\nexus\exceptions\RuntimeException;
-
-
+/**
+ * Implements the deploy strategy for nginx
+ */
 class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrategyInterface, VHostDeployStrategyInterface
 {
     const TYPE = 'nginx';

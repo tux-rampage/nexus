@@ -21,16 +21,11 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\node\installer;
+namespace Rampage\Nexus\Package\Installer;
 
-use rampage\nexus\exceptions;
-use rampage\nexus\exceptions\StageScriptException;
-use rampage\nexus\PackageInterface;
-use rampage\nexus\Executable;
-use rampage\nexus\package\ComposerPackage;
-use rampage\nexus\node\StageSubscriberInterface;
-
-use Zend\Json\Json;
+use Rampage\Nexus\Executable;
+use Rampage\Nexus\Deployment\StageSubscriberInterface;
+use Rampage\Nexus\Exception\StageScriptException;
 
 
 /**
@@ -38,8 +33,6 @@ use Zend\Json\Json;
  */
 class ComposerInstaller extends AbstractInstaller implements StageSubscriberInterface
 {
-    const TYPE_NAME = ComposerPackage::TYPE_COMPOSER;
-
     const STAGE_INSTALL         = 'stage';
     const STAGE_REMOVE          = 'remove';
     const STAGE_PRE_ACTIVATE    = 'pre-activate';
@@ -50,60 +43,16 @@ class ComposerInstaller extends AbstractInstaller implements StageSubscriberInte
     const STAGE_POST_ROLLBACK   = 'post-rollback';
 
     /**
-     * @var PackageInterface
-     */
-    protected $package;
-
-    /**
-     * @see \rampage\nexus\package\InstallerInterface::getPackage()
-     */
-    public function getPackage()
-    {
-        if ($this->package !== null) {
-            return $this->package;
-        }
-
-        if (!isset($this->archive['composer.json'])) {
-            throw new exceptions\RuntimeException(sprintf('Could not find composer.json in package file "%s"', $this->archive->getAlias()));
-        }
-
-        $json = Json::decode($this->archive['composer.json']->getContents(), Json::TYPE_ARRAY);
-
-        if (isset($json['extra']['deployment']) && is_string($json['extra']['deployment'])) {
-            $deploymentFile = $json['extra']['deployment'];
-
-            if (!isset($this->archive[$deploymentFile])) {
-                throw new exceptions\RuntimeException(sprintf(
-                    'Could not find referenced deployment file "%s" in package file "%s"',
-                    $this->archive->getAlias()
-                ));
-            }
-
-            $json['extra']['deployment'] = Json::decode($this->archive[$deploymentFile]->getContents(), Json::TYPE_ARRAY);
-        }
-
-        $this->package = new ComposerPackage($json);
-        return $this->package;
-    }
-
-    /**
-     * {@inheritdoc}
-     * @see \rampage\nexus\package\ApplicationPackageInterface::getTypeName()
-     */
-    public function getTypeName()
-    {
-        return static::TYPE_NAME;
-    }
-
-    /**
      * {@inheritdoc}
      */
     public function getWebRoot($params)
     {
+        $this->assertArchive();
         $this->assertTargetDirectory();
+
         $path = $this->targetDirectory->getPathname();
 
-        if ($root = $this->getPackage()->getDocumentRoot()) {
+        if ($root = $this->package->getDocumentRoot()) {
             $path = rtrim($path, '/') . '/' . ltrim($root, '/');
         }
 
@@ -122,8 +71,8 @@ class ComposerInstaller extends AbstractInstaller implements StageSubscriberInte
      */
     protected function triggerDeployScript($type, $params, array $env = [])
     {
-        $dir = $this->getPackage()->getExtra('scripts_dir');
-        $script = $dir . '/' . $type . '.php';
+        $dir = $this->package->getExtra('scripts_dir');
+        $script = $this->targetDirectory->getPathname() . '/' . $dir . '/' . $type . '.php';
 
         if (!$dir || !is_readable($script)) {
             return;
@@ -143,7 +92,7 @@ class ComposerInstaller extends AbstractInstaller implements StageSubscriberInte
         $invoker->setEnv('DEPLOYMENT_WEB_ROOT', $this->getWebRoot($params));
 
         if (!$invoker->execute(true)) {
-            throw new exceptions\StageScriptException(sprintf('%s stage script failed', $type));
+            throw new StageScriptException(sprintf('%s stage script failed', $type));
         }
     }
 
@@ -152,11 +101,9 @@ class ComposerInstaller extends AbstractInstaller implements StageSubscriberInte
      */
     public function install($params)
     {
-        if (!$this->targetDirectory || !$this->targetDirectory->isDir()) {
-            throw new exceptions\RuntimeException(sprintf('Invalid darget directory: "%s"', (string)$this->targetDirectory));
-        }
-
         $this->assertArchive();
+        $this->assertTargetDirectory(true);
+
         $this->archive->extractTo($this->targetDirectory);
         $this->triggerDeployScript(self::STAGE_INSTALL, $params);
 

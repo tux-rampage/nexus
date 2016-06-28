@@ -4,22 +4,15 @@
  * @copyright Copyright (c) 2015 LUKA netconsult GmbH (www.luka.de)
  */
 
-namespace rampage\nexus\node;
+namespace Rampage\Nexus\Node;
 
-use rampage\nexus\entities\ApplicationInstance;
-use rampage\nexus\node\installer\InstallerInterface;
-
+use Rampage\Nexus\Entities\ApplicationInstance;
 
 /**
  * Interface for deploy strategies.
  */
 interface DeployStrategyInterface
 {
-    /**
-     * @param InstallerInterface $installer
-     */
-    public function setInstaller(InstallerInterface $installer);
-
     /**
      * Remove everythig to allow building from scratch
      */

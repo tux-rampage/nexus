@@ -19,16 +19,13 @@
  * @copyright Copyright (c) 2015 Axel Helmert
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
-namespace rampage\nexus\node\installer;
+namespace Rampage\Nexus\Package\Installer;
 
-use rampage\nexus\exceptions;
-
-use rampage\nexus\node\FileSystem;
-use rampage\nexus\node\StageSubscriberInterface;
-
-use rampage\nexus\package\ZpkPackage;
-
-use SimpleXMLElement;
+use Rampage\Nexus\Exception;
+use Rampage\Nexus\Deployment\StageSubscriberInterface;
+use Rampage\Nexus\FileSystem;
+use Rampage\Nexus\Package\ArchiveLoaderInterface;
+use Rampage\Nexus\Package\ZpkPackage;
 
 
 /**
@@ -48,17 +45,12 @@ class ZpkInstaller extends AbstractInstaller implements StageSubscriberInterface
     const STAGE_POST_ROLLBACK   = 'post_rollback';
 
     /**
-     * @var ZpkPackage
-     */
-    protected $package;
-
-    /**
      * @var string
      */
     protected $extractedScriptsPath = null;
 
     /**
-     * @var zpk\Config
+     * @var Zpk\ConfigInterface
      */
     protected $config;
 
@@ -70,10 +62,12 @@ class ZpkInstaller extends AbstractInstaller implements StageSubscriberInterface
     /**
      * @param zpk\Config $config
      */
-    public function __construct(zpk\Config $config = null)
+    public function __construct(ArchiveLoaderInterface $archiveLoader, Zpk\ConfigInterface $config = null)
     {
-        $this->config = $config? : new zpk\Config();
+        $this->config = $config? : new Zpk\Config();
         $this->filesystem = new FileSystem();
+
+        parent::__construct($archiveLoader);
     }
 
     /**
@@ -87,43 +81,16 @@ class ZpkInstaller extends AbstractInstaller implements StageSubscriberInterface
     }
 
     /**
-     * {@inheritdoc}
-     * @return ZpkPackage
-     */
-    public function getPackage()
-    {
-        if ($this->package === null) {
-            $this->assertArchive();
-
-            if (!isset($this->archive['deployment.xml'])) {
-                throw new exceptions\RuntimeException('Could not find deployment.xml');
-            }
-
-            $xml = new SimpleXMLElement($this->archive['deployment.xml']->getContents());
-            $this->package = new ZpkPackage($xml);
-        }
-
-        return $this->package;
-    }
-
-    /**
-     * @see \rampage\nexus\package\InstallerInterface::getTypeName()
-     */
-    public function getTypeName()
-    {
-        return ZpkPackage::TYPE_ZPK;
-    }
-
-    /**
      * @see \rampage\nexus\package\InstallerInterface::getWebRoot()
      */
     public function getWebRoot($params)
     {
+        $this->assertArchive();
         $this->assertTargetDirectory();
 
-        $package = $this->getPackage();
+        $package = $this->package;
         $docRoot = $package->getDocumentRoot();
-        $appDir =  trim($package->getAppDir(), '/');
+        $appDir =  trim($package->getExtra(ZpkPackage::EXTRA_APP_DIR), '/');
 
         if (strpos($docRoot, $appDir . '/') === 0) {
             $docRoot = substr($docRoot, strlen($appDir) + 1);
@@ -140,6 +107,7 @@ class ZpkInstaller extends AbstractInstaller implements StageSubscriberInterface
     {
         if (!$subDir) {
             $this->archive->extractTo($targetDir);
+            return;
         }
 
         $mode = $this->config->getDirCreateMode();
@@ -159,7 +127,7 @@ class ZpkInstaller extends AbstractInstaller implements StageSubscriberInterface
 
             if ($file->isDir()) {
                 if (!is_dir($targetPath) && !mkdir($targetPath, $mode, true)) {
-                    throw new exceptions\RuntimeException(sprintf('Failed to create directory: "%s"', $targetPath));
+                    throw new Exception\RuntimeException(sprintf('Failed to create directory: "%s"', $targetPath));
                 }
 
                 continue;
@@ -167,7 +135,7 @@ class ZpkInstaller extends AbstractInstaller implements StageSubscriberInterface
 
             $targetDirPath = dirname($targetPath);
             if (!is_dir($targetDirPath) && !mkdir($targetDirPath, $mode, true)) {
-                throw new exceptions\RuntimeException(sprintf('Failed to create directory: "%s"', $targetDirPath));
+                throw new Exception\RuntimeException(sprintf('Failed to create directory: "%s"', $targetDirPath));
             }
 
             file_put_contents($targetPath, $file->getContent());
@@ -192,7 +160,6 @@ class ZpkInstaller extends AbstractInstaller implements StageSubscriberInterface
         return $this;
     }
 
-
     /**
      * Execute a hook script if it exists
      *
@@ -209,10 +176,10 @@ class ZpkInstaller extends AbstractInstaller implements StageSubscriberInterface
             return;
         }
 
-        $invoker = new zpk\StageScript($path, $this->config, $params, $this->targetDirectory->getPathname(), $this->getPackage()->getVersion());
+        $invoker = new Zpk\StageScript($path, $this->config, $params, $this->targetDirectory->getPathname(), $this->getPackage()->getVersion());
 
         if (!$invoker->execute(true)) {
-            throw new exceptions\StageScriptException(sprintf('Stage script "%s" failed.', $name));
+            throw new Exception\StageScriptException(sprintf('Stage script "%s" failed.', $name));
         }
     }
 
@@ -237,6 +204,7 @@ class ZpkInstaller extends AbstractInstaller implements StageSubscriberInterface
     public function remove($params)
     {
         $this->runHookScript(self::STAGE_PRE_REMOVE, $params);
+        $this->filesystem->delete($this->targetDirectory->getPathname());
         $this->runHookScript(self::STAGE_POST_REMOVE, $params);
     }
 

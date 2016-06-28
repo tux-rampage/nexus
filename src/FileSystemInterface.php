@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2015 Axel Helmert
+ * Copyright (c) 2016 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,24 +16,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @author    Axel Helmert
- * @copyright Copyright (c) 2015 Axel Helmert
+ * @copyright Copyright (c) 2016 Axel Helmert
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\node;
-
-use rampage\nexus\entities\VHost;
+namespace Rampage\Nexus;
 
 
-interface VHostDeployStrategyInterface
+/**
+ * Filesystem API
+ */
+interface FileSystemInterface
 {
     /**
-     * @param VHost $vhost
+     * Ensure existence of a directory
+     *
+     * @param   string  $dir
+     * @param   int     $mode
+     * @throws  Exception\RuntimeException
+     * @return  self
      */
-    public function deployVHost(VHost $vhost);
+    public function ensureDirectory($dir, $mode = null);
 
     /**
-     * @param VHost $vhost
+     * Remove a file or a whole directory.
+     *
+     * directories will be deleted recursively
+     *
+     * @param   string  $fileOrDirectory
+     * @return  self
      */
-    public function removeVHost(VHost $vhost);
+    public function delete($fileOrDirectory);
 }

@@ -20,9 +20,12 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\node;
+namespace Rampage\Nexus\Node;
 
-use rampage\nexus\node\installer\InstallerInterface;
+use Rampage\Nexus\Deployment\StageSubscriberInterface;
+
+use Rampage\Nexus\Package\Installer\InstallerProviderInterface;
+use Rampage\Nexus\Package\PackageInterface;
 
 
 /**
@@ -36,15 +39,16 @@ abstract class AbstractDeployStrategy implements DeployStrategyInterface
     protected $subscribers;
 
     /**
-     * @var InstallerInterface
+     * @var InstallerProviderInterface
      */
-    protected $installer = null;
+    protected $installerProvider;
 
     /**
-     *
+     * @param InstallerProviderInterface $installerProvider
      */
-    public function __construct()
+    public function __construct(InstallerProviderInterface $installerProvider)
     {
+        $this->installerProvider = $installerProvider;
         $this->subscribers = new StageSubscriberList();
     }
 
@@ -76,18 +80,8 @@ abstract class AbstractDeployStrategy implements DeployStrategyInterface
      * @param InstallerInterface $installer
      * @return self
      */
-    public function setInstaller(InstallerInterface $installer)
+    protected function getInstaller(PackageInterface $package)
     {
-        if ($this->installer instanceof StageSubscriberInterface) {
-            $this->removeStageSubscriber($this->installer);
-        }
-
-        $this->installer = $installer;
-
-        if ($installer instanceof StageSubscriberInterface) {
-            $this->addStageSubscriber($installer);
-        }
-
-        return $this;
+        return $this->installerProvider->getInstaller($package);
     }
 }
