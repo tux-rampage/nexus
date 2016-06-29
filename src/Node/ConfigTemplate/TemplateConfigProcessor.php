@@ -20,13 +20,18 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\node\config;
+namespace Rampage\Nexus\Node\ConfigTemplate;
 
-use rampage\nexus\exceptions;
+use Rampage\Nexus\Exception;
 use Zend\Stdlib\ErrorHandler;
 
-
-class TemplateConfigProcessor
+/**
+ * Implements a simple template processor
+ *
+ * This will simply replace variables in the format `${varname}` in the template string.
+ * and write the result to the target file
+ */
+class TemplateProcessor
 {
     /**
      * @var string
@@ -39,8 +44,10 @@ class TemplateConfigProcessor
     protected $targetPath;
 
     /**
-     * @param string $template
-     * @param string $targetPath
+     * Creates the template processor
+     *
+     * @param   string  $template   The template content
+     * @param   string  $targetPath The path to the resulting file
      */
     public function __construct($template, $targetPath)
     {
@@ -56,14 +63,14 @@ class TemplateConfigProcessor
     public function process($options)
     {
         if (!is_array($options) && !($options instanceof \ArrayAccess)) {
-            throw new exceptions\InvalidArgumentException(sprintf(
+            throw new Exception\InvalidArgumentException(sprintf(
                 'Processing options must be an array or implement ArrayAccess, [%s] given.',
                 is_object($options)? get_class($options) : gettype($options)
             ));
         }
 
         if (!$this->targetPath) {
-            throw new exceptions\LogicException('No config target path specified.');
+            throw new Exception\LogicException('No config target path specified.');
         }
 
         $replaced = [];
@@ -88,7 +95,7 @@ class TemplateConfigProcessor
         ErrorHandler::stop();
 
         if (false === $written) {
-            throw new exceptions\RuntimeException(sprintf('Failed to write config to "%s"', $this->targetPath));
+            throw new Exception\RuntimeException(sprintf('Failed to write config to "%s"', $this->targetPath));
         }
     }
 }

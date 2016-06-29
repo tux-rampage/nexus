@@ -26,6 +26,8 @@ use Rampage\Nexus\Deployment\StageSubscriberInterface;
 
 use Rampage\Nexus\Package\Installer\InstallerProviderInterface;
 use Rampage\Nexus\Package\PackageInterface;
+use Rampage\Nexus\Entities\ApplicationInstance;
+use Rampage\Nexus\Package\Installer\InstallerInterface;
 
 
 /**
@@ -53,6 +55,14 @@ abstract class AbstractDeployStrategy implements DeployStrategyInterface
     }
 
     /**
+     * Returns the target path to the application instance
+     *
+     * @param   ApplicationInstance $application    The application instance to get the path for
+     * @return  string                              The target path
+     */
+    abstract protected function getApplicationPath(ApplicationInstance $application);
+
+    /**
      * Add a stage subscriber
      *
      * @param StageSubscriberInterface $subscriber
@@ -77,11 +87,31 @@ abstract class AbstractDeployStrategy implements DeployStrategyInterface
     }
 
     /**
-     * @param InstallerInterface $installer
-     * @return self
+     * Returns the installer instance to utilize
+     *
+     * @param   ApplicationInstance $application    The application instance to DeployStrategyInterface
+     * @param   PackageInterface    $package        The application package
+     * @return  InstallerInterface
      */
-    protected function getInstaller(PackageInterface $package)
+    protected function getInstaller(ApplicationInstance $application, PackageInterface $package = null)
     {
-        return $this->installerProvider->getInstaller($package);
+        $package = $package? : $application->getPackage();
+        $installer = $this->installerProvider->getInstaller($package);
+        $installer->setPackage($package);
+        $installer->setTargetDirectory($this->getApplicationPath($application));
+
+        if ($installer instanceof StageSubscriberInterface) {
+            $this->addStageSubscriber($installer);
+        }
+    }
+
+    /**
+     * @param InstallerInterface $installer
+     */
+    protected function destroyInstaller(InstallerInterface $installer)
+    {
+        if ($installer instanceof StageSubscriberInterface) {
+            $this->removeStageSubscriber($installer);
+        }
     }
 }

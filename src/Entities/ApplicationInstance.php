@@ -30,6 +30,7 @@ use Rampage\Nexus\Exception\UnexpectedValueException;
 
 use Zend\Stdlib\Guard\ArrayOrTraversableGuardTrait;
 use Zend\Stdlib\Parameters;
+use Rampage\Nexus\Exception\InvalidArgumentException;
 
 
 /**
@@ -106,7 +107,7 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
      *
      * @var string
      */
-    protected $path = null;
+    protected $path = '/';
 
     /**
      * The application flavor used by the deploy strategy to optimize the created config
@@ -131,10 +132,26 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
 
     /**
      * Construct
+     *
+     * @param   string  $id     The instance identifier
+     * @param   string  $path   The location path within the vhost
      */
-    public function __construct($id)
+    public function __construct($id, $path = null)
     {
+        if (!preg_match('~^[a-z0-9-_]+$~i', $id)) {
+            throw new InvalidArgumentException('Bad application instance identifier: ' . $id);
+        }
+
+        if ($path) {
+            if (!preg_match('~^/?[a-z0-9-_]+(/[a-z0-9-_]+)*/?$~i', $path)) {
+                throw new InvalidArgumentException('Bad application path: ' . $path);
+            }
+
+            $path = '/' . trim($path, '/') . '/';
+        }
+
         $this->id = $id;
+        $this->path = $path? : '/';
     }
 
     /**
@@ -270,6 +287,26 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
     }
 
     /**
+     * Rollback to the previouis instance state
+     *
+     * @throws LogicException
+     * @return self
+     */
+    public function rollback()
+    {
+        if (!$this->previousPackage) {
+            throw new LogicException('Cannot roll back without previous package');
+        }
+
+        $this->package = $this->previousPackage;
+        $this->userParameters = $this->previousUserParameters? : [];
+        $this->previousPackage = null;
+        $this->previousUserParameters = null;
+
+        return $this;
+    }
+
+    /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\Entities\Api\ArrayExchangeInterface::exchangeArray()
      */
@@ -280,7 +317,6 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
 
         $this->label = $data->get('label');
         $this->flavor = $data->get('flavor');
-        $this->path = $data->get('path');
 
         $this->setUserParameters($data->get('userParameters'));
 

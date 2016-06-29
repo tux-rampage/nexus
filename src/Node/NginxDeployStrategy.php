@@ -22,6 +22,15 @@
 
 namespace Rampage\Nexus\Node;
 
+use Rampage\Nexus\Entities\ApplicationInstance;
+use Rampage\Nexus\Entities\VHost;
+
+use Rampage\Nexus\Executable;
+use Rampage\Nexus\Exception;
+use Rampage\Nexus\FileSystemInterface;
+use Rampage\Nexus\FileSystem;
+
+
 /**
  * Implements the deploy strategy for nginx
  */
@@ -31,6 +40,7 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
 
     const TEMPLATE_SERVER = 'server';
     const TEMPLATE_LOCATION = 'location';
+    const TEMPLATE_ROOT_LOCATION = 'root-location';
     const TEMPLATE_MAINTENANCE = 'maintenance';
     const TEMPLATE_GLOBAL = 'global';
 
@@ -38,7 +48,7 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
     const DIR_GLOBAL = 'global.d';
 
     /**
-     * @var config\TemplateLocatorInterface
+     * @var ConfigTemplate\TemplateLocatorInterface
      */
     protected $templateLocator;
 
@@ -67,7 +77,7 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
     /**
      * @param config\TemplateLocatorInterface $templateLocator
      */
-    public function __construct(config\TemplateLocatorInterface $templateLocator, FileSystem $filesystem = null)
+    public function __construct(ConfigTemplate\TemplateLocatorInterface $templateLocator, FileSystemInterface $filesystem = null)
     {
         $this->templateLocator = $templateLocator;
         $this->filesystem = $filesystem? : new FileSystem();
@@ -101,43 +111,54 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
     }
 
     /**
-     * @param ApplicationInstance $instance
+     * Returns the target path to the application instance
+     *
+     * @param   ApplicationInstance $application    The application instance to get the path for
+     * @return  string                              The target path
      */
-    protected function getApplicationPath(ApplicationInstance $instance)
+    protected function getApplicationPath(ApplicationInstance $application)
     {
-        $path = sprintf('%s/%s/%s', $this->applicationsPath, $instance->getId(), $instance->getPackage()->getId());
+        $path = sprintf('%s/versions/%s/%s', $this->applicationsPath, $application->getId(), $application->getPackage()->getId());
         return $path;
     }
 
     /**
-     * @param ApplicationInstance $instance
-     * @return string
+     * Returns the application symlink
+     *
+     * @param   ApplicationInstance $instance   The application instance to get the symlink for
+     * @return  string                          The path to the symlink of the currently deployed version
      */
     protected function getApplicationSymlinkPath(ApplicationInstance $instance)
     {
-        $path = sprintf('%s/%s/current', $this->applicationsPath, $instance->getId());
+        $path = sprintf('%s/apps/%s', $this->applicationsPath, $instance->getId());
         return $path;
     }
 
     /**
+     * Returns the path to the vhost config
+     *
      * @param VHost $vhost
      * @return string
      */
     protected function getVHostConfigPath(VHost $vhost)
     {
-        return sprintf('%s/%s.conf', $this->configsPath, $vhost->getName());
+        return sprintf('%s/sites.d/%s.conf', $this->configsPath, $vhost->getName());
     }
 
     /**
-     * @param ApplicationInstance $instance
-     * @param string $dir
+     * Returns the path to an instance specific config
+     *
+     * @param   ApplicationInstance $instance   The instance context
+     * @param   string              $dir        The relative config directory
+     * @return  string                          The path to the config file
      */
     protected function getConfigPath(ApplicationInstance $instance, $dir)
     {
+        $vhost = $instance->getVHost();
         $path = sprintf(
             '%s/%s/%s/%s.conf',
             $this->configsPath,
-            $instance->getVHost(),
+            $vhost->isDefault()? '__default__' : $vhost->getName(),
             $dir,
             (string)$instance->getId()
         );
@@ -155,16 +176,16 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
     protected function createLocationConfig(ApplicationInstance $instance, $template = null)
     {
         if (!$template) {
-            $template = self::TEMPLATE_LOCATION;
+            $template = ($instance->getPath() == '/')? self::TEMPLATE_ROOT_LOCATION : self::TEMPLATE_LOCATION;
         }
 
         $appPath = $this->getApplicationPath($instance);
         $docRoot = $appPath . '/' . trim((string)$this->installer->getWebRoot($instance->getUserParameters()), '/');
         $configPath = $this->getConfigPath($instance, self::DIR_LOCATIONS);
-        $template = new config\TemplateConfigProcessor($this->templateLocator->getConfigTemplate(self::TYPE, $template, $instance->getFlavor()), $configPath);
+        $config = new ConfigTemplate\TemplateProcessor($this->templateLocator->getConfigTemplate(self::TYPE, $template, $instance->getFlavor()), $configPath);
 
         $this->filesystem->ensureDirectory(dirname($configPath), 0755);
-        $template->process([
+        $config->process([
             'location' => $instance->getPath(),
             'document_root' => $docRoot
         ]);
@@ -220,11 +241,10 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
         $path = $this->getApplicationSymlinkPath($instance);
 
         if (file_exists($path) && !unlink($path)) {
-            throw new RuntimeException('Failed to remove existing symlink: ' . $path);
+            throw new Exception\RuntimeException('Failed to remove existing symlink: ' . $path);
         }
 
         symlink($this->getApplicationPath($instance), $path);
-
         return $this;
     }
 
@@ -237,7 +257,7 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
         $path = $this->getApplicationSymlinkPath($instance);
 
         if (file_exists($path) && !unlink($path)) {
-            throw new RuntimeException('Failed to remove existing symlink: ' . $path);
+            throw new Exception\RuntimeException('Failed to remove existing symlink: ' . $path);
         }
 
         return $this;
@@ -262,14 +282,16 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
      */
     public function activate(ApplicationInstance $instance)
     {
-        $this->installer->setTargetDirectory($this->getApplicationPath($instance));
-        $this->subscribers->beforeActivate($instance->getUserParameters());
+        $this->getInstaller($instance);
+
+        $params = $instance->getUserParameters();
+        $this->subscribers->beforeActivate($params);
 
         $this->createAndWriteConfig($instance);
         $this->updateSymlink($instance);
         $this->reloadService();
 
-        $this->subscribers->afterActivate($instance->getUserParameters());
+        $this->subscribers->afterActivate($params);
     }
 
     /**
@@ -284,31 +306,12 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
     }
 
     /**
-     * @param string $dir
-     * @return self
-     */
-    protected function purgeDirectory($dir)
-    {
-        $iterator = new \DirectoryIterator($dir);
-
-        foreach ($iterator as $file) {
-            if (in_array($file->getFilename(), ['.', '..'])) {
-                continue;
-            }
-
-            $this->filesystem->delete($file->getPathname());
-        }
-
-        return $this;
-    }
-
-    /**
      * @see \rampage\nexus\node\DeployStrategyInterface::purge()
      */
     public function purge()
     {
-        $this->purgeDirectory($this->configsPath)
-            ->purgeDirectory($this->applicationsPath);
+        $this->filesystem->purgeDirectory($this->configsPath);
+        $this->filesystem->purgeDirectory($this->applicationsPath);
 
         return $this;
     }
@@ -319,15 +322,17 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
     public function remove(ApplicationInstance $instance)
     {
         $path = $this->getApplicationPath($instance);
-        $this->installer->setTargetDirectory($path);
+        $installer = $this->getInstaller($instance);
 
         $this->subscribers->beforeDeactivate($instance->getUserParameters());
+
         $this->removeConfig($instance);
         $this->removeSymlink($instance);
         $this->reloadService();
+
         $this->subscribers->afterDeactivate($instance->getUserParameters());
 
-        $this->installer->remove($instance->getUserParameters());
+        $installer->remove($instance->getUserParameters());
         $this->filesystem->delete($path);
 
         return $this;
@@ -336,22 +341,31 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
     /**
      * @see \rampage\nexus\node\DeployStrategyInterface::rollback()
      */
-    public function rollback(ApplicationInstance $toInstanceState)
+    public function rollback(ApplicationInstance $instance)
     {
-        $path = $this->getApplicationPath($toInstanceState);
-
-        $this->installer->setTargetDirectory($path);
-        $this->subscribers->beforeRollback($toInstanceState->getUserParameters(), true);
-
-        if (!is_dir($path)) {
-            $this->stage($toInstanceState);
+        if (!$instance->getPreviousPackage()) {
+            throw new Exception\LogicException('Cannot rollback application without a previous state');
         }
 
-        $this->createAndWriteConfig($toInstanceState);
-        $this->updateSymlink($toInstanceState);
+        $path = $this->getApplicationPath($instance);
+        $installer = $this->getInstaller($instance);
+
+        $this->subscribers->beforeRollback($instance->getUserParameters());
+        $this->destroyInstaller($installer);
+
+        $instance->rollback();
+        $installer = $this->getInstaller($instance);
+
+        if (!is_dir($path)) {
+            $this->filesystem->ensureDirectory($path, 0755);
+            $installer->install($instance->getUserParameters());
+        }
+
+        $this->createAndWriteConfig($instance);
+        $this->updateSymlink($instance);
         $this->reloadService();
 
-        $this->subscribers->afterRollback($toInstanceState->getUserParameters(), true);
+        $this->subscribers->afterRollback($instance->getUserParameters(), true);
     }
 
     /**
@@ -360,47 +374,51 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
     public function stage(ApplicationInstance $instance)
     {
         $path = $this->getApplicationPath($instance);
+        $installer = $this->getInstaller($instance);
 
         $this->filesystem->ensureDirectory($path, 0755);
-        $this->installer->setTargetDirectory($path);
-        $this->installer->install($instance->getUserParameters());
+        $installer->install($instance->getUserParameters());
 
         return $this;
     }
 
+    /**
+     * Returns the alias directives for the vhost
+     *
+     * @param   VHost   $vhost
+     * @return  string
+     */
     protected function getVHostAliasDirectives(VHost $vhost)
     {
-        $directives = array();
+        $directives = [];
 
         foreach ($vhost->getAliases() as $alias) {
             $directives[] = 'server_name ' . $alias . ';';
         }
 
-        return implode("\n" . str_repeat(' ', 8), $directives);
+        return implode("\n" . str_repeat(' ', 4), $directives);
     }
 
     /**
-     * @see \rampage\nexus\node\VHostDeployStrategyInterface::deployVHost()
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Node\VHostDeployStrategyInterface::deployVHost()
      */
     public function deployVHost(VHost $vhost)
     {
+        if ($vhost->isDefault()) {
+            return $this;
+        }
+
         $configPath = $this->getVHostConfigPath($vhost);
-        $template = new config\TemplateConfigProcessor($this->templateLocator->getConfigTemplate(self::TYPE, self::TEMPLATE_SERVER, $vhost->getFlavor()), $configPath);
+        $template = new ConfigTemplate\TemplateProcessor($this->templateLocator->getConfigTemplate(self::TYPE, self::TEMPLATE_SERVER, $vhost->getFlavor()), $configPath);
+        $name = $vhost->getName();
 
         $params = [
-            'global_configs' => sprintf('%s/%s/global.d/*.conf', $this->configsPath, $vhost->getName()),
-            'location_configs' => sprintf('%s/%s/locations.d/*conf', $this->configsPath, $vhost->getName()),
+            'global_configs' => sprintf('%s/%s/global.d/*.conf', $this->configsPath, $name),
+            'location_configs' => sprintf('%s/%s/locations.d/*conf', $this->configsPath, $name),
             'servername' => $vhost->getName(),
             'server_aliases' => $this->getVHostAliasDirectives($vhost),
-            'ssl_cert_file' => $vhost->getSslCert(),
-            'ssl_key_file' => $vhost->getSslKey(),
-            'ssl_chain_file' => $vhost->getSslChain(),
-            'ssl_chain_directive' => '',
         ];
-
-        if ($vhost->getSslChain()) {
-            $params['ssl_chain_directive'] = 'include "' . $vhost->getSslChain() . '";';
-        }
 
         $template->process($params);
         $this->reloadService();
@@ -409,10 +427,15 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
     }
 
     /**
-     * @see \rampage\nexus\node\VHostDeployStrategyInterface::removeVHost()
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Node\VHostDeployStrategyInterface::removeVHost()
      */
     public function removeVHost(VHost $vhost)
     {
+        if ($vhost->isDefault()) {
+            return $this;
+        }
+
         $configFile = $this->getVHostConfigPath($vhost);
         $configDir  = sprintf('%s/%s', $this->configsPath, $vhost->getName());
 

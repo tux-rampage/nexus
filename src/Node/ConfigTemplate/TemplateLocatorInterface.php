@@ -20,17 +20,20 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\node\config;
+namespace Rampage\Nexus\Node\ConfigTemplate;
 
+/**
+ * Interface for locating templates
+ */
 interface TemplateLocatorInterface
 {
     /**
      * Returns the template for a specific config
      *
-     * @param string $type
-     * @param string $name
-     * @param string $flavor
-     * @return string
+     * @param   string  $domain The template domain
+     * @param   string  $name   The template name to locate
+     * @param   string  $flavor The template flavor
+     * @return  string          The template content as string
      */
-    public function getConfigTemplate($type, $name, $flavor = null);
+    public function getConfigTemplate($domain, $name, $flavor = null);
 }

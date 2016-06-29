@@ -41,10 +41,22 @@ interface FileSystemInterface
     /**
      * Remove a file or a whole directory.
      *
-     * directories will be deleted recursively
+     * Directories will be deleted recursively. This method will not follow symlinks
      *
      * @param   string  $fileOrDirectory
      * @return  self
      */
     public function delete($fileOrDirectory);
+
+    /**
+     * Remove the contents of the given directory
+     *
+     * This will remove all files in the current directory, but not the directory itself
+     *
+     * @param   string  $dir    The directory to purge
+     * @return  self
+     *
+     * @throws  Exception\RuntimeException  When the directory does not exists or the given path is not a directory
+     */
+    public function purgeDirectory($dir);
 }

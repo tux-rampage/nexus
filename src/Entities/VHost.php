@@ -78,6 +78,16 @@ class VHost implements Api\ArrayExchangeInterface
     }
 
     /**
+     * Checks if this is the default vhost
+     *
+     * @return boolean
+     */
+    public function isDefault()
+    {
+        return ($this->name == self::DEFAULT_VHOST);
+    }
+
+    /**
      * @return string
      */
     public function getName()

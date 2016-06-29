@@ -23,6 +23,7 @@
 namespace Rampage\Nexus;
 
 use RecursiveDirectoryIterator;
+use DirectoryIterator;
 use RecursiveIteratorIterator;
 
 /**
@@ -48,8 +49,8 @@ class FileSystem implements FileSystemInterface
     }
 
     /**
-     * @param string $fileOrDirectory
-     * @return self
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\FileSystemInterface::delete()
      */
     public function delete($fileOrDirectory)
     {
@@ -61,10 +62,12 @@ class FileSystem implements FileSystemInterface
 
         /* @var $fileInfo \SplFileInfo */
         foreach ($iterator as $fileInfo) {
-            if ($fileInfo->isDir()) {
+            if ($fileInfo->isDir() && !$fileInfo->isLink()) {
                 if (!rmdir($fileInfo->getPathname())) {
                     return false;
                 }
+
+                continue;
             }
 
             if (!unlink($fileInfo->getPathname())) {
@@ -73,5 +76,24 @@ class FileSystem implements FileSystemInterface
         }
 
         return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\FileSystemInterface::purgeDirectory()
+     */
+    public function purgeDirectory($dir)
+    {
+        $iterator = new DirectoryIterator($dir);
+
+        foreach ($iterator as $file) {
+            if (in_array($file->getFilename(), ['.', '..'])) {
+                continue;
+            }
+
+            $this->delete($file->getPathname());
+        }
+
+        return $this;
     }
 }

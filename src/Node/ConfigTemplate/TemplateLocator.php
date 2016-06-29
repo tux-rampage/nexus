@@ -20,12 +20,14 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace rampage\nexus\node\config;
+namespace Rampage\Nexus\Node\ConfigTemplate;
 
-use rampage\nexus\exceptions;
+use Rampage\Nexus\Exception;
 use Zend\Stdlib\SplPriorityQueue;
 
-
+/**
+ * Implements the default template locator
+ */
 class TemplateLocator implements TemplateLocatorInterface
 {
     /**
@@ -39,7 +41,7 @@ class TemplateLocator implements TemplateLocatorInterface
     public function __construct()
     {
         $this->pathStack = new SplPriorityQueue();
-        $this->addPath(__DIR__ . '/../resources/config-templates', 0);
+        $this->addPath(__DIR__ . '/../../../resources/config-templates', 0);
     }
 
     /**
@@ -77,6 +79,6 @@ class TemplateLocator implements TemplateLocatorInterface
             return $this->getConfigTemplate($type, $name);
         }
 
-        throw new exceptions\RuntimeException(sprintf('Could not find a config template for %s in %s', $name, $type));
+        throw new Exception\RuntimeException(sprintf('Could not find a config template for %s in %s', $name, $type));
     }
 }
