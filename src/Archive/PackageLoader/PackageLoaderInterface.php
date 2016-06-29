@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2015 Axel Helmert
+ * Copyright (c) 2016 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,14 +16,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @author    Axel Helmert
- * @copyright Copyright (c) 2015 Axel Helmert
+ * @copyright Copyright (c) 2016 Axel Helmert
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus;
+namespace Rampage\Nexus\Archive\PackageLoader;
 
-require __DIR__ . '/bootstrap.php';
+use PharData;
+use Rampage\Nexus\Package\PackageInterface;
 
-(new Bootstrap())
-    ->app(new Config\NodeConfigProvider())
-    ->run();
+/**
+ * Interface for package loaders
+ */
+interface PackageLoaderInterface
+{
+    /**
+     * Checks if this reader can read from the given archive
+     *
+     * @param   PharData $archive
+     * @return  bool
+     */
+    public function canReadFromArchive(PharData $archive);
+
+    /**
+     * Reads the package from the given archive
+     *
+     * @param   PharData            $archive    The archive to read from
+     * @return  PackageInterface                The resulting package
+     */
+    public function load(PharData $archive);
+}

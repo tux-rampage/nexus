@@ -20,33 +20,35 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Package;
-
-use Rampage\Nexus\Exception\RuntimeException;
-
-use SplFileInfo;
-use PharData;
+namespace Rampage\Nexus\Archive;
 
 /**
- * Interface for loading archive files
+ * Interface for downloaders
  */
-interface ArchiveLoaderInterface
+interface DownloaderInterface
 {
     /**
-     * Ensures the archive is available locally
+     * Check if the downloadeer can handle the given url
      *
-     * @param   string      $archive    The path or URI to the archive
-     * @return  SplFileInfo             The file info instance for the local archive file
-     * @throws  RuntimeException        When the file cannot be provided locally
+     * @param   string  $url    The url to download
+     * @return  bool
      */
-    public function ensureLocalArchiveFile($archive);
+    public function canDownload($url);
 
     /**
-     * Returns the package from the given archive
+     * Returns the base filename from the given URL
      *
-     * @param   PharData            $archive    The archive instance
-     * @return  PackageInterface                The resulting package
-     * @throws  RuntimeException                When the packagetype is not available
+     * @param   string  $url    The download url
+     * @return  string          The resulting filename without any path information
      */
-    public function getPackage(PharData $archive);
+    public function getFilenameFromUrl($url);
+
+    /**
+     * Download the given URL
+     *
+     * @param   string  $url        The URL to download
+     * @param   string  $targetFile The file to download to
+     * @return  bool
+     */
+    public function download($url, $targetFile);
 }

@@ -24,7 +24,7 @@ namespace Rampage\Nexus\Package\Installer;
 
 use Rampage\Nexus\Exception;
 use Rampage\Nexus\Package\PackageInterface;
-use Rampage\Nexus\Package\ArchiveLoaderInterface;
+use Rampage\Nexus\Archive\ArchiveLoaderInterface;
 
 use SplFileInfo;
 use PharData;

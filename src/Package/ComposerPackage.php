@@ -62,7 +62,7 @@ class ComposerPackage implements PackageInterface
      */
     public function __construct($json)
     {
-        if (!is_string($json)) {
+        if (is_string($json)) {
             $json = json_decode($json, true);
         }
 
@@ -86,6 +86,10 @@ class ComposerPackage implements PackageInterface
             if (!isset($this->data[$field]) || ($this->data[$field] == '')) {
                 throw new UnexpectedValueException('Missing field in composer.json: ' . $field);
             }
+        }
+
+        if (!isset($this->data['extra']['deployment'])) {
+            throw new UnexpectedValueException('Missing deployment section in composer.json');
         }
     }
 

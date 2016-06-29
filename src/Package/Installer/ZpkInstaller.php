@@ -24,7 +24,7 @@ namespace Rampage\Nexus\Package\Installer;
 use Rampage\Nexus\Exception;
 use Rampage\Nexus\Deployment\StageSubscriberInterface;
 use Rampage\Nexus\FileSystem;
-use Rampage\Nexus\Package\ArchiveLoaderInterface;
+use Rampage\Nexus\Archive\ArchiveLoaderInterface;
 use Rampage\Nexus\Package\ZpkPackage;
 
 

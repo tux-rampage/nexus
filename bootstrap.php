@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2015 Axel Helmert
+ * Copyright (c) 2016 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,14 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @author    Axel Helmert
- * @copyright Copyright (c) 2015 Axel Helmert
+ * @copyright Copyright (c) 2016 Axel Helmert
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus;
+require_once __DIR__ . '/vendor/autoload.php';
 
-require __DIR__ . '/bootstrap.php';
-
-(new Bootstrap())
-    ->app(new Config\NodeConfigProvider())
-    ->run();
+// Legacy aliases for PHP < 7.0
+if (!class_exists('Throwable')) {
+    class_alias('Exception', 'Throwable');
+}

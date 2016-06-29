@@ -75,7 +75,7 @@ class ZpkPackage implements PackageInterface
         $dom = new \DOMDocument();
         $dom->loadXML($this->descriptor->asXML());
 
-        if (!$dom->schemaValidate(__DIR__ . '/../../resource/xsd/zend-package.xsd')) {
+        if (!$dom->schemaValidate(__DIR__ . '/../../resources/xsd/zpk.xsd')) {
             throw new RuntimeException('Invalid deployment descriptor');
         }
     }

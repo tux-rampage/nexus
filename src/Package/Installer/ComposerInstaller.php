@@ -51,8 +51,9 @@ class ComposerInstaller extends AbstractInstaller implements StageSubscriberInte
         $this->assertTargetDirectory();
 
         $path = $this->targetDirectory->getPathname();
+        $root = $this->package->getDocumentRoot();
 
-        if ($root = $this->package->getDocumentRoot()) {
+        if ($root) {
             $path = rtrim($path, '/') . '/' . ltrim($root, '/');
         }
 

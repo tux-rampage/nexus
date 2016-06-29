@@ -22,7 +22,7 @@
 
 namespace Rampage\Nexus;
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../bootstrap.php';
 
 (new Bootstrap())
     ->app(new Config\MasterConfigProvider())

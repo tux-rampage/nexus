@@ -7,7 +7,12 @@
 
 namespace Rampage\Nexus\Config;
 
-class ArrayConfig
+/**
+ * Array config
+ *
+ * Allows to access even nested array elements as properties.
+ */
+class ArrayConfig implements PropertyConfigInterface
 {
     /**
      * Config data array
@@ -59,12 +64,17 @@ class ArrayConfig
      * nested properties might be dot separated
      *
      * @param   string  $property
+     * @param   mixed   $default
      * @return  mixed
      */
-    public function get($property)
+    public function get($property, $default = null)
     {
         if (!array_key_exists($property, $this->properties)) {
             $this->properties[$property] = $this->flatten($property);
+        }
+
+        if (!isset($this->properties[$property])) {
+            return $default;
         }
 
         return $this->properties[$property];

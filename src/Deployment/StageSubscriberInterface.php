@@ -67,16 +67,20 @@ interface StageSubscriberInterface
 
 
     /**
-     * Called on BOTH instances before rolling back
+     * Called before rollback
      *
-     * @param  array|ArrayAccess  $params            User params
-     * @param  bool               $isRollbackTarget  True if this is the call for the version rolled back to
+     * Called on the **current** instance that is being rolled back
+     *
+     * @param  array|ArrayAccess  $params   User params
      */
     public function beforeRollback($params, $isRollbackTarget);
 
     /**
-     * @param  array|ArrayAccess  $params            User paramters
-     * @param  bool               $isRollbackTarget  True if this is the call for the version rolled back to
+     * Called after rollback
+     *
+     * This is called on the **previous** instance that was rolled back to.
+     *
+     * @param  array|ArrayAccess  $params   User paramters
      */
     public function afterRollback($params, $isRollbackTarget);
 }
