@@ -35,6 +35,8 @@ use Rampage\Nexus\Exception\InvalidArgumentException;
 
 /**
  * Defines a deployed application instance
+ *
+ * This entity is aggregated by the deploy target
  */
 class ApplicationInstance implements Api\ArrayExchangeInterface
 {

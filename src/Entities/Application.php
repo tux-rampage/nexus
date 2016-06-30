@@ -24,26 +24,35 @@
 namespace Rampage\Nexus\Entities;
 
 use Rampage\Nexus\Package\PackageInterface;
-use Rampage\Nexus\Exception\UnexpectedValueException;
 use Zend\Stdlib\Parameters;
 
 
 /**
  * Represents a deployable application
+ *
+ * This is a logical grouping of all packages of a specific application.
+ * It may never contain packages of other applications and it might not exist without at least one
+ * Package instance
  */
 class Application implements Api\ArrayExchangeInterface
 {
     /**
-     * @var mixed
+     * The identifier
+     *
+     * This is the package name that groups all packages
+     *
+     * @var string
      */
     private $id = null;
 
     /**
-     * The application name
+     * The application label
+     *
+     * This may be the identifier (which is the package name) by default.
      *
      * @var string
      */
-    protected $name = null;
+    protected $label = null;
 
     /**
      * Represents the icon as binary data
@@ -74,7 +83,7 @@ class Application implements Api\ArrayExchangeInterface
      */
     public function getName()
     {
-        return $this->name;
+        return $this->label;
     }
 
     /**
@@ -86,7 +95,7 @@ class Application implements Api\ArrayExchangeInterface
     }
 
     /**
-     * @param MongoBinData $icon
+     * @param string $icon
      * @return self
      */
     public function setIcon($icon)
@@ -119,22 +128,6 @@ class Application implements Api\ArrayExchangeInterface
     }
 
     /**
-     * Add a package to this application
-     *
-     * @param   PackageInterface    $package
-     * @return  self
-     */
-    public function addPackage(PackageInterface $package)
-    {
-        if ($package->getName() !== $this->getName()) {
-            throw UnexpectedValueException::notMatching('Package name', $package->getName(), $this->getName());
-        }
-
-        $this->packages[$package->getId()] = $package;
-        return $this;
-    }
-
-    /**
      * Check if this application has the requested package
      *
      * @param PackageInterface $package
@@ -154,7 +147,7 @@ class Application implements Api\ArrayExchangeInterface
     public function exchangeArray(array $array)
     {
         $params = new Parameters($array);
-        $this->name = $params->get('name', $this->name);
+        $this->label = $params->get('label', $this->label);
 
         return $this;
     }
@@ -168,7 +161,7 @@ class Application implements Api\ArrayExchangeInterface
     {
         $array = [
             'id' => $this->id,
-            'name' => $this->name,
+            'label' => $this->label,
             'packages' => [],
         ];
 

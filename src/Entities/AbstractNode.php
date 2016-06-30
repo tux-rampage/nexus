@@ -259,6 +259,21 @@ abstract class AbstractNode implements NodeInterface
 
     /**
      * {@inheritDoc}
+     * @see \Rampage\Nexus\Deployment\NodeInterface::canSync()
+     */
+    public function canSync()
+    {
+        $invalidStates = [
+            self::STATE_BUILDING,
+            self::STATE_UNREACHABLE,
+            self::STATE_SECURITY_VIOLATED
+        ];
+
+        return !in_array($this->getState(), $invalidStates);
+    }
+
+    /**
+     * {@inheritDoc}
      * @see \Rampage\Nexus\Entities\Api\ArrayExportableInterface::toArray()
      */
     public function toArray()

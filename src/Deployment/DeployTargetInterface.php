@@ -26,6 +26,7 @@ use Rampage\Nexus\Entities\ApplicationInstance;
 use Rampage\Nexus\Entities\VHost;
 use Rampage\Nexus\Entities\Api\ArrayExchangeInterface;
 use Rampage\Nexus\Exception\RuntimeException;
+use Rampage\Nexus\Exception\LogicException;
 
 
 /**
@@ -126,4 +127,18 @@ interface DeployTargetInterface extends ArrayExchangeInterface
      * @return self Fluid Interface
      */
     public function refreshStatus();
+
+    /**
+     * Check if the target is syncable
+     *
+     * @return bool
+     */
+    public function canSync();
+
+    /**
+     * Sync the deploy target
+     *
+     * @throws  LogicException  When the target is not able to sync
+     */
+    public function sync();
 }

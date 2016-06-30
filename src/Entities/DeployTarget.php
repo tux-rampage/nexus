@@ -80,10 +80,10 @@ class DeployTarget implements DeployTargetInterface
     protected $statusAggregationLevels = [
         ApplicationInstance::STATE_PENDING => 1,
         ApplicationInstance::STATE_INACTIVE => 2,
-        'working' => 3,
         ApplicationInstance::STATE_REMOVED => 4,
-        ApplicationInstance::STATE_DEPLOYED => 5,
-        ApplicationInstance::STATE_ERROR => 6,
+        ApplicationInstance::STATE_DEPLOYED => 8,
+        ApplicationInstance::STATE_ERROR => 16,
+        'working' => 32,
     ];
 
     /**
@@ -139,7 +139,7 @@ class DeployTarget implements DeployTargetInterface
      */
     public function addVHost(VHost $host)
     {
-        if ($host->getName() == VHost::DEFAULT_VHOST) {
+        if ($host->isDefault()) {
             throw new LogicException('Cannot add another default VHost');
         }
 
@@ -179,7 +179,7 @@ class DeployTarget implements DeployTargetInterface
      */
     public function removeVHost(VHost $host)
     {
-        if ($host->getName() == VHost::DEFAULT_VHOST) {
+        if ($host->isDefault()) {
             throw new LogicException('Cannot remove the default vhost');
         }
 
@@ -193,6 +193,7 @@ class DeployTarget implements DeployTargetInterface
      */
     public function canManageVHosts()
     {
+        // TODO: Implement actual check for managable vhost configs
         return true;
     }
 
@@ -239,7 +240,7 @@ class DeployTarget implements DeployTargetInterface
     public function refreshStatus()
     {
         foreach ($this->nodes as $node) {
-            $node->refreshStatus();
+            $node->refresh();
         }
 
         foreach ($this->applications as $application) {
@@ -304,6 +305,36 @@ class DeployTarget implements DeployTargetInterface
 
     /**
      * {@inheritDoc}
+     * @see \Rampage\Nexus\Deployment\DeployTargetInterface::canSync()
+     */
+    public function canSync()
+    {
+        foreach ($this->nodes as $node) {
+            if (!$node->canSync()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Deployment\DeployTargetInterface::sync()
+     */
+    public function sync()
+    {
+        if (!$this->canSync()) {
+            throw new LogicException('Target is not syncable');
+        }
+
+        foreach ($this->nodes as $node) {
+            $node->sync();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
      * @see \Rampage\Nexus\Entities\Api\ArrayExchangeInterface::exchangeArray()
      */
     public function exchangeArray(array $array)
@@ -321,6 +352,7 @@ class DeployTarget implements DeployTargetInterface
         $array = [
             'id' => $this->id,
             'name' => $this->name,
+            'canManageVHosts' => $this->canManageVHosts(),
             'vhosts' => [],
             'nodes' => [],
             'applications' => [],

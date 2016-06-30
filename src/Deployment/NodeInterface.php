@@ -24,6 +24,7 @@ namespace Rampage\Nexus\Deployment;
 
 use Rampage\Nexus\Entities\ApplicationInstance;
 use Rampage\Nexus\Entities\Api\ArrayExportableInterface;
+use Rampage\Nexus\Exception\LogicException;
 
 
 /**
@@ -55,6 +56,11 @@ interface NodeInterface extends ArrayExportableInterface
      * Node is not reachable
      */
     const STATE_UNREACHABLE = 'unreachable';
+
+    /**
+     * The node's communication channel violeates the security parameters
+     */
+    const STATE_SECURITY_VIOLATED = 'securityViolated';
 
 
     /**
@@ -128,6 +134,29 @@ interface NodeInterface extends ArrayExportableInterface
     public function getPublicKey();
 
     /**
+     * Trigger a rebuild
+     *
+     * This causes the node to rebuild a single application instance or
+     * the whole node.
+     *
+     * @param   ApplicationInstance $application    If provided, only rebuild this application instance
+     * @throws  LogicException                      When the node or application cannot be rebuild
+     */
+    public function rebuild(ApplicationInstance $application = null);
+
+    /**
+     * Check if the node can rebuild
+     *
+     * This will check if a rebuild is possible for the entire node, or for a single application instance
+     * if provided.
+     *
+     * The caller may call refresh beforehand.
+     *
+     * @param   ApplicationInstance $application If provided, only check if rebuilding this application instance is possible
+     */
+    public function canRebuild(ApplicationInstance $application = null);
+
+    /**
      * Check if this node accepts the given node as sibling in a cluster
      *
      * @param NodeInterface $node
@@ -136,7 +165,20 @@ interface NodeInterface extends ArrayExportableInterface
     public function acceptsClusterSibling(NodeInterface $node);
 
     /**
+     * Checks whether the node can perform a sync or not
+     *
+     * The caller may perform a `refresh()` to ensure up to date information
+     *
+     * @return bool
+     */
+    public function canSync();
+
+    /**
      * Sync changes to the node
+     *
+     * The node's ability to sync must be checked before calling this method.
+     *
+     * @throws  LogicException  When the node is not syncable
      */
     public function sync();
 
@@ -145,5 +187,5 @@ interface NodeInterface extends ArrayExportableInterface
      *
      * @return self
      */
-    public function refreshStatus();
+    public function refresh();
 }
