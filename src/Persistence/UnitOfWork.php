@@ -20,9 +20,8 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-require_once __DIR__ . '/vendor/autoload.php';
+namespace Rampage\Nexus\Persistence;
 
-// Polyfill: Legacy alias for PHP < 7.0
-if (!class_exists('Throwable')) {
-    class_alias('Exception', 'Throwable');
+class UnitOfWork
+{
 }

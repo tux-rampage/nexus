@@ -74,6 +74,8 @@ class HttpDownloader implements DownloaderInterface
     public function download($url, $targetFile)
     {
         $this->client->setUri($url);
+        $this->client->setStream($targetFile);
+
         $response = $this->client->send();
 
         if (!$response->isOk()) {

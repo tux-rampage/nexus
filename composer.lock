@@ -174,16 +174,16 @@
         },
         {
             "name": "zendframework/zend-code",
-            "version": "3.0.2",
+            "version": "3.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zend-code.git",
-                "reference": "57cfbcf794a79985278d6308325bc86060af588c"
+                "reference": "cdd9d0ff36c09772ca787c9c54318115f65d4fab"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zend-code/zipball/57cfbcf794a79985278d6308325bc86060af588c",
-                "reference": "57cfbcf794a79985278d6308325bc86060af588c",
+                "url": "https://api.github.com/repos/zendframework/zend-code/zipball/cdd9d0ff36c09772ca787c9c54318115f65d4fab",
+                "reference": "cdd9d0ff36c09772ca787c9c54318115f65d4fab",
                 "shasum": ""
             },
             "require": {
@@ -223,7 +223,7 @@
                 "code",
                 "zf2"
             ],
-            "time": "2016-04-20 17:34:49"
+            "time": "2016-06-27 22:07:15"
         },
         {
             "name": "zendframework/zend-di",

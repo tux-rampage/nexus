@@ -20,9 +20,43 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-require_once __DIR__ . '/vendor/autoload.php';
+namespace Rampage\Nexus\Persistence\Predicate;
 
-// Polyfill: Legacy alias for PHP < 7.0
-if (!class_exists('Throwable')) {
-    class_alias('Exception', 'Throwable');
+/**
+ * Interface for predicate sets
+ */
+interface PredicateSetInterface extends PredicateInterface
+{
+    /**
+     * Combine the predicates with logical `or`
+     */
+    const COMBINE_BY_OR = 'or';
+
+    /**
+     * Combine the predicates with logical `and`
+     */
+    const COMBINE_BY_AND = 'and';
+
+    /**
+     * Returns the combination type
+     *
+     * @see     COMBINE_BY_AND  Logical `and` combination
+     * @see     COMBINE_BY_OR   Logical `or` combination
+     * @return  string
+     */
+    public function getCombination();
+
+    /**
+     * Check if there are predicates in this predicate set
+     *
+     * @return bool
+     */
+    public function hasPredicates();
+
+    /**
+     * Returns all predicates
+     *
+     * @return PredicateInterface[]
+     */
+    public function getPredicates();
 }
