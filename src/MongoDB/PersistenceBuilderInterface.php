@@ -20,13 +20,24 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\PersistenceBuilder;
+namespace Rampage\Nexus\MongoDB;
 
-use Zend\Hydrator\Strategy\StrategyInterface;
-
-/**
- * Typemapper
- */
-interface TypeMapperInterface extends StrategyInterface
+interface PersistenceBuilderInterface
 {
+    /**
+     * Build the persist actions for the given object
+     *
+     * @param   object      $object The object
+     * @param   EntityState $state  The current entity state. This will be replaced with an updated state after the call
+     * @return  callable
+     */
+    public function buildPersist($object, EntityState &$state);
+
+    /**
+     * Build the remove actions for the given object
+     *
+     * @param   string      $object
+     * @return  callable
+     */
+    public function buildRemove($object);
 }

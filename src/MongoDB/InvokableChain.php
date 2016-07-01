@@ -20,27 +20,34 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\PersistenceBuilder;
+namespace Rampage\Nexus\MongoDB;
 
-interface PersistenceBuilderInterface
+
+/**
+ * Implements a simple invokable chain
+ */
+class InvokableChain
 {
-    public function buildInserts($object);
-
-    public function buildUpserts($object);
-
-    public function buildUpdates($object);
-
-    public function buildRemove($object);
-
-    public function getIdentifierFromData($data);
+    /**
+     * @var callable[]
+     */
+    private $callbacks = [];
 
     /**
-     * @param array $query
-     * @param array $fields
-     * @param int $limit
-     * @param int $skip
-     * @param int $order
-     * @return \Traversable|\Countable
+     * @param callable $callback
      */
-    public function find($query, $fields = null, $limit = null, $skip = null, $order = null);
+    public function add(callable $callback)
+    {
+        $this->callbacks[] = $callback;
+    }
+
+    /**
+     * Invoke all callbacks
+     */
+    public function __invoke()
+    {
+        foreach ($this->callbacks as $callback) {
+            $callback();
+        }
+    }
 }

@@ -20,38 +20,28 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\Hydration;
+namespace Rampage\Nexus\MongoDB\Driver;
 
-use Zend\Hydrator\HydratorInterface;
+use Zend\Hydrator\Strategy\StrategyInterface as HydrationStrategyInterface;
 
 /**
- * Hydrator Builder
+ * Interface for mongo drivers
  */
-class HydratorBuilder implements HydratorBuilderInterface
+interface DriverInterface
 {
     /**
-     * @var HydratorInterface[]
+     * Returns the collection with the given name
+     *
+     * @param string $name
+     * @return CollectionInterface
      */
-    protected $hydrators = [];
+    public function getCollection($name);
 
     /**
-     * @param string $entityClass
+     * Returns the type hydration strategy
+     *
+     * @param   int $type
+     * @return  HydrationStrategyInterface
      */
-    private function createHydrator($entityClass)
-    {
-        // FIXME
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\MongoDB\Hydration\HydratorBuilderInterface::getHydrator()
-     */
-    public function getHydrator($entityClass)
-    {
-        if (!isset($this->hydrators[$entityClass])) {
-            $this->hydrators[$entityClass] = $this->createHydrator($entityClass);
-        }
-
-        return $this->hydrators[$entityClass];
-    }
+    public function getTypeHydrationStrategy($type);
 }

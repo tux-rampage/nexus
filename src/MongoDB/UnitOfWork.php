@@ -52,7 +52,7 @@ class UnitOfWork
      * @param object $object
      * @param EntityState $state
      */
-    public function attach($object, EntityState $state)
+    public function attach($object, EntityState $state, $asClass = null)
     {
         if ($this->states->contains($object)) {
             return;
@@ -61,7 +61,7 @@ class UnitOfWork
         $id = $state->getId();
 
         if ($id) {
-            $this->attachById($id, $object);
+            $this->attachById($id, $object, $asClass);
         }
 
         $this->states->attach($object, $state);
@@ -72,13 +72,13 @@ class UnitOfWork
      *
      * @param object $object
      */
-    public function detatch($object)
+    public function detatch($object, $asClass = null)
     {
         if (!$this->isAttached($object)) {
             return;
         }
 
-        $class = get_class($object);
+        $class = $asClass? : get_class($object);
         $id = $this->states->offsetGet($object)->getId();
 
         if (isset($this->byIdentifier[$class][$id])) {
@@ -93,9 +93,11 @@ class UnitOfWork
      * @param object $object
      * @throws RuntimeException
      */
-    private function attachById($id, $object)
+    private function attachById($id, $object, $class = null)
     {
-        $class = get_class($object);
+        if ($class === null) {
+            $class = get_class($object);
+        }
 
         if (isset($this->byIdentifier[$class][$id]) && ($this->byIdentifier[$class][$id] !== $object)) {
             throw new RuntimeException('Duplicate identifier: ' . $id);
@@ -138,18 +140,18 @@ class UnitOfWork
      * @param   EntityState     $state  The new state information
      * @throws  LogicException          When the object is not attached
      */
-    public function updateState($object, EntityState $state)
+    public function updateState($object, EntityState $state, $asClass = null)
     {
         if (!$this->isAttached($object)) {
             throw new LogicException('This object is not attached');
         }
 
-        $class = get_class($object);
+        $class = $asClass? : get_class($object);
         $lastId = $this->states->offsetGet($object)->getId();
         $id = $state->getId();
 
         if ($id) {
-            $this->attachById($id, $object);
+            $this->attachById($id, $object, $class);
         }
 
         if ($lastId && ($lastId != $id)) {
@@ -187,21 +189,22 @@ class UnitOfWork
     }
 
     /**
-     * @param string $class
-     * @param array $data
+     * Returns the tracked identity or uses the create callback to create one and attac it
+     *
+     * @param   string      $class
+     * @param   EntityState $state
+     * @param   callable    $create
      */
-    protected function getOrCreate($class, $data)
+    public function getOrCreate($class, EntityState $state, callable $create)
     {
-        $id = $this->mapIdentifier($class, $data);
+        $id = $state->getId();
 
-        if ($this->uow->hasInstanceByIdentifier($class, $id)) {
+        if ($id && $this->uow->hasInstanceByIdentifier($class, $id)) {
             return $this->uow->getInstanceByIdentifier($class, $id);
         }
 
-        $object = $this->newEntityInstance($class);
-
-        $this->hydrator->hydrate($data, $object);
-        $this->uow->attach($object, new EntityState(EntityState::STATE_PERSISTED, $data, $id));
+        $object = $create();
+        $this->attach($object, $state, $class);
 
         return $object;
     }

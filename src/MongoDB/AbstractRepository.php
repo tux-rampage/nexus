@@ -23,8 +23,9 @@
 namespace Rampage\Nexus\MongoDB;
 
 use Rampage\Nexus\Repository\RepositoryInterface;
-use Rampage\Nexus\MongoDB\PersistenceBuilder\PersistenceBuilderInterface;
 use Zend\Hydrator\HydratorInterface;
+use Rampage\Nexus\MongoDB\Driver\DriverInterface;
+use Rampage\Nexus\Exception\InvalidArgumentException;
 
 
 abstract class AbstractRepository implements RepositoryInterface
@@ -37,7 +38,7 @@ abstract class AbstractRepository implements RepositoryInterface
     /**
      * @var PersistenceBuilderInterface
      */
-    protected $persistenceBuilder;
+    protected $driver;
 
     /**
      * @var HydratorInterface
@@ -45,13 +46,19 @@ abstract class AbstractRepository implements RepositoryInterface
     protected $hydrator;
 
     /**
+     * @var PersistenceBuilderInterface
+     */
+    protected $persistenceBuilder;
+
+    /**
      * @param UnitOfWork $unitOfWork
      */
-    public function __construct(PersistenceBuilderInterface $persistenceBuilder, UnitOfWork $unitOfWork = null)
+    public function __construct(DriverInterface $driver, PersistenceBuilderInterface $persistenceBuilder, UnitOfWork $unitOfWork = null)
     {
         $this->uow = $unitOfWork? : new UnitOfWork();
-        $this->persistenceBuilder = $persistenceBuilder;
+        $this->driver = $driver;
         $this->hydrator = $this->createHydrator();
+        $this->persistenceBuilder = $persistenceBuilder;
     }
 
     /**
@@ -61,15 +68,9 @@ abstract class AbstractRepository implements RepositoryInterface
     abstract protected function createHydrator();
 
     /**
-     * @param string $class
-     * @param array $data
-     */
-    abstract protected function mapIdentifier($class, $data);
-
-    /**
      * @param unknown $class
      */
-    abstract protected function newEntityInstance($class);
+    abstract protected function newEntityInstance();
 
     /**
      * Returns the entity class
@@ -77,23 +78,48 @@ abstract class AbstractRepository implements RepositoryInterface
     abstract protected function getEntityClass();
 
     /**
-     * @param string $class
-     * @param array $data
+     * @return \Zend\Hydrator\Strategy\StrategyInterface
      */
-    protected function getOrCreate($class, $data)
-    {
-        $id = $this->mapIdentifier($class, $data);
+    abstract protected function getIdentifierStrategy();
 
-        if ($this->uow->hasInstanceByIdentifier($class, $id)) {
-            return $this->uow->getInstanceByIdentifier($class, $id);
+    /**
+     * Returns the underlying mongo collection
+     *
+     * @return Driver\CollectionInterface
+     */
+    abstract protected function getMongoCollection();
+
+    /**
+     * @param array $data
+     * @return mixed
+     */
+    protected function extractIdentifier(array $data)
+    {
+        if (!isset($data['_id'])) {
+            return null;
         }
 
-        $object = $this->newEntityInstance($class);
+        return $this->getIdentifierStrategy()->hydrate($data['_id']);
+    }
 
-        $this->hydrator->hydrate($data, $object);
-        $this->uow->attach($object, new EntityState(EntityState::STATE_PERSISTED, $data, $id));
+    /**
+     * Returns the existing entity or creates a new one
+     *
+     * @param string $class
+     * @param array $data
+     * @return object
+     */
+    protected function getOrCreate($class, array $data)
+    {
+        $id = $this->extractIdentifier($data);
+        $state = new EntityState(EntityState::STATE_PERSISTED, $data, $id);
 
-        return $object;
+        return $this->uow->getOrCreate($class, $state, function() use ($data) {
+            $entity = $this->newEntityInstance();
+            $this->hydrator->hydrate($data, $entity);
+
+            return $entity;
+        });
     }
 
     /**
@@ -122,8 +148,10 @@ abstract class AbstractRepository implements RepositoryInterface
      */
     public function findAll()
     {
-        $result = $this->persistenceBuilder->find([]);
-        $hydrate = function($data) {};
+        $result = $this->driver->find([]);
+        $hydrate = function($data) {
+            return $this->getOrCreate($this->getEntityClass(), $data);
+        };
 
         return new Cursor($result, $hydrate);
     }
@@ -134,7 +162,16 @@ abstract class AbstractRepository implements RepositoryInterface
      */
     public function findOne($id)
     {
-        // FIXME
+        $mongoId = $this->getIdentifierStrategy()->extract($id);
+        $result = new \IteratorIterator($this->getMongoCollection()->find(['_id' => $mongoId], null, 1));
+
+        $result->rewind();
+
+        if (!$result->valid()) {
+            return null;
+        }
+
+        return $this->getOrCreate($this->getEntityClass(), $result->current());
     }
 
     /**
@@ -143,8 +180,23 @@ abstract class AbstractRepository implements RepositoryInterface
      */
     public function persist($object)
     {
-        // TODO Auto-generated method stub
+        if (!$this->accepts($object)) {
+            throw new InvalidArgumentException(sprintf('Entity %s is not accepted by this repository', is_object($object)? get_class($object) : gettype($object)));
+        }
 
+        $isAttached = $this->uow->isAttached($object);
+
+        if ($isAttached) {
+            $state = $this->uow->getState($object);
+        } else {
+            $state = new EntityState(EntityState::STATE_NEW, null);
+            $this->uow->attach($object, $state, $this->getEntityClass());
+        }
+
+        $persist = $this->persistenceBuilder->buildPersist($object, $state);
+        $persist();
+
+        $this->uow->updateState($object, new EntityState(EntityState::STATE_REMOVED, null, $state->getId()), $this->getEntityClass());
     }
 
     /**
@@ -153,9 +205,22 @@ abstract class AbstractRepository implements RepositoryInterface
      */
     public function remove($object)
     {
-        // TODO Auto-generated method stub
+        if (!$this->accepts($object)) {
+            throw new InvalidArgumentException(sprintf('Entity %s is not accepted by this repository', is_object($object)? get_class($object) : gettype($object)));
+        }
 
+        if (!$this->uow->isAttached($object)) {
+            throw new InvalidArgumentException(sprintf('Cannot remove an unattached entity'));
+        }
+
+        $state = $this->uow->getState($object);
+        if ($state->getState() == EntityState::STATE_REMOVED) {
+            return;
+        }
+
+        $remove = $this->persistenceBuilder->buildRemove($object);
+        $remove();
+
+        $this->uow->updateState($object, new EntityState(EntityState::STATE_REMOVED, null, $state->getId()), $this->getEntityClass());
     }
-
-
 }
