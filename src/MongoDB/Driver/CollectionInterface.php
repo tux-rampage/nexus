@@ -25,6 +25,20 @@ namespace Rampage\Nexus\MongoDB\Driver;
 interface CollectionInterface
 {
     /**
+     * Returns the collection name
+     *
+     * @return string
+     */
+    public function getName();
+
+    /**
+     * Creates a new unique id value
+     *
+     * @return mixed
+     */
+    public function createIdValue();
+
+    /**
      * Find records
      *
      * @param array $query
@@ -62,7 +76,7 @@ interface CollectionInterface
      * @param string $upsert
      * @param string $multiple
      */
-    public function update(array $query, array $document, $upsert = false, $multiple = false);
+    public function update(array $query, array $document, $multiple = false);
 
     /**
      * Remove documents

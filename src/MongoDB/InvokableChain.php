@@ -34,11 +34,46 @@ class InvokableChain
     private $callbacks = [];
 
     /**
+     * @param callable[] $callbacks
+     */
+    public function __construct($callbacks = null)
+    {
+        if (is_array($callbacks) || ($callbacks instanceof \Traversable)) {
+            $this->addAll($callbacks);
+        }
+    }
+
+    /**
      * @param callable $callback
+     * @return self
      */
     public function add(callable $callback)
     {
         $this->callbacks[] = $callback;
+        return $this;
+    }
+
+    /**
+     * @param callable $callback
+     * @return self
+     */
+    public function prepend(callable $callback)
+    {
+        array_unshift($this->callbacks, $callback);
+        return $this;
+    }
+
+    /**
+     * @param callable[] $callbacks
+     * @return self
+     */
+    public function addAll($callbacks)
+    {
+        foreach ($callbacks as $callback) {
+            $this->add($callback);
+        }
+
+        return $this;
     }
 
     /**
