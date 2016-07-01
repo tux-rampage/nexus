@@ -22,25 +22,11 @@
 
 namespace Rampage\Nexus\MongoDB\PersistenceBuilder;
 
-interface PersistenceBuilderInterface
+use Zend\Hydrator\Strategy\StrategyInterface;
+
+/**
+ * Typemapper
+ */
+interface TypeMapperInterface extends StrategyInterface
 {
-    public function buildInserts($object);
-
-    public function buildUpserts($object);
-
-    public function buildUpdates($object);
-
-    public function buildRemove($object);
-
-    public function getIdentifierFromData($data);
-
-    /**
-     * @param array $query
-     * @param array $fields
-     * @param int $limit
-     * @param int $skip
-     * @param int $order
-     * @return \Traversable|\Countable
-     */
-    public function find($query, $fields = null, $limit = null, $skip = null, $order = null);
 }

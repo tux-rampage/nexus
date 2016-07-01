@@ -24,6 +24,8 @@ namespace Rampage\Nexus\MongoDB;
 
 use Rampage\Nexus\Repository\RepositoryInterface;
 use Rampage\Nexus\MongoDB\PersistenceBuilder\PersistenceBuilderInterface;
+use Zend\Hydrator\HydratorInterface;
+
 
 abstract class AbstractRepository implements RepositoryInterface
 {
@@ -38,7 +40,7 @@ abstract class AbstractRepository implements RepositoryInterface
     protected $persistenceBuilder;
 
     /**
-     * @var Hy
+     * @var HydratorInterface
      */
     protected $hydrator;
 
@@ -54,13 +56,44 @@ abstract class AbstractRepository implements RepositoryInterface
 
     /**
      * @param string $class
-     * @return
+     * @return HydratorInterface
      */
     abstract protected function createHydrator();
 
-    protected function getOrCreate($data)
+    /**
+     * @param string $class
+     * @param array $data
+     */
+    abstract protected function mapIdentifier($class, $data);
+
+    /**
+     * @param unknown $class
+     */
+    abstract protected function newEntityInstance($class);
+
+    /**
+     * Returns the entity class
+     */
+    abstract protected function getEntityClass();
+
+    /**
+     * @param string $class
+     * @param array $data
+     */
+    protected function getOrCreate($class, $data)
     {
-        // FIXME
+        $id = $this->mapIdentifier($class, $data);
+
+        if ($this->uow->hasInstanceByIdentifier($class, $id)) {
+            return $this->uow->getInstanceByIdentifier($class, $id);
+        }
+
+        $object = $this->newEntityInstance($class);
+
+        $this->hydrator->hydrate($data, $object);
+        $this->uow->attach($object, new EntityState(EntityState::STATE_PERSISTED, $data, $id));
+
+        return $object;
     }
 
     /**
@@ -101,8 +134,7 @@ abstract class AbstractRepository implements RepositoryInterface
      */
     public function findOne($id)
     {
-        // TODO Auto-generated method stub
-
+        // FIXME
     }
 
     /**

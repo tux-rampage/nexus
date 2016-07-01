@@ -20,27 +20,20 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\PersistenceBuilder;
+namespace Rampage\Nexus\MongoDB\Hydration;
 
-interface PersistenceBuilderInterface
+use Zend\Hydrator\HydratorInterface;
+
+/**
+ * Builds the hydrator
+ */
+interface HydratorBuilderInterface
 {
-    public function buildInserts($object);
-
-    public function buildUpserts($object);
-
-    public function buildUpdates($object);
-
-    public function buildRemove($object);
-
-    public function getIdentifierFromData($data);
-
     /**
-     * @param array $query
-     * @param array $fields
-     * @param int $limit
-     * @param int $skip
-     * @param int $order
-     * @return \Traversable|\Countable
+     * Returns the hydrator for the given entity class
+     *
+     * @param   string  $entityClass
+     * @return  HydratorInterface
      */
-    public function find($query, $fields = null, $limit = null, $skip = null, $order = null);
+    public function getHydrator($entityClass);
 }

@@ -187,6 +187,26 @@ class UnitOfWork
     }
 
     /**
+     * @param string $class
+     * @param array $data
+     */
+    protected function getOrCreate($class, $data)
+    {
+        $id = $this->mapIdentifier($class, $data);
+
+        if ($this->uow->hasInstanceByIdentifier($class, $id)) {
+            return $this->uow->getInstanceByIdentifier($class, $id);
+        }
+
+        $object = $this->newEntityInstance($class);
+
+        $this->hydrator->hydrate($data, $object);
+        $this->uow->attach($object, new EntityState(EntityState::STATE_PERSISTED, $data, $id));
+
+        return $object;
+    }
+
+    /**
      * Clear the current state
      */
     public function clear()
