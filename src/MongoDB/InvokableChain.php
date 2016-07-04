@@ -22,11 +22,13 @@
 
 namespace Rampage\Nexus\MongoDB;
 
+use Countable;
+
 
 /**
  * Implements a simple invokable chain
  */
-class InvokableChain
+class InvokableChain implements Countable
 {
     /**
      * @var callable[]
@@ -41,6 +43,15 @@ class InvokableChain
         if (is_array($callbacks) || ($callbacks instanceof \Traversable)) {
             $this->addAll($callbacks);
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see Countable::count()
+     */
+    public function count()
+    {
+        return count($this->callbacks);
     }
 
     /**

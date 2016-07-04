@@ -33,44 +33,7 @@ use Rampage\Nexus\MongoDB\InvokableChain;
  */
 class DefaultPersistenceBuilder implements PersistenceBuilderInterface
 {
-    const AGGREGATE_OBJECT = 1;
-    const AGGREGATE_COLLECTION = 2;
-    const AGGREGATE_INDEXED = 3;
-
-    /**
-     * @var UnitOfWork
-     */
-    protected $unitOfWork;
-
-    /**
-     * @var HydratorInterface
-     */
-    protected $hydrator;
-
-    /**
-     * @var Driver\CollectionInterface
-     */
-    protected $collection;
-
-    /**
-     * @var AggregateBuilderInterface[]
-     */
-    protected $aggregationProperties = [];
-
-    /**
-     * @var array
-     */
-    protected $mappedRefProperties = [];
-
-    /**
-     * @var array
-     */
-    protected $discriminatorMap = [];
-
-    /**
-     * @var string
-     */
-    protected $discriminatorField = null;
+    use PersistenceBuilderTrait;
 
     /**
      * @param UnitOfWork $unitOfWork
@@ -81,81 +44,6 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
         $this->hydrator = $hydrator;
         $this->unitOfWork = $unitOfWork;
         $this->collection = $collection;
-    }
-
-    /**
-     * @return mixed
-     */
-    protected function createIdentity()
-    {
-        return $this->collection->createIdValue();
-    }
-
-    /**
-     * Define a property as aggregate
-     *
-     * @param string $property
-     * @param PersistenceBuilderInterface $persistenceBuilder
-     *
-     * @return self
-     */
-    public function setAggregatedProperty($property, AggregateBuilderInterface $persistenceBuilder)
-    {
-        $this->aggregationProperties[$property] = $persistenceBuilder;
-        return $this;
-    }
-
-    /**
-     * Define a non-owning side property
-     *
-     * This property will not be persisted.
-     *
-     * @param string $property
-     * @return self
-     */
-    public function addMappedRefProperty($property)
-    {
-        $this->mappedRefProperties[$property] = $property;
-        return $this;
-    }
-
-    /**
-     * @param string $discriminatorField
-     * @return self
-     */
-    public function setDiscriminatorField($discriminatorField)
-    {
-        $this->discriminatorField = ($discriminatorField !== null)? (string)$discriminatorField : null;
-        return $this;
-    }
-
-    /**
-     * Set the discriminator map
-     *
-     * @param   string[string]    $map  The mapping of class name to discriminator value
-     */
-    public function setDiscriminatorMap(array $map)
-    {
-        $this->discriminatorMap = [];
-
-        foreach ($map as $class => $value) {
-            $this->addToDiscriminatorMap($class, $value);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Add a class to the discriminator map
-     *
-     * @param string $class
-     * @param string $value
-     * @return self
-     */
-    public function addToDiscriminatorMap($class, $value)
-    {
-        $this->discriminatorMap[$class] = (string)$value;
-        return $this;
     }
 
     /**
@@ -173,7 +61,9 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
                 continue;
             }
 
-            $callback = $persister->buildInsertDocument($document, $property, $document[$property]);
+            $aggregatedObject = $document[$property];
+            unset($document[$property]);
+            $callback = $persister->buildInsertDocument($aggregatedObject, $document, $property, null, $document);
 
             if ($callback) {
                 $callbacks[] = $callback;
@@ -189,7 +79,44 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
      */
     protected function buildUpdateDocument($object, array $extractedData, EntityState $state, array &$callbacks)
     {
-        // FIXME
+        $stateData = $state->getData();
+        $document = null;
+        $newStateData = [];
+
+        if (!is_array($stateData)) {
+            $stateData = [];
+        }
+
+        foreach ($extractedData as $property => $value) {
+            if ($this->isExcludedFromDiff($property)) {
+                continue;
+            }
+
+            $newStateData[$property] = $value;
+
+            // Not changed?
+            if (array_key_exists($property, $stateData) && ($stateData[$property] == $value)) {
+                continue;
+            }
+
+            $document['$set'][$property] = $value;
+        }
+
+        foreach ($this->aggregationProperties as $property => $persister) {
+            if (!isset($extractedData[$property])) {
+                $callback = $persister->buildUndefinedInDocument($property, null, $document, $state);
+            } else {
+                $aggregatedObject = $extractedData[$property];
+                $newStateData[$property] = isset($stateData[$property])? $stateData[$property] : null;
+                $callback = $persister->buildUpdateDocument($aggregatedObject, $newStateData, $property, null, $document, $state);
+            }
+
+            if ($callback) {
+                $callbacks[] = $callback;
+            }
+        }
+
+        return $document;
     }
 
     /**
@@ -201,6 +128,10 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
         $callbacks = [];
         $data = $this->hydrator->extract($object);
         $id = isset($data['_id'])? $data['_id'] : null;
+
+        if ($this->discriminatorField) {
+            $data[$this->discriminatorField] = $this->mapTypeToDiscriminator($object);
+        }
 
         if (!$id || ($state->getState() != EntityState::STATE_PERSISTED)) {
             $document = $this->buildInsertDocument($object, $data, $callbacks);
@@ -223,8 +154,6 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
         return (new InvokableChain($callbacks))->prepend(function() use ($document, $id) {
             $this->collection->update(['_id' => $id], $document);
         });
-
-
     }
 
     /**
@@ -233,7 +162,16 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
      */
     public function buildRemove($object)
     {
-        // TODO Auto-generated method stub
+        $data = $this->hydrator->extract($object);
 
+        if (!isset($data['_id'])) {
+            return new InvokableChain();
+        }
+
+        $id = $data['_id'];
+
+        return function() use ($id) {
+            $this->collection->remove(['_id' => $id]);
+        };
     }
 }

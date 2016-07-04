@@ -34,29 +34,37 @@ interface AggregateBuilderInterface
      *
      * This will build the update document
      *
-     * @param   array           $document   The update document
-     * @param   string          $property   The property path
-     * @param   object          $object     The object to persist
+     * @param   object          $object     The aggregated object to persist
+     * @param   array           $parent     The parent document to build into. The property in this document will contain the previous state data (also if it is null).
+     * @param   string          $property   The property
+     * @param   string          $prefix     The path perfix
+     * @param   array           $root       The root document
+     * @param   EntityState     $state      The entity state
      * @return  callable|null   Additional operations that need to be performed after persisting the aggregate
      */
-    public function buildUpdateDocument(array &$document, $property, $object, EntityState $state);
+    public function buildUpdateDocument($object, array &$parent, $property, $prefix, array &$root, EntityState $state);
 
     /**
      * Populate removal
      *
-     * @param array $document
-     * @param string $property
-     * @return callable|null
+     * @param   string          $property   The property
+     * @param   string          $prefix     The path perfix
+     * @param   object          $stateValue The previously known state value
+     * @param   EntityState     $state      The entity state
+     * @return  callable|null
      */
-    public function buildUndefinedInDocument(array &$document, $property, EntityState $state);
+    public function buildUndefinedInDocument($property, $prefix, $stateValue, EntityState $state);
 
     /**
      * Build the insert for this document
      *
-     * @param   array           $document   The document to build into
-     * @param   string          $property   The property path
-     * @param   object          $object     The object to persist
+     * @param   object          $object     The aggregated object to persist
+     * @param   array           $parent     The parent document to build into
+     * @param   string          $property   The property
+     * @param   string          $prefix     The path perfix
+     * @param   array           $root       The root document
+     *
      * @return  callable|null   Additional operations that need to be performed after persisting the aggregate
      */
-    public function buildInsertDocument(array &$document, $property, $object);
+    public function buildInsertDocument($object, array &$parent, $property, $prefix, array &$root);
 }
