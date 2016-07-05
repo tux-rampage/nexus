@@ -30,6 +30,8 @@ use Zend\Hydrator\HydratorInterface;
  */
 trait PersistenceBuilderTrait
 {
+    use PropertyPathTrait;
+
     /**
      * @var HydratorInterface
      */
@@ -159,21 +161,5 @@ trait PersistenceBuilderTrait
         }
 
         return $this->discriminatorMap[$class];
-    }
-
-    /**
-     * Build the property path from property and prefix
-     *
-     * @param   string  $property
-     * @param   string  $prefix
-     * @return  string
-     */
-    protected function prefixPropertyPath($property, $prefix)
-    {
-        if ($prefix == '') {
-            return $property;
-        }
-
-        return $prefix . '.' . $property;
     }
 }

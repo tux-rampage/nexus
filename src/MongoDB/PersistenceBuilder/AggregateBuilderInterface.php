@@ -22,7 +22,7 @@
 
 namespace Rampage\Nexus\MongoDB\PersistenceBuilder;
 
-use Rampage\Nexus\MongoDB\EntityState;
+use Rampage\Nexus\MongoDB\InvokableChain;
 
 /**
  * Aggregate builder
@@ -35,14 +35,13 @@ interface AggregateBuilderInterface
      * This will build the update document
      *
      * @param   object          $object     The aggregated object to persist
-     * @param   array           $parent     The parent document to build into. The property in this document will contain the previous state data (also if it is null).
      * @param   string          $property   The property
      * @param   string          $prefix     The path perfix
-     * @param   array           $root       The root document
-     * @param   EntityState     $state      The entity state
-     * @return  callable|null   Additional operations that need to be performed after persisting the aggregate
+     * @param   array           $stateValue The previously know state value for this property. The builder should populate the new state into the given variable.
+     * @param   InvokableChain  $actions    The actions to perform. The builder may append additional actions
+     * @return  array                       The resulting update oprations
      */
-    public function buildUpdateDocument($object, array &$parent, $property, $prefix, array &$root, EntityState $state);
+    public function buildUpdateDocument($object, $property, $prefix, &$stateValue, InvokableChain $actions);
 
     /**
      * Populate removal
@@ -50,21 +49,18 @@ interface AggregateBuilderInterface
      * @param   string          $property   The property
      * @param   string          $prefix     The path perfix
      * @param   object          $stateValue The previously known state value
-     * @param   EntityState     $state      The entity state
-     * @return  callable|null
+     * @param   InvokableChain  $actions    The actions to perform. The builder may append additional actions
      */
-    public function buildUndefinedInDocument($property, $prefix, $stateValue, EntityState $state);
+    public function buildUndefinedInDocument($property, $prefix, $stateValue, InvokableChain $actions);
 
     /**
-     * Build the insert for this document
+     * Build the insert or creation for this document
      *
      * @param   object          $object     The aggregated object to persist
-     * @param   array           $parent     The parent document to build into
      * @param   string          $property   The property
      * @param   string          $prefix     The path perfix
-     * @param   array           $root       The root document
-     *
-     * @return  callable|null   Additional operations that need to be performed after persisting the aggregate
+     * @param   InvokableChain  $actions    The actions to perform. The builder may append additional actions
+     * @return  mixed                       The resulting document or value to populate into the property
      */
-    public function buildInsertDocument($object, array &$parent, $property, $prefix, array &$root);
+    public function buildInsertDocument($object, $property, $prefix, InvokableChain $actions);
 }

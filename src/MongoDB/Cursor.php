@@ -31,7 +31,7 @@ use Rampage\Nexus\Exception\InvalidArgumentException;
 /**
  * Wrapped cursor implementation
  */
-class Cursor implements Iterator, Countable
+class Cursor implements CursorInterface
 {
     /**
      * @var Iterator

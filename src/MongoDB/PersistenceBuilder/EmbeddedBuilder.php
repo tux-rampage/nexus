@@ -23,9 +23,11 @@
 namespace Rampage\Nexus\MongoDB\PersistenceBuilder;
 
 use Rampage\Nexus\MongoDB\InvokableChain;
-use Rampage\Nexus\MongoDB\EntityState;
 
-class EmbeddedPersisterBuilder implements AggregateBuilderInterface
+/**
+ * Builder for embedded documents
+ */
+class EmbeddedBuilder implements AggregateBuilderInterface
 {
     use PersistenceBuilderTrait;
 
@@ -33,11 +35,10 @@ class EmbeddedPersisterBuilder implements AggregateBuilderInterface
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\PersistenceBuilder\AggregateBuilderInterface::buildInsertDocument()
      */
-    public function buildInsertDocument($object, array &$parent, $property, $prefix, array &$root)
+    public function buildInsertDocument($object, $property, $prefix, InvokableChain $actions)
     {
         $data = $this->hydrator->extract($object);
         $propertyPath = $this->prefixPropertyPath($property, $prefix);
-        $callbacks = new InvokableChain();
 
         foreach ($this->mappedRefProperties as $key) {
             unset($data[$key]);
@@ -49,48 +50,38 @@ class EmbeddedPersisterBuilder implements AggregateBuilderInterface
             }
 
             $aggregatedObject = $data[$key];
-            unset($data[$key]);
-            $callback = $persister->buildInsertDocument($aggregatedObject, $data, $key, $propertyPath, $root);
-
-            if ($callback) {
-                $callbacks->add($callback);
-            }
+            $data[$key] = $persister->buildInsertDocument($aggregatedObject, $key, $propertyPath, $actions);
         }
 
-        $parent[$property] = $data;
-        return ($callbacks->count())? $callbacks : null;
+        return $data;
     }
 
     /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\PersistenceBuilder\AggregateBuilderInterface::buildUndefinedInDocument()
      */
-    public function buildUndefinedInDocument($property, $prefix, array &$root, EntityState $state)
+    public function buildUndefinedInDocument($property, $prefix, $stateValue, InvokableChain $actions)
     {
         $propertyPath = $this->prefixPropertyPath($property, $prefix);
-        $callbacks = new InvokableChain();
 
         foreach ($this->aggregationProperties as $key => $persister) {
-            $callback = $persister->buildUndefinedInDocument($key, $propertyPath, $root, $state);
-
-            if ($callback) {
-                $callbacks->add($callback);
+            if (!isset($stateValue[$key])) {
+                continue;
             }
-        }
 
-        return ($callbacks->count())? $callbacks : null;
+            $persister->buildUndefinedInDocument($key, $propertyPath, $stateValue[$key], $actions);
+        }
     }
 
     /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\PersistenceBuilder\AggregateBuilderInterface::buildUpdateDocument()
      */
-    public function buildUpdateDocument($object, array &$parent, $property, $prefix, array &$root, EntityState $state)
+    public function buildUpdateDocument($object, $property, $prefix, &$stateData, InvokableChain $actions)
     {
+        $updateDocument = [];
         $data = $this->hydrator->extract($object);
         $propertyPath = $this->prefixPropertyPath($property, $prefix);
-        $callbacks = new InvokableChain();
-        $stateData = $parent[$property];
         $newStateData = [];
 
         if (!is_array($stateData)) {
@@ -108,23 +99,34 @@ class EmbeddedPersisterBuilder implements AggregateBuilderInterface
                 continue;
             }
 
-            $root['$set'][$this->prefixPropertyPath($key, $propertyPath)] = $value;
+            $updateDocument['$set'][$this->prefixPropertyPath($key, $propertyPath)] = $value;
         }
 
         foreach ($this->aggregationProperties as $key => $persister) {
             if (!isset($data[$key])) {
-                $callback = $persister->buildUndefinedInDocument($key, $propertyPath, $root, $state);
-            } else {
-                $aggregatedObject = $data[$key];
-                $newStateData[$key] = isset($stateData[$key])? $stateData[$key] : null;
-                $callback = $persister->buildUpdateDocument($aggregatedObject, $newStateData, $key, $propertyPath, $root, $state);
+                if (isset($stateData[$key])) {
+                    $persister->buildUndefinedInDocument($key, $propertyPath, $stateData[$key], $actions);
+                }
+
+                continue;
             }
 
-            if ($callback) {
-                $callbacks->add($callback);
+            $aggregatedObject = $data[$key];
+
+            if (isset($stateData[$key])) {
+                $state = $stateData[$key];
+                $updates = $persister->buildUpdateDocument($aggregatedObject, $key, $propertyPath, $state, $actions);
+                $newStateData[$key] = $state;
+                $updateDocument = array_merge_recursive($updateDocument, $updates);
+            } else {
+                $doc = $persister->buildInsertDocument($aggregatedObject, $key, $propertyPath, $actions);
+                $newStateData[$key] = $doc;
+                $updateDocument['$set'][$this->prefixPropertyPath($key, $propertyPath)] = $doc;
             }
         }
 
-        return ($callbacks->count())? $callbacks : null;
+        $stateData = $newStateData;
+
+        return $updateDocument;
     }
 }
