@@ -22,15 +22,17 @@
 
 namespace Rampage\Nexus\MongoDB\PersistenceBuilder;
 
-use Rampage\Nexus\Entities\IndexableCollectionInterface;
 use Rampage\Nexus\Exception\InvalidArgumentException;
+use Rampage\Nexus\Exception\LogicException;
+
+use Rampage\Nexus\MongoDB\Exception\NestedBuilderException;
 use Rampage\Nexus\MongoDB\Driver;
 use Rampage\Nexus\MongoDB\InvokableChain;
 use Rampage\Nexus\MongoDB\ImmutablePersistedCollection;
 use Rampage\Nexus\MongoDB\PersistedCollection;
 
 use Traversable;
-use Rampage\Nexus\Exception\LogicException;
+use Throwable;
 
 
 /**
@@ -74,20 +76,21 @@ class AggregateCollectionBuilder implements AggregateBuilderInterface
             throw new InvalidArgumentException('The collection to persist must be an arrayor traversable');
         }
 
+        $itemBuilder = $this->itemBuilder;
         $propertyPath = $this->prefixPropertyPath($property, $prefix);
         $collection = [];
         $offset = 0;
 
-        if ($this->indexed) {
-            foreach ($object as $key => $item) {
-                $collection[$key] = $this->buildInsertDocument($item, $key, $propertyPath, $actions);
-            }
-        } else {
-            $offset = 0;
-
-            foreach ($object as $item) {
-                $collection[] = $this->buildInsertDocument($item, $offset, $propertyPath, $actions);
-                $offset++;
+        foreach ($object as $key => $item) {
+            try {
+                if ($this->indexed) {
+                    $collection[$key] = $itemBuilder->buildInsertDocument($item, $key, $propertyPath, $actions);
+                } else {
+                    $collection[] = $itemBuilder->buildInsertDocument($item, $offset, $propertyPath, $actions);
+                    $offset++;
+                }
+            } catch (Throwable $e) {
+                throw new NestedBuilderException($e, $this->indexed? $key : $offset);
             }
         }
 
@@ -104,10 +107,15 @@ class AggregateCollectionBuilder implements AggregateBuilderInterface
             return;
         }
 
+        $itemBuilder = $this->itemBuilder;
         $propertyPath = $this->prefixPropertyPath($property, $prefix);
 
         foreach ($stateValue as $key => $itemStateValue) {
-            $this->itemBuilder->buildUndefinedInDocument($key, $propertyPath, $itemStateValue, $actions);
+            try {
+                $itemBuilder->buildUndefinedInDocument($key, $propertyPath, $itemStateValue, $actions);
+            } catch (Throwable $e) {
+                throw new NestedBuilderException($e, $key);
+            }
         }
     }
 
@@ -141,11 +149,21 @@ class AggregateCollectionBuilder implements AggregateBuilderInterface
             foreach ($removed as $item) {
                 $fromOffset = $removed[$item];
                 $state = (isset($stateValue[$fromOffset]))? $stateValue[$fromOffset] : null;
-                $itemBuilder->buildUndefinedInDocument($fromOffset, $propertyPath, $state, $actions);
+
+                try {
+                    $itemBuilder->buildUndefinedInDocument($fromOffset, $propertyPath, $state, $actions);
+                } catch (Throwable $e) {
+                    throw new NestedBuilderException($e, '$');
+                }
             }
 
             foreach ($collection as $item) {
-                $newState[$offset] = $itemBuilder->buildInsertDocument($item, $offset, $propertyPath, $actions);
+                try {
+                    $newState[$offset] = $itemBuilder->buildInsertDocument($item, $offset, $propertyPath, $actions);
+                } catch (Throwable $e) {
+                    throw new NestedBuilderException($e, $offset);
+                }
+
 
                 if ($added->contains($item)) {
                     $added->offsetSet($item, $offset);
@@ -168,9 +186,13 @@ class AggregateCollectionBuilder implements AggregateBuilderInterface
             $offset = $persisted[$item];
             $state = isset($stateValue[$offset])? $stateValue[$offset] : null;
 
-            $updates = $itemBuilder->buildUpdateDocument($item, $offset, $propertyPath, $state, $actions);
-            $updateDocument = array_merge_recursive($updateDocument, $updates);
-            $stateValue[$offset] = $state;
+            try {
+                $updates = $itemBuilder->buildUpdateDocument($item, $offset, $propertyPath, $state, $actions);
+                $updateDocument = array_merge_recursive($updateDocument, $updates);
+                $stateValue[$offset] = $state;
+            } catch (Throwable $e) {
+                throw new NestedBuilderException($e, $offset);
+            }
         }
 
         if ($added->count()) {
@@ -180,9 +202,13 @@ class AggregateCollectionBuilder implements AggregateBuilderInterface
                 $offset = count($stateValue);
                 $added->offsetSet($item, $offset);
 
-                $add = $itemBuilder->buildInsertDocument($item, $offset, $propertyPath, $actions);
-                $stateValue[] = $add;
-                $updateDocument['$pushAll'][$propertyPath][] = $add;
+                try {
+                    $add = $itemBuilder->buildInsertDocument($item, $offset, $propertyPath, $actions);
+                    $stateValue[] = $add;
+                    $updateDocument['$pushAll'][$propertyPath][] = $add;
+                } catch (Throwable $e) {
+                    throw new NestedBuilderException($e, '[]');
+                }
             }
         }
 

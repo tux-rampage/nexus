@@ -33,6 +33,8 @@ use Rampage\Nexus\MongoDB\InvokableChain;
  */
 class ReferenceBuilder implements AggregateBuilderInterface
 {
+    use PropertyPathTrait;
+
     const CASCADE_NONE = 0;
     const CASCADE_PERSIST = 1;
     const CASCADE_REMOVE = 2;
@@ -99,13 +101,11 @@ class ReferenceBuilder implements AggregateBuilderInterface
         return $state;
     }
 
-    // FIXME: Update method signatures
-
     /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\PersistenceBuilder\AggregateBuilderInterface::buildInsertDocument()
      */
-    public function buildInsertDocument($object, array &$parent, $property, $prefix, array &$root)
+    public function buildInsertDocument($object, $property, $prefix, InvokableChain $actions)
     {
         $state = $this->getOrCreateObjectState($object);
 
@@ -115,77 +115,66 @@ class ReferenceBuilder implements AggregateBuilderInterface
 
         if ($this->cascade & self::CASCADE_PERSIST) {
             $callback = $this->entityBuilder->buildPersist($object, $state);
-            $parent[$property] = $state->getId();
 
+            $actions->add($callback);
             $this->unitOfWork->updateState($object, $state);
-
-            return $callback;
         }
 
         if (!$state->getId()) {
-            $path = ($prefix == '')? $property : $prefix . '.' . $property;
-            throw new LogicException('Cannot persist entity reference "%s" without id', $path);
+            throw new LogicException(sprintf('Cannot persist entity reference to "%s" without id', $this->class));
         }
 
-        $parent[$property] = $state->getId();
-        return null;
+        return $state->getId();
     }
 
     /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\PersistenceBuilder\AggregateBuilderInterface::buildUndefinedInDocument()
      */
-    public function buildUndefinedInDocument($property, $prefix, $stateValue, EntityState $state)
+    public function buildUndefinedInDocument($property, $prefix, $stateValue, InvokableChain $actions)
     {
-        if (!$stateValue || (($this->cascade & self::CASCADE_REMOVE) == 0)) {
-            return null;
+        if (!$stateValue || (($this->cascade & self::CASCADE_REMOVE) != self::CASCADE_REMOVE)) {
+            return;
         }
 
         if (!$this->unitOfWork->hasInstanceByIdentifier($this->class, $stateValue)) {
-            $path = ($prefix == '')? $property : $prefix . '.' . $property;
-            throw new LogicException(sprintf('Cannot remove untracked reference %s in %s', $this->class, $path));
+            throw new LogicException(sprintf('Cannot remove untracked reference %s', $this->class));
         }
 
         $object = $this->unitOfWork->getInstanceByIdentifier($this->class, $stateValue);
         $refState = $this->unitOfWork->getState($object);
 
         if ($refState->getState() == EntityState::STATE_REMOVED) {
-            return null;
+            return;
         }
-
-        $callback = null;
 
         if ($refState->getState() == EntityState::STATE_PERSISTED) {
-            $callback = $this->entityBuilder->buildRemove($object);
+            $actions->add($this->entityBuilder->buildRemove($object));
         }
 
-        $this->unitOfWork->updateState($object, new EntityState(EntityState::STATE_REMOVED, []));
-        return $callback;
+        $this->unitOfWork->updateState($object, new EntityState(EntityState::STATE_REMOVED, []), $this->class);
     }
 
     /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\PersistenceBuilder\AggregateBuilderInterface::buildUpdateDocument()
      */
-    public function buildUpdateDocument($object, array &$parent, $property, $prefix, array &$root, EntityState $state)
+    public function buildUpdateDocument($object, $property, $prefix, &$stateValue, InvokableChain $actions)
     {
-        $previousId = $parent[$property];
+        $previousId = $stateValue;
         $state = $this->getOrCreateObjectState($object);
-        $callbacks = new InvokableChain();
 
         if ($previousId != $state->getId()) {
-            $removeCallback = $this->buildUndefinedInDocument($property, $prefix, $previousId, $state);
-
-            if ($removeCallback) {
-                $callbacks->add($removeCallback);
-            }
+            $this->buildUndefinedInDocument($property, $prefix, $previousId, $actions);
         }
 
-        $insertCallback = $this->buildInsertDocument($object, $parent, $property, $prefix, $root);
-        if ($insertCallback) {
-            $callbacks->add($insertCallback);
-        }
+        $id = $this->buildInsertDocument($object, $property, $prefix, $actions);
+        $stateValue = $id;
 
-        return ($callbacks->count())? $callbacks : null;
+        return [
+            '$set' => [
+                $this->prefixPropertyPath($property, $prefix) => $id
+            ]
+        ];
     }
 }

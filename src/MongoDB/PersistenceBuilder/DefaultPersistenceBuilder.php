@@ -24,9 +24,12 @@ namespace Rampage\Nexus\MongoDB\PersistenceBuilder;
 
 use Rampage\Nexus\MongoDB\UnitOfWork;
 use Rampage\Nexus\MongoDB\Driver;
-use Zend\Hydrator\HydratorInterface;
 use Rampage\Nexus\MongoDB\EntityState;
 use Rampage\Nexus\MongoDB\InvokableChain;
+use Rampage\Nexus\MongoDB\Exception\PersistenceBuilderException;
+
+use Zend\Hydrator\HydratorInterface;
+use Throwable;
 
 /**
  * The default persistence builder
@@ -36,21 +39,33 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
     use PersistenceBuilderTrait;
 
     /**
-     * @param UnitOfWork $unitOfWork
-     * @param HydratorInterface $hydrator
+     * The class this builder is responsible for
+     * @var string
      */
-    public function __construct(UnitOfWork $unitOfWork, HydratorInterface $hydrator, Driver\CollectionInterface $collection)
+    protected $class;
+
+    /**
+     * @param string                        $class
+     * @param UnitOfWork                    $unitOfWork
+     * @param HydratorInterface             $hydrator
+     * @param Driver\CollectionInterface    $collection
+     */
+    public function __construct($class, UnitOfWork $unitOfWork, HydratorInterface $hydrator, Driver\CollectionInterface $collection)
     {
         $this->hydrator = $hydrator;
         $this->unitOfWork = $unitOfWork;
         $this->collection = $collection;
+        $this->class = $class;
     }
 
     /**
-     * @param object $object
-     * @param array $callbacks
+     * @param unknown $object
+     * @param array $document
+     * @param InvokableChain $actions
+     * @throws PersistenceBuilderException
+     * @return array
      */
-    protected function buildInsertDocument($object, array $document, array &$callbacks)
+    protected function buildInsertDocument($object, array $document, InvokableChain $actions)
     {
         foreach ($this->mappedRefProperties as $property) {
             unset($document[$property]);
@@ -61,12 +76,11 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
                 continue;
             }
 
-            $aggregatedObject = $document[$property];
-            unset($document[$property]);
-            $callback = $persister->buildInsertDocument($aggregatedObject, $document, $property, null, $document);
-
-            if ($callback) {
-                $callbacks[] = $callback;
+            try {
+                $aggregatedObject = $document[$property];
+                $document[$property] = $persister->buildInsertDocument($aggregatedObject, $property, null, $actions);
+            } catch (Throwable $e) {
+                throw new PersistenceBuilderException($this->class, $e, $property);
             }
         }
 
@@ -76,8 +90,9 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
     /**
      * @param object $object
      * @param array $callbacks
+     *
      */
-    protected function buildUpdateDocument($object, array $extractedData, EntityState $state, array &$callbacks)
+    protected function buildUpdateDocument($object, array $extractedData, EntityState &$state, InvokableChain $callbacks)
     {
         $stateData = $state->getData();
         $document = null;
@@ -103,20 +118,49 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
         }
 
         foreach ($this->aggregationProperties as $property => $persister) {
-            if (!isset($extractedData[$property])) {
-                $callback = $persister->buildUndefinedInDocument($property, null, $document, $state);
-            } else {
-                $aggregatedObject = $extractedData[$property];
-                $newStateData[$property] = isset($stateData[$property])? $stateData[$property] : null;
-                $callback = $persister->buildUpdateDocument($aggregatedObject, $newStateData, $property, null, $document, $state);
-            }
+            try {
+                $stateValue = (isset($stateData[$property]))? $stateData[$property] : null;
 
-            if ($callback) {
-                $callbacks[] = $callback;
+                if (!isset($extractedData[$property])) {
+                    $persister->buildUndefinedInDocument($property, null, $stateValue, $callbacks);
+                } else {
+                    $aggregatedObject = $extractedData[$property];
+                    $updates = $persister->buildUpdateDocument($aggregatedObject, $property, null, $stateValue, $callbacks);
+
+                    $document = array_merge_recursive($document, $updates);
+                    $newStateData[$property] = $stateValue;
+                }
+            } catch (Throwable $e) {
+                throw new PersistenceBuilderException($this->class, $e, $property);
             }
         }
 
+        $state = new EntityState(EntityState::STATE_PERSISTED, $newStateData, $extractedData['_id']);
+
         return $document;
+    }
+
+    /**
+     * Creates the update callbacks in the invocation chain
+     *
+     * @param   mixed           $id         The document identifier
+     * @param   array           $document   The update document
+     * @param   InvokableChain  $actions    The action chain to add the actions to
+     */
+    private function createUpdateActions($id, array $document, InvokableChain $actions)
+    {
+        $actions->prepend(function() use ($id, $document) {
+            $this->collection->update(['_id' => $id], $document);
+        });
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\MongoDB\PersistenceBuilder\PersistenceBuilderInterface::getClass()
+     */
+    public function getClass()
+    {
+        return $this->class;
     }
 
     /**
@@ -125,7 +169,7 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
      */
     public function buildPersist($object, EntityState &$state)
     {
-        $callbacks = [];
+        $actions = new InvokableChain();
         $data = $this->hydrator->extract($object);
         $id = isset($data['_id'])? $data['_id'] : null;
 
@@ -134,7 +178,7 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
         }
 
         if (!$id || ($state->getState() != EntityState::STATE_PERSISTED)) {
-            $document = $this->buildInsertDocument($object, $data, $callbacks);
+            $document = $this->buildInsertDocument($object, $data, $actions);
             $upsert = true;
 
             if (!$id) {
@@ -143,35 +187,43 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
             }
 
             $state = new EntityState(EntityState::STATE_PERSISTED, $document, $document['_id']);
-            return (new InvokableChain($callbacks))->prepend(function() use ($document, $upsert) {
+            $actions->prepend(function() use ($document, $upsert) {
                 $this->collection->insert($document, $upsert);
             });
+        } else {
+            $document = $this->buildUpdateDocument($object, $data, $state, $actions);
+            $this->createUpdateActions($id, $document, $actions);
         }
 
-        $document = $this->buildUpdateDocument($object, $data, $state, $callbacks);
-        $state = new EntityState(EntityState::STATE_PERSISTED, $document, $document['_id']);
-
-        return (new InvokableChain($callbacks))->prepend(function() use ($document, $id) {
-            $this->collection->update(['_id' => $id], $document);
-        });
+        return $actions;
     }
 
     /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\PersistenceBuilder\PersistenceBuilderInterface::buildRemove()
      */
-    public function buildRemove($object)
+    public function buildRemove($object, EntityState &$state)
     {
-        $data = $this->hydrator->extract($object);
+        $id = $state->getId();
+        $actions = new InvokableChain();
+        $stateData = $state->getData();
 
-        if (!isset($data['_id'])) {
-            return new InvokableChain();
+        if (!$id || ($state->getState() == EntityState::STATE_REMOVED)) {
+            return $actions;
         }
 
-        $id = $data['_id'];
+        foreach ($this->aggregationProperties as $property => $persister) {
+            if (!isset($stateData[$property])) {
+                continue;
+            }
 
-        return function() use ($id) {
-            $this->collection->remove(['_id' => $id]);
-        };
+            try {
+                $persister->buildUndefinedInDocument($property, null, $stateData[$property], $actions);
+            } catch (Throwable $e) {
+                throw new PersistenceBuilderException($this->class, $e, $property);
+            }
+        }
+
+        return $actions;
     }
 }

@@ -20,36 +20,23 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\PersistenceBuilder;
+namespace Rampage\Nexus\MongoDB\Exception;
 
-use Rampage\Nexus\MongoDB\EntityState;
+use Throwable;
 
 /**
- * Interface for PErsistence builders
+ * Exception for nested persistence builders
  */
-interface PersistenceBuilderInterface
+class NestedBuilderException extends PersistenceBuilderException
 {
     /**
-     * Returns the class this builder is responsible for
-     *
-     * @return string
+     * @param string|Throwable  $messageOrPrevious
+     * @param string            $property
+     * @param int               $code
+     * @param Throwable         $previous
      */
-    public function getClass();
-
-    /**
-     * Build the persist actions for the given object
-     *
-     * @param   object      $object The object
-     * @param   EntityState $state  The current entity state. This will be replaced with an updated state after the call
-     * @return  callable
-     */
-    public function buildPersist($object, EntityState &$state);
-
-    /**
-     * Build the remove actions for the given object
-     *
-     * @param   string      $object
-     * @return  callable
-     */
-    public function buildRemove($object, EntityState &$state);
+    public function __construct($messageOrPrevious, $property = null, $code = 0, Throwable $previous = null)
+    {
+        parent::__construct(null, $messageOrPrevious, $property, $code, $previous);
+    }
 }
