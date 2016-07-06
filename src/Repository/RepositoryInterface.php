@@ -55,34 +55,6 @@ interface RepositoryInterface
     public function detatch($object);
 
     /**
-     * Check if this repository accepts the given entity
-     *
-     * @param   object  $object
-     * @return  bool
-     */
-    public function accepts($object);
-
-    /**
-     * Persist an entity
-     *
-     * Ensures the persistence of the entity
-     *
-     * @param   object                      $object The entity to persist
-     * @throws  RuntimeException
-     * @throws  InvalidArgumentException            When the object is not accepted
-     */
-    public function persist($object);
-
-    /**
-     * Remove the object's persisted data
-     *
-     * @param   object                      $object The entity to persist
-     * @throws  RuntimeException
-     * @throws  InvalidArgumentException            When the object is not accepted
-     */
-    public function remove($object);
-
-    /**
      * Detatches all objects from state tracking
      *
      * This might be useful to force full updates/inserts for all entities on the next `persist()` call.

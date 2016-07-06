@@ -26,7 +26,6 @@ use Rampage\Nexus\Exception\InvalidArgumentException;
 use Rampage\Nexus\Exception\LogicException;
 
 use Rampage\Nexus\MongoDB\Exception\NestedBuilderException;
-use Rampage\Nexus\MongoDB\Driver;
 use Rampage\Nexus\MongoDB\InvokableChain;
 use Rampage\Nexus\MongoDB\ImmutablePersistedCollection;
 use Rampage\Nexus\MongoDB\PersistedCollection;
@@ -53,17 +52,11 @@ class AggregateCollectionBuilder implements AggregateBuilderInterface
     private $itemBuilder;
 
     /**
-     * @var Driver\CollectionInterface
-     */
-    protected $collection;
-
-    /**
      * @param AggregateBuilderInterface $itemBuilder
      */
-    public function __construct(AggregateBuilderInterface $itemBuilder, Driver\CollectionInterface $collection)
+    public function __construct(AggregateBuilderInterface $itemBuilder)
     {
         $this->itemBuilder = $itemBuilder;
-        $this->collection = $collection;
     }
 
     /**

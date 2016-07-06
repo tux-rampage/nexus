@@ -187,8 +187,13 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
             }
 
             $state = new EntityState(EntityState::STATE_PERSISTED, $document, $document['_id']);
-            $actions->prepend(function() use ($document, $upsert) {
+            $actions->prepend(function() use ($document, $upsert, $object) {
                 $this->collection->insert($document, $upsert);
+
+                // Hydrate the id into the object
+                $this->hydrator->hydrate([
+                    '_id' => $document['_id']
+                ], $object);
             });
         } else {
             $document = $this->buildUpdateDocument($object, $data, $state, $actions);

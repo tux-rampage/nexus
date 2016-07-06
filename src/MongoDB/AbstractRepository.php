@@ -26,6 +26,7 @@ use Rampage\Nexus\Repository\RepositoryInterface;
 use Zend\Hydrator\HydratorInterface;
 use Rampage\Nexus\MongoDB\Driver\DriverInterface;
 use Rampage\Nexus\Exception\InvalidArgumentException;
+use Rampage\Nexus\MongoDB\PersistenceBuilder\PersistenceBuilderInterface;
 
 
 abstract class AbstractRepository implements RepositoryInterface
@@ -36,7 +37,7 @@ abstract class AbstractRepository implements RepositoryInterface
     protected $uow;
 
     /**
-     * @var PersistenceBuilderInterface
+     * @var DriverInterface
      */
     protected $driver;
 
@@ -53,12 +54,12 @@ abstract class AbstractRepository implements RepositoryInterface
     /**
      * @param UnitOfWork $unitOfWork
      */
-    public function __construct(DriverInterface $driver, PersistenceBuilderInterface $persistenceBuilder, UnitOfWork $unitOfWork = null)
+    public function __construct(DriverInterface $driver, UnitOfWork $unitOfWork = null)
     {
         $this->uow = $unitOfWork? : new UnitOfWork();
         $this->driver = $driver;
         $this->hydrator = $this->createHydrator();
-        $this->persistenceBuilder = $persistenceBuilder;
+        $this->persistenceBuilder = $this->createPersistenceBuilder();
     }
 
     /**
@@ -68,9 +69,14 @@ abstract class AbstractRepository implements RepositoryInterface
     abstract protected function createHydrator();
 
     /**
+     * @return PersistenceBuilderInterface
+     */
+    abstract protected function createPersistenceBuilder();
+
+    /**
      * @param unknown $class
      */
-    abstract protected function newEntityInstance();
+    abstract protected function newEntityInstance($class, $data);
 
     /**
      * Returns the entity class
@@ -114,8 +120,8 @@ abstract class AbstractRepository implements RepositoryInterface
         $id = $this->extractIdentifier($data);
         $state = new EntityState(EntityState::STATE_PERSISTED, $data, $id);
 
-        return $this->uow->getOrCreate($class, $state, function() use ($data) {
-            $entity = $this->newEntityInstance();
+        return $this->uow->getOrCreate($class, $state, function() use ($class, $data) {
+            $entity = $this->newEntityInstance($class, $data);
             $this->hydrator->hydrate($data, $entity);
 
             return $entity;
@@ -178,37 +184,29 @@ abstract class AbstractRepository implements RepositoryInterface
      * {@inheritDoc}
      * @see \Rampage\Nexus\Repository\RepositoryInterface::persist()
      */
-    public function persist($object)
+    protected function doPersist($object, $asClass = null)
     {
-        if (!$this->accepts($object)) {
-            throw new InvalidArgumentException(sprintf('Entity %s is not accepted by this repository', is_object($object)? get_class($object) : gettype($object)));
-        }
-
         $isAttached = $this->uow->isAttached($object);
 
         if ($isAttached) {
             $state = $this->uow->getState($object);
         } else {
             $state = new EntityState(EntityState::STATE_NEW, null);
-            $this->uow->attach($object, $state, $this->getEntityClass());
+            $this->uow->attach($object, $state, $asClass);
         }
 
         $persist = $this->persistenceBuilder->buildPersist($object, $state);
         $persist();
 
-        $this->uow->updateState($object, new EntityState(EntityState::STATE_REMOVED, null, $state->getId()), $this->getEntityClass());
+        $this->uow->updateState($object, new EntityState(EntityState::STATE_REMOVED, null, $state->getId()), $asClass);
     }
 
     /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\Repository\RepositoryInterface::remove()
      */
-    public function remove($object)
+    protected function doRemove($object, $asClass = null)
     {
-        if (!$this->accepts($object)) {
-            throw new InvalidArgumentException(sprintf('Entity %s is not accepted by this repository', is_object($object)? get_class($object) : gettype($object)));
-        }
-
         if (!$this->uow->isAttached($object)) {
             throw new InvalidArgumentException(sprintf('Cannot remove an unattached entity'));
         }
@@ -221,6 +219,6 @@ abstract class AbstractRepository implements RepositoryInterface
         $remove = $this->persistenceBuilder->buildRemove($object);
         $remove();
 
-        $this->uow->updateState($object, new EntityState(EntityState::STATE_REMOVED, null, $state->getId()), $this->getEntityClass());
+        $this->uow->updateState($object, new EntityState(EntityState::STATE_REMOVED, null, $state->getId()), $asClass);
     }
 }
