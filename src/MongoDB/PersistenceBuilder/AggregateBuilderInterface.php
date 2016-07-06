@@ -46,21 +46,17 @@ interface AggregateBuilderInterface
     /**
      * Populate removal
      *
-     * @param   string          $property   The property
-     * @param   string          $prefix     The path perfix
      * @param   object          $stateValue The previously known state value
      * @param   InvokableChain  $actions    The actions to perform. The builder may append additional actions
      */
-    public function buildUndefinedInDocument($property, $prefix, $stateValue, InvokableChain $actions);
+    public function buildUndefinedInDocument($stateValue, InvokableChain $actions);
 
     /**
      * Build the insert or creation for this document
      *
      * @param   object          $object     The aggregated object to persist
-     * @param   string          $property   The property
-     * @param   string          $prefix     The path perfix
      * @param   InvokableChain  $actions    The actions to perform. The builder may append additional actions
      * @return  mixed                       The resulting document or value to populate into the property
      */
-    public function buildInsertDocument($object, $property, $prefix, InvokableChain $actions);
+    public function buildInsertDocument($object, InvokableChain $actions);
 }

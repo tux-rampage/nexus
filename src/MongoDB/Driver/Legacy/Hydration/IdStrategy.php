@@ -20,31 +20,28 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\Driver;
+namespace Rampage\Nexus\MongoDB\Driver\Legacy\Hydration;
 
-use Zend\Hydrator\Strategy\StrategyInterface as HydrationStrategyInterface;
+use Zend\Hydrator\Strategy\StrategyInterface;
 
-/**
- * Interface for mongo drivers
- */
-interface DriverInterface
+class IdStartegy implements StrategyInterface
 {
-    const SORT_ASC = 1;
-    const SORT_DESC = 2;
+    /**
+     * {@inheritDoc}
+     * @see \Zend\Hydrator\Strategy\StrategyInterface::extract()
+     */
+    public function extract($value)
+    {
+        return new \MongoId($value);
+
+    }
 
     /**
-     * Returns the collection with the given name
-     *
-     * @param string $name
-     * @return CollectionInterface
+     * {@inheritDoc}
+     * @see \Zend\Hydrator\Strategy\StrategyInterface::hydrate()
      */
-    public function getCollection($name);
-
-    /**
-     * Returns the type hydration strategy
-     *
-     * @param   int $type
-     * @return  HydrationStrategyInterface
-     */
-    public function getTypeHydrationStrategy($type);
+    public function hydrate($value)
+    {
+        return (string)$value;
+    }
 }

@@ -63,20 +63,20 @@ interface CollectionInterface
     /**
      * Insert a document
      *
-     * @param array $document
-     * @param string $upsert
+     * @param   array   $document   The document to insert
+     * @return  mixed               The _id value of the inserted document
      */
-    public function insert(array $document, $upsert = false);
+    public function insert(array $document);
 
     /**
      * Update documents
      *
      * @param array $query
      * @param array $document
-     * @param string $upsert
-     * @param string $multiple
+     * @param bool $multiple
+     * @param bool $upsert
      */
-    public function update(array $query, array $document, $multiple = false);
+    public function update(array $query, array $document, $multiple = false, $upsert = false);
 
     /**
      * Remove documents

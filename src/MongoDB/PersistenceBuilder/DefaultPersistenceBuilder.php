@@ -78,7 +78,7 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
 
             try {
                 $aggregatedObject = $document[$property];
-                $document[$property] = $persister->buildInsertDocument($aggregatedObject, $property, null, $actions);
+                $document[$property] = $persister->buildInsertDocument($aggregatedObject, $actions);
             } catch (Throwable $e) {
                 throw new PersistenceBuilderException($this->class, $e, $property);
             }
@@ -89,10 +89,10 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
 
     /**
      * @param object $object
-     * @param array $callbacks
+     * @param array $actions
      *
      */
-    protected function buildUpdateDocument($object, array $extractedData, EntityState &$state, InvokableChain $callbacks)
+    protected function buildUpdateDocument($object, array $extractedData, EntityState &$state, InvokableChain $actions)
     {
         $stateData = $state->getData();
         $document = null;
@@ -122,10 +122,10 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
                 $stateValue = (isset($stateData[$property]))? $stateData[$property] : null;
 
                 if (!isset($extractedData[$property])) {
-                    $persister->buildUndefinedInDocument($property, null, $stateValue, $callbacks);
+                    $persister->buildUndefinedInDocument($stateValue, $actions);
                 } else {
                     $aggregatedObject = $extractedData[$property];
-                    $updates = $persister->buildUpdateDocument($aggregatedObject, $property, null, $stateValue, $callbacks);
+                    $updates = $persister->buildUpdateDocument($aggregatedObject, $property, null, $stateValue, $actions);
 
                     $document = array_merge_recursive($document, $updates);
                     $newStateData[$property] = $stateValue;
@@ -218,7 +218,7 @@ class DefaultPersistenceBuilder implements PersistenceBuilderInterface
             }
 
             try {
-                $persister->buildUndefinedInDocument($property, null, $stateData[$property], $actions);
+                $persister->buildUndefinedInDocument($stateData[$property], $actions);
             } catch (Throwable $e) {
                 throw new PersistenceBuilderException($this->class, $e, $property);
             }

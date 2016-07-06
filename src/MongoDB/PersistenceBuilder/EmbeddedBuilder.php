@@ -22,7 +22,12 @@
 
 namespace Rampage\Nexus\MongoDB\PersistenceBuilder;
 
+use Rampage\Nexus\MongoDB\UnitOfWork;
 use Rampage\Nexus\MongoDB\InvokableChain;
+use Rampage\Nexus\MongoDB\Exception\NestedBuilderException;
+use Zend\Hydrator\HydratorInterface;
+use Throwable;
+
 
 /**
  * Builder for embedded documents
@@ -32,13 +37,22 @@ class EmbeddedBuilder implements AggregateBuilderInterface
     use PersistenceBuilderTrait;
 
     /**
+     * @param UnitOfWork                    $unitOfWork
+     * @param HydratorInterface             $hydrator
+     */
+    public function __construct(UnitOfWork $unitOfWork, HydratorInterface $hydrator)
+    {
+        $this->hydrator = $hydrator;
+        $this->unitOfWork = $unitOfWork;
+    }
+
+    /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\PersistenceBuilder\AggregateBuilderInterface::buildInsertDocument()
      */
-    public function buildInsertDocument($object, $property, $prefix, InvokableChain $actions)
+    public function buildInsertDocument($object, InvokableChain $actions)
     {
         $data = $this->hydrator->extract($object);
-        $propertyPath = $this->prefixPropertyPath($property, $prefix);
 
         foreach ($this->mappedRefProperties as $key) {
             unset($data[$key]);
@@ -50,7 +64,7 @@ class EmbeddedBuilder implements AggregateBuilderInterface
             }
 
             $aggregatedObject = $data[$key];
-            $data[$key] = $persister->buildInsertDocument($aggregatedObject, $key, $propertyPath, $actions);
+            $data[$key] = $persister->buildInsertDocument($aggregatedObject, $actions);
         }
 
         return $data;
@@ -60,16 +74,18 @@ class EmbeddedBuilder implements AggregateBuilderInterface
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\PersistenceBuilder\AggregateBuilderInterface::buildUndefinedInDocument()
      */
-    public function buildUndefinedInDocument($property, $prefix, $stateValue, InvokableChain $actions)
+    public function buildUndefinedInDocument($stateValue, InvokableChain $actions)
     {
-        $propertyPath = $this->prefixPropertyPath($property, $prefix);
-
         foreach ($this->aggregationProperties as $key => $persister) {
             if (!isset($stateValue[$key])) {
                 continue;
             }
 
-            $persister->buildUndefinedInDocument($key, $propertyPath, $stateValue[$key], $actions);
+            try {
+                $persister->buildUndefinedInDocument($stateValue[$key], $actions);
+            } catch (Throwable $e) {
+                throw new NestedBuilderException($e, $key);
+            }
         }
     }
 
@@ -103,25 +119,29 @@ class EmbeddedBuilder implements AggregateBuilderInterface
         }
 
         foreach ($this->aggregationProperties as $key => $persister) {
-            if (!isset($data[$key])) {
-                if (isset($stateData[$key])) {
-                    $persister->buildUndefinedInDocument($key, $propertyPath, $stateData[$key], $actions);
+            try {
+                if (!isset($data[$key])) {
+                    if (isset($stateData[$key])) {
+                        $persister->buildUndefinedInDocument($stateData[$key], $actions);
+                    }
+
+                    continue;
                 }
 
-                continue;
-            }
+                $aggregatedObject = $data[$key];
 
-            $aggregatedObject = $data[$key];
-
-            if (isset($stateData[$key])) {
-                $state = $stateData[$key];
-                $updates = $persister->buildUpdateDocument($aggregatedObject, $key, $propertyPath, $state, $actions);
-                $newStateData[$key] = $state;
-                $updateDocument = array_merge_recursive($updateDocument, $updates);
-            } else {
-                $doc = $persister->buildInsertDocument($aggregatedObject, $key, $propertyPath, $actions);
-                $newStateData[$key] = $doc;
-                $updateDocument['$set'][$this->prefixPropertyPath($key, $propertyPath)] = $doc;
+                if (isset($stateData[$key])) {
+                    $state = $stateData[$key];
+                    $updates = $persister->buildUpdateDocument($aggregatedObject, $key, $propertyPath, $state, $actions);
+                    $newStateData[$key] = $state;
+                    $updateDocument = array_merge_recursive($updateDocument, $updates);
+                } else {
+                    $doc = $persister->buildInsertDocument($aggregatedObject, $actions);
+                    $newStateData[$key] = $doc;
+                    $updateDocument['$set'][$this->prefixPropertyPath($key, $propertyPath)] = $doc;
+                }
+            } catch (Throwable $e) {
+                throw new NestedBuilderException($e, $key);
             }
         }
 

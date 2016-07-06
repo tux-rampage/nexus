@@ -70,23 +70,22 @@ class AggregateCollectionBuilder implements AggregateBuilderInterface
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\PersistenceBuilder\AggregateBuilderInterface::buildInsertDocument()
      */
-    public function buildInsertDocument($object, $property, $prefix, InvokableChain $actions)
+    public function buildInsertDocument($object, InvokableChain $actions)
     {
         if (!is_array($object) && !($object instanceof Traversable)) {
             throw new InvalidArgumentException('The collection to persist must be an arrayor traversable');
         }
 
         $itemBuilder = $this->itemBuilder;
-        $propertyPath = $this->prefixPropertyPath($property, $prefix);
         $collection = [];
         $offset = 0;
 
         foreach ($object as $key => $item) {
             try {
                 if ($this->indexed) {
-                    $collection[$key] = $itemBuilder->buildInsertDocument($item, $key, $propertyPath, $actions);
+                    $collection[$key] = $itemBuilder->buildInsertDocument($item, $actions);
                 } else {
-                    $collection[] = $itemBuilder->buildInsertDocument($item, $offset, $propertyPath, $actions);
+                    $collection[] = $itemBuilder->buildInsertDocument($item, $actions);
                     $offset++;
                 }
             } catch (Throwable $e) {
@@ -101,18 +100,17 @@ class AggregateCollectionBuilder implements AggregateBuilderInterface
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\PersistenceBuilder\AggregateBuilderInterface::buildUndefinedInDocument()
      */
-    public function buildUndefinedInDocument($property, $prefix, $stateValue, InvokableChain $actions)
+    public function buildUndefinedInDocument($stateValue, InvokableChain $actions)
     {
         if (!is_array($stateValue) && !($stateValue instanceof Traversable)) {
             return;
         }
 
         $itemBuilder = $this->itemBuilder;
-        $propertyPath = $this->prefixPropertyPath($property, $prefix);
 
         foreach ($stateValue as $key => $itemStateValue) {
             try {
-                $itemBuilder->buildUndefinedInDocument($key, $propertyPath, $itemStateValue, $actions);
+                $itemBuilder->buildUndefinedInDocument($itemStateValue, $actions);
             } catch (Throwable $e) {
                 throw new NestedBuilderException($e, $key);
             }
@@ -151,7 +149,7 @@ class AggregateCollectionBuilder implements AggregateBuilderInterface
                 $state = (isset($stateValue[$fromOffset]))? $stateValue[$fromOffset] : null;
 
                 try {
-                    $itemBuilder->buildUndefinedInDocument($fromOffset, $propertyPath, $state, $actions);
+                    $itemBuilder->buildUndefinedInDocument($state, $actions);
                 } catch (Throwable $e) {
                     throw new NestedBuilderException($e, '$');
                 }
@@ -159,7 +157,7 @@ class AggregateCollectionBuilder implements AggregateBuilderInterface
 
             foreach ($collection as $item) {
                 try {
-                    $newState[$offset] = $itemBuilder->buildInsertDocument($item, $offset, $propertyPath, $actions);
+                    $newState[$offset] = $itemBuilder->buildInsertDocument($item, $actions);
                 } catch (Throwable $e) {
                     throw new NestedBuilderException($e, $offset);
                 }
@@ -203,7 +201,7 @@ class AggregateCollectionBuilder implements AggregateBuilderInterface
                 $added->offsetSet($item, $offset);
 
                 try {
-                    $add = $itemBuilder->buildInsertDocument($item, $offset, $propertyPath, $actions);
+                    $add = $itemBuilder->buildInsertDocument($item, $actions);
                     $stateValue[] = $add;
                     $updateDocument['$pushAll'][$propertyPath][] = $add;
                 } catch (Throwable $e) {
@@ -235,7 +233,7 @@ class AggregateCollectionBuilder implements AggregateBuilderInterface
 
         // Collection is not tracked (therefore not existent or entirely replaced)
         $propertyPath = $this->prefixPropertyPath($property, $prefix);
-        $new = $this->buildInsertDocument($collection, $property, $prefix, $actions);
+        $new = $this->buildInsertDocument($collection, $actions);
         $stateValue = $new;
         $updateDocument = [
             '$set' => [

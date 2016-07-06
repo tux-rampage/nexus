@@ -105,7 +105,7 @@ class ReferenceBuilder implements AggregateBuilderInterface
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\PersistenceBuilder\AggregateBuilderInterface::buildInsertDocument()
      */
-    public function buildInsertDocument($object, $property, $prefix, InvokableChain $actions)
+    public function buildInsertDocument($object, InvokableChain $actions)
     {
         $state = $this->getOrCreateObjectState($object);
 
@@ -131,7 +131,7 @@ class ReferenceBuilder implements AggregateBuilderInterface
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\PersistenceBuilder\AggregateBuilderInterface::buildUndefinedInDocument()
      */
-    public function buildUndefinedInDocument($property, $prefix, $stateValue, InvokableChain $actions)
+    public function buildUndefinedInDocument($stateValue, InvokableChain $actions)
     {
         if (!$stateValue || (($this->cascade & self::CASCADE_REMOVE) != self::CASCADE_REMOVE)) {
             return;
@@ -165,10 +165,10 @@ class ReferenceBuilder implements AggregateBuilderInterface
         $state = $this->getOrCreateObjectState($object);
 
         if ($previousId != $state->getId()) {
-            $this->buildUndefinedInDocument($property, $prefix, $previousId, $actions);
+            $this->buildUndefinedInDocument($previousId, $actions);
         }
 
-        $id = $this->buildInsertDocument($object, $property, $prefix, $actions);
+        $id = $this->buildInsertDocument($object, $actions);
         $stateValue = $id;
 
         return [
