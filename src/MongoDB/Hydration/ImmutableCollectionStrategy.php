@@ -20,36 +20,35 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\Driver;
+namespace Rampage\Nexus\MongoDB\Hydration;
 
-use Zend\Hydrator\Strategy\StrategyInterface as HydrationStrategyInterface;
+use Rampage\Nexus\MongoDB\ImmutablePersistedCollection;
+use Rampage\Nexus\Exception\UnexpectedValueException;
 
-/**
- * Interface for mongo drivers
- */
-interface DriverInterface
+use Zend\Hydrator\Strategy\StrategyInterface;
+
+
+class CollectionStrategy implements StrategyInterface
 {
-    const SORT_ASC = 1;
-    const SORT_DESC = 2;
-
-    const STRATEGY_ID = 'id';
-    const STRATEGY_DYNAMIC = 'dynamic';
-    const STRATEGY_STRING = 'string';
-    const STRATEGY_DATE = 'date';
+    /**
+     * {@inheritDoc}
+     * @see \Zend\Hydrator\Strategy\StrategyInterface::extract()
+     */
+    public function extract($value)
+    {
+        return $value;
+    }
 
     /**
-     * Returns the collection with the given name
-     *
-     * @param string $name
-     * @return CollectionInterface
+     * {@inheritDoc}
+     * @see \Zend\Hydrator\Strategy\StrategyInterface::hydrate()
      */
-    public function getCollection($name);
+    public function hydrate($value)
+    {
+        if ($value && !($value instanceof ImmutablePersistedCollection)) {
+            throw new UnexpectedValueException('Expected an immutable collection instance, got ' . (is_object($value)? get_class($value) : gettype($value)));
+        }
 
-    /**
-     * Returns the type hydration strategy
-     *
-     * @param   int $type
-     * @return  HydrationStrategyInterface
-     */
-    public function getTypeHydrationStrategy($type);
+        return $value;
+    }
 }

@@ -29,9 +29,13 @@ use Rampage\Nexus\MongoDB\Exception\NestedBuilderException;
 use Rampage\Nexus\MongoDB\InvokableChain;
 use Rampage\Nexus\MongoDB\ImmutablePersistedCollection;
 use Rampage\Nexus\MongoDB\PersistedCollection;
+use Rampage\Nexus\MongoDB\PersistedIndexableCollection;
 
+use ArrayIterator;
 use Traversable;
 use Throwable;
+use MultipleIterator;
+use Rampage\Nexus\Entities\IndexableCollectionInterface;
 
 
 /**
@@ -57,6 +61,24 @@ class AggregateCollectionBuilder implements AggregateBuilderInterface
     public function __construct(AggregateBuilderInterface $itemBuilder)
     {
         $this->itemBuilder = $itemBuilder;
+    }
+
+    /**
+     * @param bool $flag
+     * @return self
+     */
+    public function setIsIndexed($flag)
+    {
+        $this->indexed = (bool)$flag;
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isIndexed()
+    {
+        return $this->indexed;
     }
 
     /**
@@ -207,6 +229,78 @@ class AggregateCollectionBuilder implements AggregateBuilderInterface
     }
 
     /**
+     * @param PersistedIndexableCollection $collection
+     * @param unknown $property
+     * @param unknown $prefix
+     * @param unknown $stateValue
+     * @param InvokableChain $actions
+     * @throws NestedBuilderException
+     */
+    protected function buildIndexedCollectionUpdateDocument(PersistedIndexableCollection $collection, $property, $prefix, &$stateValue, InvokableChain $actions)
+    {
+        if (!$this->indexed) {
+            throw new LogicException('Cannot build non-indexed persistence for indexed collections');
+        }
+
+        $append = $collection->getItemsToAdd();
+        $itemBuilder = $this->itemBuilder;
+        $updateDocument = [];
+        $propertyPath = $this->prefixPropertyPath($property, $prefix);
+
+        if ($append->count()) {
+            throw new NestedBuilderException('Persisting indexed collections with appended items is not supported');
+        }
+
+        if (!is_array($stateValue)) {
+            $stateValue = [];
+        }
+
+        foreach ($collection->getRemovedOffsets() as $offset) {
+            if (!isset($stateValue[$offset])) {
+                continue;
+            }
+
+            try {
+                $itemBuilder->buildUndefinedInDocument($stateValue[$offset], $actions);
+                unset($stateValue[$offset]);
+            } catch (Throwable $e) {
+                throw new NestedBuilderException($e, $offset);
+            }
+        }
+
+        $stateKeys = array_keys($stateValue);
+        $stateKeys = array_combine($stateKeys, $stateKeys);
+
+        $populate = new MultipleIterator(MultipleIterator::MIT_NEED_ANY | MultipleIterator::MIT_KEYS_ASSOC);
+        $populate->attachIterator(new ArrayIterator($collection->getModifiedOffsets()));
+        $populate->attachIterator(new ArrayIterator($collection->getAddedOffsets()));
+
+        foreach ($populate as $offset) {
+            unset($stateKeys[$offset]);
+            $setPath = $this->prefixPropertyPath($offset, $propertyPath);
+
+            try {
+                $document = $itemBuilder->buildInsertDocument($collection[$offset], $actions);
+                $stateKeys[$offset] = $document;
+                $updateDocument['$set'][$setPath] = $document;
+            } catch (Throwable $e) {
+                throw new NestedBuilderException($e, $offset);
+            }
+        }
+
+        foreach ($stateKeys as $offset) {
+            try {
+                $updates = $itemBuilder->buildUpdateDocument($collection[$offset], $offset, $propertyPath, $stateValue[$offset], $actions);
+                $updateDocument = array_merge_recursive($updateDocument, $updates);
+            } catch (Throwable $e) {
+                throw new NestedBuilderException($e, $offset);
+            }
+        }
+
+        return $updateDocument;
+    }
+
+    /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\PersistenceBuilder\AggregateBuilderInterface::buildUpdateDocument()
      */
@@ -220,7 +314,9 @@ class AggregateCollectionBuilder implements AggregateBuilderInterface
             return [];
         }
 
-        if ($collection instanceof PersistedCollection) {
+        if ($collection instanceof IndexableCollectionInterface) {
+            return $this->buildIndexedCollectionUpdateDocument($collection, $property, $prefix, $stateValue, $actions);
+        } else if ($collection instanceof PersistedCollection) {
             return $this->buildCollectionUpdateDocument($collection, $property, $prefix, $stateValue, $actions);
         }
 

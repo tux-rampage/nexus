@@ -20,36 +20,35 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\Driver;
+namespace Rampage\Nexus\MongoDB\Hydration;
 
-use Zend\Hydrator\Strategy\StrategyInterface as HydrationStrategyInterface;
+use Zend\Hydrator\HydrationInterface;
+
 
 /**
- * Interface for mongo drivers
+ * Hydrate from a closure
  */
-interface DriverInterface
+class ClosureHydration implements HydrationInterface
 {
-    const SORT_ASC = 1;
-    const SORT_DESC = 2;
-
-    const STRATEGY_ID = 'id';
-    const STRATEGY_DYNAMIC = 'dynamic';
-    const STRATEGY_STRING = 'string';
-    const STRATEGY_DATE = 'date';
+    /**
+     * @var callable
+     */
+    private $closure;
 
     /**
-     * Returns the collection with the given name
-     *
-     * @param string $name
-     * @return CollectionInterface
+     * @param callable $closure
      */
-    public function getCollection($name);
+    public function __construct(callable $closure)
+    {
+        $this->closure = $closure;
+    }
 
     /**
-     * Returns the type hydration strategy
-     *
-     * @param   int $type
-     * @return  HydrationStrategyInterface
+     * {@inheritDoc}
+     * @see \Zend\Hydrator\HydrationInterface::hydrate()
      */
-    public function getTypeHydrationStrategy($type);
+    public function hydrate(array $data, $object)
+    {
+        call_user_func($this->closure, $data, $object);
+    }
 }

@@ -20,36 +20,32 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\Driver;
+namespace Rampage\Nexus\MongoDB\Driver\Legacy\Hydration;
 
-use Zend\Hydrator\Strategy\StrategyInterface as HydrationStrategyInterface;
+use Rampage\Nexus\MongoDB\Driver\Legacy\Driver;
+use Zend\ServiceManager\AbstractPluginManager;
+use Zend\Hydrator\Strategy\StrategyInterface;
+
 
 /**
- * Interface for mongo drivers
+ * The default strategy provider
  */
-interface DriverInterface
+class StrategyProvider extends AbstractPluginManager
 {
-    const SORT_ASC = 1;
-    const SORT_DESC = 2;
-
-    const STRATEGY_ID = 'id';
-    const STRATEGY_DYNAMIC = 'dynamic';
-    const STRATEGY_STRING = 'string';
-    const STRATEGY_DATE = 'date';
-
     /**
-     * Returns the collection with the given name
-     *
-     * @param string $name
-     * @return CollectionInterface
+     * {@inheritDoc}
+     * @see \Zend\ServiceManager\AbstractPluginManager::__construct()
      */
-    public function getCollection($name);
-
-    /**
-     * Returns the type hydration strategy
-     *
-     * @param   int $type
-     * @return  HydrationStrategyInterface
-     */
-    public function getTypeHydrationStrategy($type);
+    public function __construct()
+    {
+        $this->instanceOf = StrategyInterface::class;
+        parent::__construct(null, [
+            'invokables' => [
+                Driver::STRATEGY_ID => IdStartegy::class,
+                Driver::STRATEGY_DATE => DateStrategy::class,
+                Driver::STRATEGY_DYNAMIC => DynamicStrategy::class,
+                Driver::STRATEGY_STRING => StringStrategy::class
+            ]
+        ]);
+    }
 }

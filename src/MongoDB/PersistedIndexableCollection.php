@@ -24,6 +24,9 @@ namespace Rampage\Nexus\MongoDB;
 
 use Rampage\Nexus\Entities\IndexableCollectionInterface;
 use Rampage\Nexus\Entities\ArrayCollection;
+use SplObjectStorage;
+use Rampage\Nexus\Exception\LogicException;
+
 
 /**
  * Provides a persisted indexable collection
@@ -33,7 +36,21 @@ class PersistedIndexableCollection extends PersistedCollection implements Indexa
     /**
      * @var ArrayCollection
      */
-    protected $allItems = null;
+    protected $items = null;
+
+    /**
+     * @var array
+     */
+    protected $changes = [
+        'modified' => [],
+        'added' => [],
+        'removed' => []
+    ];
+
+    /**
+     * @var bool
+     */
+    protected $allowAppend = false;
 
     /**
      * {@inheritDoc}
@@ -41,19 +58,90 @@ class PersistedIndexableCollection extends PersistedCollection implements Indexa
      */
     protected function ensureLoadAll()
     {
-        if ($this->allItems) {
+        if ($this->items) {
             return;
         }
 
         $this->ensureCursor();
-        $this->allItems = new ArrayCollection();
+        $this->items = new ArrayCollection();
 
         foreach ($this->cursor as $key => $item) {
-            $this->allItems[$key] = $item;
+            $this->items[$key] = $item;
         }
     }
 
+    /**
+     * Returns the modified offsets
+     *
+     * @return string[]|int[]
+     */
+    public function getModifiedOffsets()
+    {
+        return $this->changes['modified'];
+    }
 
+    /**
+     * Returns newly added offsets
+     *
+     * @return string[]|int[]
+     */
+    public function getAddedOffsets()
+    {
+        return $this->changes['added'];
+    }
+
+    /**
+     * Returns removed offsets
+     *
+     * @return string[]|int[]
+     */
+    public function getRemovedOffsets()
+    {
+        return $this->changes['removed'];
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\MongoDB\PersistedCollection::flushPersistenceTracking()
+     */
+    public function flushPersistenceTracking()
+    {
+        $this->addedItems = new SplObjectStorage();
+
+        foreach (array_keys($this->changes) as $key) {
+            $this->changes[$key] = [];
+        }
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\MongoDB\PersistedCollection::add()
+     */
+    public function add($item)
+    {
+        if (!$this->allowAppend) {
+            throw new LogicException('Appending items without index to this indexed collection is not allowed');
+        }
+
+        $this->guardItemType($item);
+        $this->addedItems->attach($item);
+        $this->items[] = $item;
+
+        return $this;
+    }
+
+    /**
+     * This is an alias of offsetUnset
+     *
+     * @return self
+     */
+    public function remove($offset)
+    {
+        $this->offsetUnset($offset);
+        return $this;
+    }
 
     /**
      * {@inheritDoc}
@@ -61,8 +149,8 @@ class PersistedIndexableCollection extends PersistedCollection implements Indexa
      */
     public function offsetExists($offset)
     {
-        // TODO Auto-generated method stub
-
+        $this->ensureLoadAll();
+        return $this->items->offsetExists($offset);
     }
 
     /**
@@ -71,8 +159,54 @@ class PersistedIndexableCollection extends PersistedCollection implements Indexa
      */
     public function offsetGet($offset)
     {
-        // TODO Auto-generated method stub
+        $this->ensureLoadAll();
+        return $this->items->offsetGet($offset);
+    }
 
+    /**
+     * Track offset set
+     *
+     * @param string|int $offset
+     */
+    protected function trackSet($offset)
+    {
+        if (isset($this->changes['removed'][$offset])) {
+            unset($this->changes['removed'][$offset]);
+            $this->changes['modified'][$offset] = $offset;
+            return;
+        }
+
+        if (isset($this->changes['added'][$offset])) {
+            return;
+        }
+
+        if ($this->offsetExists($offset)) {
+            $this->changes['modified'] = $offset;
+        } else {
+            $this->changes['added'] = $offset;
+        }
+    }
+
+    /**
+     * Track offset removal
+     *
+     * @param string $offset
+     */
+    protected function trackRemove($offset)
+    {
+        $item = $this->offsetGet($offset);
+
+        if ($this->addedItems->contains($item)) {
+            $this->addedItems->detach($item);
+        }
+
+        if ($this->changes['added'][$offset]) {
+            unset($this->changes['added'][$offset]);
+            return;
+        }
+
+        unset($this->changes['modified'][$offset]);
+        $this->changes['removed'][$offset] = $offset;
     }
 
     /**
@@ -81,8 +215,16 @@ class PersistedIndexableCollection extends PersistedCollection implements Indexa
      */
     public function offsetSet($offset, $value)
     {
-        // TODO Auto-generated method stub
+        $this->ensureLoadAll();
 
+        if ($offset === null) {
+            $this->add($value);
+            return;
+        }
+
+        $this->guardItemType($value);
+        $this->trackSet($offset);
+        $this->items->offsetSet($offset, $value);
     }
 
     /**
@@ -91,9 +233,13 @@ class PersistedIndexableCollection extends PersistedCollection implements Indexa
      */
     public function offsetUnset($offset)
     {
-        // TODO Auto-generated method stub
+        $this->ensureLoadAll();
 
+        if (!$this->offsetExists($offset)) {
+            return;
+        }
+
+        $this->trackRemove($offset);
+        $this->items->offsetUnset($offset);
     }
-
-
 }

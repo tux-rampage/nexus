@@ -23,6 +23,8 @@
 namespace Rampage\Nexus\MongoDB\Driver\Legacy;
 
 use Rampage\Nexus\MongoDB\Driver\DriverInterface;
+use Rampage\Nexus\MongoDB\Driver\Legacy\Hydration\StrategyProvider;
+use Interop\Container\ContainerInterface;
 
 class Driver implements DriverInterface
 {
@@ -41,10 +43,21 @@ class Driver implements DriverInterface
      */
     private $client;
 
+    /**
+     * @var ContainerInterface
+     */
+    private $strategyProvider;
+
+    /**
+     * @param string $server
+     * @param string $databaseName
+     * @param array $options
+     */
     public function __construct($server, $databaseName, array $options = null)
     {
         $this->client = new \MongoClient($server, $options);
         $this->dbName = $databaseName;
+        $this->strategyProvider = new Hydration\StrategyProvider();
     }
 
     /**
@@ -84,8 +97,6 @@ class Driver implements DriverInterface
      */
     public function getTypeHydrationStrategy($type)
     {
-        if ($type == 'id') {
-            return new Hydration\IdStartegy();
-        }
+        return $this->strategyProvider->get($type);
     }
 }

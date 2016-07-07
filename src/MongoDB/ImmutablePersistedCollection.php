@@ -50,6 +50,15 @@ class ImmutablePersistedCollection implements IteratorAggregate, CollectionInter
     }
 
     /**
+     * @return self
+     */
+    public function reload()
+    {
+        $this->cursor = null;
+        return $this;
+    }
+
+    /**
      * Set the wrapped cursor instance
      *
      * @param CursorInterface $cursor

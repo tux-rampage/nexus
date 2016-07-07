@@ -23,15 +23,29 @@
 namespace Rampage\Nexus\MongoDB\Repository;
 
 use Rampage\Nexus\Entities\ApplicationPackage;
-use Rampage\Nexus\Entities\ApplicationInstance;
+use Rampage\Nexus\Entities\Application;
+use Rampage\Nexus\Entities\PackageParameter;
+
 use Rampage\Nexus\Repository\PackageRepositoryInterface;
+
 use Rampage\Nexus\MongoDB\AbstractRepository;
+use Rampage\Nexus\MongoDB\UnitOfWork;
+use Rampage\Nexus\MongoDB\ImmutablePersistedCollection;
+
 use Rampage\Nexus\MongoDB\Driver\DriverInterface;
 use Rampage\Nexus\MongoDB\Driver\CollectionInterface as MongoCollectionInterface;
-use Rampage\Nexus\MongoDB\UnitOfWork;
+
 use Rampage\Nexus\MongoDB\PersistenceBuilder\DefaultPersistenceBuilder;
 use Rampage\Nexus\MongoDB\PersistenceBuilder\AggregateCollectionBuilder;
 use Rampage\Nexus\MongoDB\PersistenceBuilder\EmbeddedBuilder;
+use Rampage\Nexus\MongoDB\PersistenceBuilder\PersistenceBuilderInterface;
+
+use Rampage\Nexus\MongoDB\Hydration\ReflectionHydrator;
+use Rampage\Nexus\MongoDB\Hydration\CollectionStrategy;
+use Rampage\Nexus\MongoDB\Hydration\EmbeddedStrategy;
+
+use Zend\Hydrator\HydratorInterface;
+use Rampage\Nexus\Exception\LogicException;
 
 /**
  * The default package repo
@@ -41,7 +55,53 @@ class PackageRepository extends AbstractRepository implements PackageRepositoryI
     /**
      * @var MongoCollectionInterface
      */
-    private $collection;
+    private $collections = [
+        ApplicationPackage::class => 'packages',
+        Application::class => 'applications',
+    ];
+
+    /**
+     * @var HydratorInterface
+     */
+    private $paramHydrator = null;
+
+    /**
+     * @var HydratorInterface
+     */
+    private $groupHydrator;
+
+    /**
+     * @var PersistenceBuilderInterface
+     */
+    private $groupPersistenceBuilder;
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\MongoDB\AbstractRepository::__construct()
+     */
+    public function __construct(DriverInterface $driver, UnitOfWork $unitOfWork = null)
+    {
+        parent::__construct($driver, $unitOfWork);
+        $this->groupCollection = $driver->getCollection('applications');
+        $this->groupHydrator = $this->createGroupHydrator();
+        $this->groupPersistenceBuilder = $this->createGroupBuilder();
+    }
+
+    /**
+     * @return HydratorInterface
+     */
+    protected function getParamHydrator()
+    {
+        if (!$this->paramHydrator) {
+            $stringStrategy = $this->driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING);
+            $hydrator = new ReflectionHydrator();
+            $hydrator->addStrategy('name', $stringStrategy);
+            $hydrator->addStrategy('label', $stringStrategy);
+            $hydrator->addStrategy('type', $stringStrategy);
+        }
+
+        return $this->paramHydrator;
+    }
 
     /**
      * {@inheritDoc}
@@ -49,8 +109,24 @@ class PackageRepository extends AbstractRepository implements PackageRepositoryI
      */
     protected function createHydrator()
     {
-        // TODO Auto-generated method stub
+        $paramHydrator = $this->getParamHydrator();
+        $hydrator = new ReflectionHydrator([
+            'id' => '_id',
+            'archive',
+            'name',
+            'version',
+            'type',
+            'documentRoot',
+            'parameters',
+            'extra'
+        ]);
 
+        $hydrator->addStrategy('id', $this->getIdentifierStrategy());
+        $hydrator->addStrategy('extra', $this->driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_DYNAMIC));
+        $hydrator->addStrategy('*', $this->driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING));
+        $hydrator->addStrategy('parameters', new CollectionStrategy(new EmbeddedStrategy(new PackageParameter(), $paramHydrator), true, PackageParameter::class));
+
+        return $hydrator;
     }
 
     /**
@@ -59,9 +135,45 @@ class PackageRepository extends AbstractRepository implements PackageRepositoryI
      */
     protected function createPersistenceBuilder()
     {
-        // TODO Auto-generated method stub
         $builder = new DefaultPersistenceBuilder(ApplicationPackage::class, $this->uow, $this->hydrator, $this->getMongoCollection());
-        $builder->setAggregatedProperty('parameters', new AggregateCollectionBuilder(new EmbeddedBuilder($this->uow, $paramHydrator)));
+        $paramsBuilder = new AggregateCollectionBuilder(new EmbeddedBuilder($this->uow, $this->getParamHydrator()));
+
+        $paramsBuilder->setIsIndexed(true);
+        $builder->setAggregatedProperty('parameters', $paramsBuilder);
+
+        return $builder;
+    }
+
+    /**
+     * @return \Rampage\Nexus\MongoDB\Hydration\ReflectionHydrator
+     */
+    protected function createGroupHydrator()
+    {
+        $hydrator = new ReflectionHydrator([
+            'id' => '_id',
+            'label',
+            'icon',
+            'packages'
+        ]);
+
+        $hydrator->addStrategy('id', $this->driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING));
+        $hydrator->addHydrationInterceptor(function(&$data) {
+            $id = $data['_id'];
+            $data['packages'] = new ImmutablePersistedCollection(function() use ($id) {
+                return $this->findByPackageName($id);
+            });
+        });
+
+        return $hydrator;
+    }
+
+    /**
+     * @return PersistenceBuilderInterface
+     */
+    protected function createGroupBuilder()
+    {
+        $builder = new DefaultPersistenceBuilder(Application::class, $this->uow, $this->groupHydrator, $this->getMongoCollection(Application::class));
+        $builder->addMappedRefProperty('packages');
 
         return $builder;
     }
@@ -81,20 +193,7 @@ class PackageRepository extends AbstractRepository implements PackageRepositoryI
      */
     protected function getIdentifierStrategy()
     {
-        return $this->driver->getTypeHydrationStrategy('string');
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\MongoDB\AbstractRepository::getMongoCollection()
-     */
-    protected function getMongoCollection()
-    {
-        if (!$this->collection) {
-            $this->collection = $this->driver->getCollection('packages');
-        }
-
-        return $this->collection;
+        return $this->driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING);
     }
 
     /**
@@ -103,7 +202,56 @@ class PackageRepository extends AbstractRepository implements PackageRepositoryI
      */
     protected function newEntityInstance($class, $data)
     {
+        if ($class == Application::class) {
+            return new Application();
+        }
+
+        if ($class != ApplicationPackage::class) {
+            throw new LogicException('Unsupported entity class: ' . $class);
+        }
+
         return new ApplicationPackage();
+    }
+
+    /**
+     * @param ApplicationPackage $package
+     */
+    public function persist(ApplicationPackage $package)
+    {
+        $this->doPersist($package);
+
+        if (!$this->findApplication($package->getName())) {
+            $app = new Application();
+            $this->groupHydrator->hydrate([
+                '_id' => $package->getName(),
+                'label' => $package->getName()
+            ], $app);
+
+            $this->doPersist($app, $this->groupPersistenceBuilder, Application::class);
+        }
+    }
+
+    /**
+     * @param ApplicationPackage $package
+     */
+    private function checkApplicationRemoval(ApplicationPackage $package)
+    {
+        $cursor = $this->getMongoCollection()->find(['name' => $package->getName()]);
+        if ($cursor->count()) {
+            return;
+        }
+
+        $app = $this->findApplication($package->getName());
+        $this->doRemove($app, $this->groupPersistenceBuilder, Application::class);
+    }
+
+    /**
+     * @param ApplicationPackage $package
+     */
+    public function remove(ApplicationPackage $package)
+    {
+        $this->doRemove($package);
+        $this->checkApplicationRemoval($package);
     }
 
     /**
@@ -112,8 +260,7 @@ class PackageRepository extends AbstractRepository implements PackageRepositoryI
      */
     public function findApplication($packageName)
     {
-        // TODO Auto-generated method stub
-
+        return $this->doFindOne(Application::class, ['id' => $packageName]);
     }
 
     /**
@@ -122,7 +269,6 @@ class PackageRepository extends AbstractRepository implements PackageRepositoryI
      */
     public function findByPackageName($packageName)
     {
-        $data = $this->getMongoCollection()->findOne([ 'name' => $packageName ]);
-        return $data? $this->getOrCreate(ApplicationInstance::class, $data) : null;
+        return $this->doFind(ApplicationPackage::class, ['name' => $packageName]);
     }
 }
