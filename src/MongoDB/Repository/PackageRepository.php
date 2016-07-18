@@ -52,39 +52,16 @@ use Rampage\Nexus\Exception\LogicException;
  */
 class PackageRepository extends AbstractRepository implements PackageRepositoryInterface
 {
-    /**
-     * @var MongoCollectionInterface
-     */
-    private $collections = [
-        ApplicationPackage::class => 'packages',
-        Application::class => 'applications',
-    ];
-
-    /**
-     * @var HydratorInterface
-     */
-    private $paramHydrator = null;
-
-    /**
-     * @var HydratorInterface
-     */
-    private $groupHydrator;
-
-    /**
-     * @var PersistenceBuilderInterface
-     */
-    private $groupPersistenceBuilder;
+    const COLLECTION_NAME = 'packages';
+    const APP_COLLECTION_NAME = 'applications';
 
     /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\AbstractRepository::__construct()
      */
-    public function __construct(DriverInterface $driver, UnitOfWork $unitOfWork = null)
+    public function __construct(DriverInterface $driver)
     {
-        parent::__construct($driver, $unitOfWork);
-        $this->groupCollection = $driver->getCollection('applications');
-        $this->groupHydrator = $this->createGroupHydrator();
-        $this->groupPersistenceBuilder = $this->createGroupBuilder();
+        parent::__construct($driver, $hydrator, self::COLLECTION_NAME);
     }
 
     /**
@@ -130,21 +107,6 @@ class PackageRepository extends AbstractRepository implements PackageRepositoryI
     }
 
     /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\MongoDB\AbstractRepository::createPersistenceBuilder()
-     */
-    protected function createPersistenceBuilder()
-    {
-        $builder = new DefaultPersistenceBuilder(ApplicationPackage::class, $this->uow, $this->hydrator, $this->getMongoCollection());
-        $paramsBuilder = new AggregateCollectionBuilder(new EmbeddedBuilder($this->uow, $this->getParamHydrator()));
-
-        $paramsBuilder->setIsIndexed(true);
-        $builder->setAggregatedProperty('parameters', $paramsBuilder);
-
-        return $builder;
-    }
-
-    /**
      * @return \Rampage\Nexus\MongoDB\Hydration\ReflectionHydrator
      */
     protected function createGroupHydrator()
@@ -165,26 +127,6 @@ class PackageRepository extends AbstractRepository implements PackageRepositoryI
         });
 
         return $hydrator;
-    }
-
-    /**
-     * @return PersistenceBuilderInterface
-     */
-    protected function createGroupBuilder()
-    {
-        $builder = new DefaultPersistenceBuilder(Application::class, $this->uow, $this->groupHydrator, $this->getMongoCollection(Application::class));
-        $builder->addMappedRefProperty('packages');
-
-        return $builder;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\MongoDB\AbstractRepository::getEntityClass()
-     */
-    protected function getEntityClass()
-    {
-        return ApplicationPackage::class;
     }
 
     /**

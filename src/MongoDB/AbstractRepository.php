@@ -23,19 +23,22 @@
 namespace Rampage\Nexus\MongoDB;
 
 use Rampage\Nexus\Repository\RepositoryInterface;
-use Zend\Hydrator\HydratorInterface;
 use Rampage\Nexus\MongoDB\Driver\DriverInterface;
+use Rampage\Nexus\MongoDB\Driver\CollectionInterface;
 use Rampage\Nexus\Exception\InvalidArgumentException;
-use Rampage\Nexus\MongoDB\PersistenceBuilder\PersistenceBuilderInterface;
-use Rampage\Nexus\Exception\LogicException;
+
+use Zend\Hydrator\HydratorInterface;
 
 
+/**
+ * Abstract Reposiotry impplementation
+ */
 abstract class AbstractRepository implements RepositoryInterface
 {
     /**
-     * @var UnitOfWork
+     * @var EntityStateContainer
      */
-    protected $uow;
+    protected $entityStates;
 
     /**
      * @var DriverInterface
@@ -48,71 +51,33 @@ abstract class AbstractRepository implements RepositoryInterface
     protected $hydrator;
 
     /**
-     * @var PersistenceBuilderInterface
+     * @var CollectionInterface
      */
-    protected $persistenceBuilder;
-
-    /**
-     * @var CollectionMapping
-     */
-    protected $collections = [];
+    protected $collection;
 
     /**
      * @param UnitOfWork $unitOfWork
      */
-    public function __construct(DriverInterface $driver, UnitOfWork $unitOfWork = null)
+    public function __construct(DriverInterface $driver, HydratorInterface $hydrator, $collectionName)
     {
-        $this->uow = $unitOfWork? : new UnitOfWork();
+        $this->entityStates = new EntityStateContainer();
         $this->driver = $driver;
-        $this->hydrator = $this->createHydrator();
-        $this->persistenceBuilder = $this->createPersistenceBuilder();
+        $this->hydrator = $hydrator;
+        $this->collection = $driver->getCollection($collectionName);
     }
 
     /**
-     * @param string $class
-     * @return HydratorInterface
+     * Creates a new entity matching the instance data
+     *
+     * @param array $data
+     * @return object
      */
-    abstract protected function createHydrator();
-
-    /**
-     * @return PersistenceBuilderInterface
-     */
-    abstract protected function createPersistenceBuilder();
-
-    /**
-     * @param unknown $class
-     */
-    abstract protected function newEntityInstance($class, $data);
-
-    /**
-     * Returns the entity class
-     */
-    abstract protected function getEntityClass();
+    abstract protected function newEntityInstance(array &$data);
 
     /**
      * @return \Zend\Hydrator\Strategy\StrategyInterface
      */
     abstract protected function getIdentifierStrategy();
-
-    /**
-     * Returns the underlying mongo collection
-     *
-     * @return Driver\CollectionInterface
-     */
-    protected function getMongoCollection($class = null)
-    {
-        $class = $class? : $this->getEntityClass();
-
-        if (!$this->collections[$class]) {
-            throw new LogicException('This class has no collection: ' . $class);
-        }
-
-        if (is_string($this->collections[$class])) {
-            $this->collections[$class] = $this->driver->getCollection($this->collections[$class]);
-        }
-
-        return $this->collections[$class];
-    }
 
     /**
      * @param array $data
@@ -130,17 +95,16 @@ abstract class AbstractRepository implements RepositoryInterface
     /**
      * Returns the existing entity or creates a new one
      *
-     * @param string $class
      * @param array $data
      * @return object
      */
-    protected function getOrCreate($class, array $data)
+    protected function getOrCreate(array $data)
     {
         $id = $this->extractIdentifier($data);
         $state = new EntityState(EntityState::STATE_PERSISTED, $data, $id);
 
-        return $this->uow->getOrCreate($class, $state, function() use ($class, $data) {
-            $entity = $this->newEntityInstance($class, $data);
+        return $this->entityStates->getOrCreate($state, function() use ($data) {
+            $entity = $this->newEntityInstance($data);
             $this->hydrator->hydrate($data, $entity);
 
             return $entity;
@@ -148,26 +112,6 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Repository\RepositoryInterface::clear()
-     */
-    public function clear()
-    {
-        $this->uow->clear();
-        return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Repository\RepositoryInterface::detatch()
-     */
-    public function detatch($object)
-    {
-        $this->uow->detatch($object);
-        return $this;
-    }
-
-    /**
      * @param unknown $class
      * @param array $query
      * @param unknown $limit
@@ -175,35 +119,35 @@ abstract class AbstractRepository implements RepositoryInterface
      * @param unknown $order
      * @return Cursor
      */
-    protected function doFind($class, array $query, $limit = null, $skip = null, array $order = null)
+    protected function doFindOne(array $query)
     {
-        $result = $this->getMongoCollection($class)->find($query, [], $limit, $skip, $order);
-        $hydrate = function($data) use ($class) {
-            return $this->getOrCreate($class, $data);
-        };
-
-        return new Cursor($result, $hydrate);
-    }
-
-    /**
-     * @param unknown $class
-     * @param array $query
-     * @param unknown $limit
-     * @param unknown $skip
-     * @param unknown $order
-     * @return Cursor
-     */
-    protected function doFindOne($class, array $query)
-    {
-        $result = $this->getMongoCollection($class)->findOne($query, []);
+        $result = $this->collection->findOne($query);
 
         if (!is_array($result)) {
             return null;
         }
 
-        return $this->getOrCreate($class, $result);
+        return $this->getOrCreate($result);
     }
 
+    /**
+     * Find items
+     *
+     * @param array $query
+     * @param unknown $limit
+     * @param unknown $skip
+     * @param array $order
+     * @return \Rampage\Nexus\MongoDB\Cursor
+     */
+    protected function doFind(array $query, $limit = null, $skip = null, array $order = null)
+    {
+        $result = $this->collection->find($query, null, $limit, $skip, $order);
+        $hydrate = function($data) {
+            return $this->getOrCreate($data);
+        };
+
+        return new Cursor($result, $hydrate);
+    }
 
     /**
      * {@inheritDoc}
@@ -211,7 +155,7 @@ abstract class AbstractRepository implements RepositoryInterface
      */
     public function findAll()
     {
-        return $this->doFind($this->getEntityClass(), []);
+        return $this->doFind([]);
     }
 
     /**
@@ -225,52 +169,68 @@ abstract class AbstractRepository implements RepositoryInterface
     }
 
     /**
+     * @param object $object
+     * @param array $data
+     */
+    protected function prePersist($object, array &$data)
+    {
+    }
+
+    /**
+     * @param object $object
+     * @param array $data
+     */
+    protected function postPersist($object, array &$data)
+    {
+    }
+
+    /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\Repository\RepositoryInterface::persist()
      */
-    protected function doPersist($object, PersistenceBuilderInterface $builder = null, $asClass = null)
+    protected function doPersist($object)
     {
-        $isAttached = $this->uow->isAttached($object);
-
-        if (!$builder) {
-            $builder = $this->persistenceBuilder;
-        }
+        $isAttached = $this->entityStates->isAttached($object);
+        $data = $this->hydrator->extract($object);
+        $id = $this->extractIdentifier($data);
 
         if ($isAttached) {
-            $state = $this->uow->getState($object);
+            $state = $this->entityStates->getState($object);
         } else {
-            $state = new EntityState(EntityState::STATE_NEW, null);
-            $this->uow->attach($object, $state, $asClass);
+            $state = new EntityState(EntityState::STATE_NEW, null, $id);
+            $this->entityStates->attach($object, $state);
         }
 
-        $persist = $builder->buildPersist($object, $state);
-        $persist();
+        $this->prePersist($object, $data);
 
-        $this->uow->updateState($object, $state, $asClass);
+        if (!$id) {
+            $id = $this->collection->insert($data);
+            $this->hydrator->hydrate(['_id' => $id], $object);
+        } else {
+            $this->collection->update(['_id' => $state->getId()], $data, true, true);
+        }
+
+        $this->entityStates->updateState($object, new EntityState(EntityState::STATE_PERSISTED, $data, $id));
+        $this->postPersist($object, $data);
     }
 
     /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\Repository\RepositoryInterface::remove()
      */
-    protected function doRemove($object, PersistenceBuilderInterface $builder = null, $asClass = null)
+    protected function doRemove($object)
     {
-        if (!$builder) {
-            $builder = $this->persistenceBuilder;
-        }
-
-        if (!$this->uow->isAttached($object)) {
+        if (!$this->entityStates->isAttached($object)) {
             throw new InvalidArgumentException(sprintf('Cannot remove an unattached entity'));
         }
 
-        $state = $this->uow->getState($object);
+        $state = $this->entityStates->getState($object);
+
         if ($state->getState() == EntityState::STATE_REMOVED) {
             return;
         }
 
-        $remove = $builder->buildRemove($object, $state);
-        $remove();
-
-        $this->uow->updateState($object, $state, $asClass);
+        $this->collection->remove(['_id' => $state->getId()]);
+        $this->entityStates->updateState($object, new EntityState(EntityState::STATE_REMOVED, $state->getData(), $state->getId()));
     }
 }

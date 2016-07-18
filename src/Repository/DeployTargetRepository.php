@@ -22,25 +22,23 @@
 
 namespace Rampage\Nexus\Repository;
 
+use Rampage\Nexus\Repository\RepositoryInterface;
+use Rampage\Nexus\Entities\DeployTarget;
+
 /**
- * Repository definition
+ * Repository for deploy targets
  */
-interface RepositoryInterface
+interface DeployTargetRepositoryInterface extends RepositoryInterface
 {
     /**
-     * Find a single entity by id
-     *
-     * Consider all objects returned by this method as state tracked.
-     *
-     * @param   string      $id The object's identifier
-     * @return  object|null     The resulting object or null
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Repository\RepositoryInterface::save()
      */
-    public function findOne($id);
+    public function save(DeployTarget $target);
 
     /**
-     * A collection of all entities
-     *
-     * @return  object[]
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Repository\RepositoryInterface::remove()
      */
-    public function findAll();
+    public function remove(DeployTarget $target);
 }

@@ -22,25 +22,33 @@
 
 namespace Rampage\Nexus\Repository;
 
+use Rampage\Nexus\Deployment\DeployTargetInterface;
+use Rampage\Nexus\Entities\AbstractNode;
+
 /**
- * Repository definition
+ * Node repository
  */
-interface RepositoryInterface
+interface NodeRepositoryInterface extends RepositoryInterface, PrototypeProviderInterface
 {
     /**
-     * Find a single entity by id
-     *
-     * Consider all objects returned by this method as state tracked.
-     *
-     * @param   string      $id The object's identifier
-     * @return  object|null     The resulting object or null
+     * @param DeployTarget $target
      */
-    public function findOne($id);
+    public function findByTarget(DeployTargetInterface $target);
 
     /**
-     * A collection of all entities
+     * Persist the given object
      *
-     * @return  object[]
+     * @param   object  $node The object to persist
+     * @return  self            Provides a fluent interface
      */
-    public function findAll();
+    public function save(AbstractNode $node);
+
+    /**
+     * Remove the object from persistence
+     *
+     * @param   object  $node The object to remove
+     * @return  self            Provides a fluent interface
+     */
+    public function remove(AbstractNode $node);
+
 }

@@ -26,7 +26,7 @@ use SplObjectStorage;
 use Rampage\Nexus\Exception\RuntimeException;
 use Rampage\Nexus\Exception\LogicException;
 
-class UnitOfWork
+class EntityStateContainer
 {
     /**
      * Contains all object states
@@ -41,10 +41,7 @@ class UnitOfWork
     /**
      * Tracks the objects by their identifier
      *
-     * This is a multidimensional array containing the class name on the first dimension
-     * and the identifier on the second
-     *
-     * @var object[][]
+     * @var object[]
      */
     private $byIdentifier = [];
 
@@ -52,7 +49,7 @@ class UnitOfWork
      * @param object $object
      * @param EntityState $state
      */
-    public function attach($object, EntityState $state, $asClass = null)
+    public function attach($object, EntityState $state)
     {
         if ($this->states->contains($object)) {
             return;
@@ -61,7 +58,7 @@ class UnitOfWork
         $id = $state->getId();
 
         if ($id) {
-            $this->attachById($id, $object, $asClass);
+            $this->attachById($id, $object);
         }
 
         $this->states->attach($object, $state);
@@ -72,17 +69,16 @@ class UnitOfWork
      *
      * @param object $object
      */
-    public function detatch($object, $asClass = null)
+    public function detatch($object)
     {
         if (!$this->isAttached($object)) {
             return;
         }
 
-        $class = $asClass? : get_class($object);
         $id = $this->states->offsetGet($object)->getId();
 
-        if (isset($this->byIdentifier[$class][$id])) {
-            unset($this->byIdentifier[$class][$id]);
+        if (isset($this->byIdentifier[$id])) {
+            unset($this->byIdentifier[$id]);
         }
 
         $this->states->detach($object);
@@ -93,17 +89,13 @@ class UnitOfWork
      * @param object $object
      * @throws RuntimeException
      */
-    private function attachById($id, $object, $class = null)
+    private function attachById($id, $object)
     {
-        if ($class === null) {
-            $class = get_class($object);
-        }
-
-        if (isset($this->byIdentifier[$class][$id]) && ($this->byIdentifier[$class][$id] !== $object)) {
+        if (isset($this->byIdentifier[$id]) && ($this->byIdentifier[$id] !== $object)) {
             throw new RuntimeException('Duplicate identifier: ' . $id);
         }
 
-        $this->byIdentifier[$class][$id] = $object;
+        $this->byIdentifier[$id] = $object;
     }
 
     /**
@@ -140,67 +132,66 @@ class UnitOfWork
      * @param   EntityState     $state  The new state information
      * @throws  LogicException          When the object is not attached
      */
-    public function updateState($object, EntityState $state, $asClass = null)
+    public function updateState($object, EntityState $state)
     {
         if (!$this->isAttached($object)) {
             throw new LogicException('This object is not attached');
         }
 
-        $class = $asClass? : get_class($object);
         $lastId = $this->states->offsetGet($object)->getId();
         $id = $state->getId();
 
         if ($id) {
-            $this->attachById($id, $object, $class);
+            $this->attachById($id, $object);
         }
 
         if ($lastId && ($lastId != $id)) {
-            unset($this->byIdentifier[$class][$lastId]);
+            unset($this->byIdentifier[$lastId]);
         }
 
         $this->states->offsetSet($object, $state);
     }
 
     /**
-     * @param string $class
+     * Check if there is an instance for the given identifier
+     *
      * @param string|int $id
      * @return bool
      */
-    public function hasInstanceByIdentifier($class, $id)
+    public function hasInstanceByIdentifier($id)
     {
-        return isset($this->byIdentifier[$class][$id]);
+        return isset($this->byIdentifier[$id]);
     }
 
     /**
      * Returns the instance for an identifier
      *
-     * @param   string          $class  The class name
      * @param   int|string      $id     The identifier
      * @throws  LogicException          If there is no object with this id attached
      * @return  object
      */
-    public function getInstanceByIdentifier($class, $id)
+    public function getInstanceByIdentifier($id)
     {
-        if (!$this->hasInstanceByIdentifier($class, $id)) {
-            throw new LogicException(sprintf('There is no instance for %s with identifier %s', $class, $id));
+        if (!$this->hasInstanceByIdentifier($id)) {
+            throw new LogicException(sprintf('There is no instance for identifier %s', $id));
         }
 
-        return $this->byIdentifier[$class][$id];
+        return $this->byIdentifier[$id];
     }
 
     /**
-     * Returns the tracked identity or uses the create callback to create one and attac it
+     * Returns the tracked identity or uses the create callback to create one and attach it
      *
      * @param   string      $class
      * @param   EntityState $state
      * @param   callable    $create
      */
-    public function getOrCreate($class, EntityState $state, callable $create)
+    public function getOrCreate(EntityState $state, callable $create)
     {
         $id = $state->getId();
 
-        if ($id && $this->uow->hasInstanceByIdentifier($class, $id)) {
-            return $this->uow->getInstanceByIdentifier($class, $id);
+        if ($id && $this->hasInstanceByIdentifier($id)) {
+            return $this->getInstanceByIdentifier($id);
         }
 
         $object = $create();

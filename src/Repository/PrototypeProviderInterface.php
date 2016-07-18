@@ -20,27 +20,19 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
+
 namespace Rampage\Nexus\Repository;
 
 /**
- * Repository definition
+ * Implements a prototype provider
  */
-interface RepositoryInterface
+interface PrototypeProviderInterface
 {
     /**
-     * Find a single entity by id
+     * Returns the matching object prototype according to the provided input data
      *
-     * Consider all objects returned by this method as state tracked.
-     *
-     * @param   string      $id The object's identifier
-     * @return  object|null     The resulting object or null
+     * @param array $data
+     * @return object
      */
-    public function findOne($id);
-
-    /**
-     * A collection of all entities
-     *
-     * @return  object[]
-     */
-    public function findAll();
+    public function getPrototypeByData($data);
 }

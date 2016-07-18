@@ -12,7 +12,7 @@ use Zend\Di\ConfigProvider as DiConfigProvider;
 $configManager = new ConfigManager(
     [
         new DiConfigProvider(),
-        new PhpFileProvider(__DIR__ . '/conf.d/*.global.php'),
+        new PhpFileProvider(__DIR__ . '/core.d/*.conf.php'),
     ]
 );
 

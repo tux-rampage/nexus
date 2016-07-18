@@ -34,14 +34,9 @@ use Rampage\Nexus\Exception\InvalidArgumentException;
 class Cursor implements CursorInterface
 {
     /**
-     * @var Iterator
+     * @var Iterator|Countable
      */
     private $wrapped;
-
-    /**
-     * @var int
-     */
-    private $count;
 
     /**
      * @var callable
@@ -67,7 +62,6 @@ class Cursor implements CursorInterface
         }
 
         $this->wrapped = ($wrapped instanceof Iterator)? $wrapped : new IteratorIterator($wrapped);
-        $this->count = $wrapped->count();
         $this->hydration = $hydration;
     }
 
@@ -77,7 +71,7 @@ class Cursor implements CursorInterface
      */
     public function count()
     {
-        return $this->count;
+        return $this->wrapped->count();
     }
 
     /**

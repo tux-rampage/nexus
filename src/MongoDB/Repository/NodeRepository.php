@@ -20,27 +20,11 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Repository;
+namespace Rampage\Nexus\MongoDB\Repository;
 
-/**
- * Repository definition
- */
-interface RepositoryInterface
+use Rampage\Nexus\Repository\NodeRepositoryInterface;
+
+class NodeRepository implements NodeRepositoryInterface
 {
-    /**
-     * Find a single entity by id
-     *
-     * Consider all objects returned by this method as state tracked.
-     *
-     * @param   string      $id The object's identifier
-     * @return  object|null     The resulting object or null
-     */
-    public function findOne($id);
 
-    /**
-     * A collection of all entities
-     *
-     * @return  object[]
-     */
-    public function findAll();
 }
