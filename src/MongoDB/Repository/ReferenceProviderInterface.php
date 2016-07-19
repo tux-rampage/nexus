@@ -20,23 +20,26 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\Exception;
-
-use Throwable;
+namespace Rampage\Nexus\MongoDB\Repository;
 
 /**
- * Exception for nested persistence builders
+ * Definition of a reference provider
  */
-class NestedBuilderException extends PersistenceBuilderException
+interface ReferenceProviderInterface
 {
     /**
-     * @param string|Throwable  $messageOrPrevious
-     * @param string            $property
-     * @param int               $code
-     * @param Throwable         $previous
+     * Returns the reference value for the given object
+     *
+     * @param object $object
+     * @return mixed
      */
-    public function __construct($messageOrPrevious, $property = null, $code = 0, Throwable $previous = null)
-    {
-        parent::__construct(null, $messageOrPrevious, $property, $code, $previous);
-    }
+    public function getReference($object);
+
+    /**
+     * Finds an object by reference
+     *
+     * @param mixed $reference
+     * @return object
+     */
+    public function findByReference($reference);
 }

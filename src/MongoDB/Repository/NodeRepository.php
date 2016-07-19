@@ -23,8 +23,100 @@
 namespace Rampage\Nexus\MongoDB\Repository;
 
 use Rampage\Nexus\Repository\NodeRepositoryInterface;
+use Rampage\Nexus\MongoDB\Driver\DriverInterface;
+use Rampage\Nexus\Deployment\DeployTargetInterface;
+use Rampage\Nexus\Entities\AbstractNode;
+use Rampage\Nexus\Deployment\NodeProviderInterface;
+use Rampage\Nexus\Exception\LogicException;
+use Rampage\Nexus\MongoDB\Hydration\EntityHydrator\NodeHydrator;
+use Rampage\Nexus\Repository\DeployTargetRepositoryInterface;
+use Rampage\Nexus\Exception\InvalidArgumentException;
 
-class NodeRepository implements NodeRepositoryInterface
+final class NodeRepository extends AbstractRepository implements NodeRepositoryInterface
 {
+    const COLLECTION_NAME = 'nodes';
 
+    /**
+     * @var NodeProviderInterface
+     */
+    private $nodeProvider;
+
+    /**
+     * @var DeployTargetRepositoryInterface|ReferenceProviderInterface
+     */
+    private $deployTargetRepository;
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\MongoDB\AbstractRepository::__construct()
+     */
+    public function __construct(DriverInterface $driver, NodeProviderInterface $nodeProvider, DeployTargetRepositoryInterface $deployTargetRepository)
+    {
+        if (!$deployTargetRepository instanceof ReferenceProviderInterface) {
+            throw new InvalidArgumentException('The deployment target repository must implement the reference provider interface');
+        }
+
+        $this->deployTargetRepository = $deployTargetRepository;
+        $this->nodeProvider = $nodeProvider;
+
+        parent::__construct($driver, new NodeHydrator($driver, $deployTargetRepository), self::COLLECTION_NAME);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\MongoDB\AbstractRepository::getIdentifierStrategy()
+     */
+    protected function getIdentifierStrategy()
+    {
+        return $this->driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_ID);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\MongoDB\AbstractRepository::newEntityInstance()
+     */
+    protected function newEntityInstance(array &$data)
+    {
+        if (!isset($data['type'])) {
+            throw new LogicException('Missing node type');
+        }
+
+        return $this->nodeProvider->get($data['type']);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Repository\NodeRepositoryInterface::findByTarget()
+     */
+    public function findByTarget(DeployTargetInterface $target)
+    {
+        return $this->doFindOne(['deployTarget' => $this->getIdentifierStrategy()->extract($target->getId())]);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Repository\NodeRepositoryInterface::remove()
+     */
+    public function remove(AbstractNode $node)
+    {
+        $this->doRemove($node);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Repository\NodeRepositoryInterface::save()
+     */
+    public function save(AbstractNode $node)
+    {
+        $this->doPersist($node);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Repository\PrototypeProviderInterface::getPrototypeByData()
+     */
+    public function getPrototypeByData($data)
+    {
+        return $this->newEntityInstance($data);
+    }
 }

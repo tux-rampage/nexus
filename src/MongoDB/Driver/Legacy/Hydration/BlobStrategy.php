@@ -20,38 +20,44 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\Driver;
+namespace Rampage\Nexus\MongoDB\Driver\Legacy\Hydration;
 
-use Zend\Hydrator\Strategy\StrategyInterface as HydrationStrategyInterface;
+use Zend\Hydrator\Strategy\StrategyInterface;
+use MongoBinData;
+
 
 /**
- * Interface for mongo drivers
+ * Implements a binary string data hydration strategy
  */
-interface DriverInterface
+class BlobStrategy implements StrategyInterface
 {
-    const SORT_ASC = 1;
-    const SORT_DESC = 2;
+    /**
+     * {@inheritDoc}
+     * @see \Zend\Hydrator\Strategy\StrategyInterface::extract()
+     */
+    public function extract($value)
+    {
+        if (!is_resource($value)) {
+            $value = stream_get_contents($value);
+        }
 
-    const STRATEGY_ID = 'id';
-    const STRATEGY_DYNAMIC = 'dynamic';
-    const STRATEGY_STRING = 'string';
-    const STRATEGY_DATE = 'date';
-    const STRATEGY_BLOB = 'blob';
-    const STRATEGY_HASH = 'hash';
+        return new MongoBinData($value, MongoBinData::GENERIC);
+    }
 
     /**
-     * Returns the collection with the given name
-     *
-     * @param string $name
-     * @return CollectionInterface
+     * {@inheritDoc}
+     * @see \Zend\Hydrator\Strategy\StrategyInterface::hydrate()
      */
-    public function getCollection($name);
+    public function hydrate($value)
+    {
+        if (!is_string($value) && !($value instanceof MongoBinData)) {
+            return null;
+        }
 
-    /**
-     * Returns the type hydration strategy
-     *
-     * @param   int $type
-     * @return  HydrationStrategyInterface
-     */
-    public function getTypeHydrationStrategy($type);
+        $fp = fopen('php://memory', 'w+');
+        $fp = fwrite($fp, (string)$value);
+        fseek($fp, 0, SEEK_SET);
+
+        return $fp;
+    }
 }

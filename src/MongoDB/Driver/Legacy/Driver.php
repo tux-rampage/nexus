@@ -76,7 +76,7 @@ class Driver implements DriverInterface
     protected function getDatabase()
     {
         if (!$this->database) {
-            $this->database = $this->client->selectDB($this->dbName);
+            $this->database = $this->selectDatabase($this->dbName);
         }
 
         return $this->database;

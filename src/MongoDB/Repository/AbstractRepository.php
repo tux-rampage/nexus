@@ -20,7 +20,7 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB;
+namespace Rampage\Nexus\MongoDB\Repository;
 
 use Rampage\Nexus\Repository\RepositoryInterface;
 use Rampage\Nexus\MongoDB\Driver\DriverInterface;
@@ -28,6 +28,10 @@ use Rampage\Nexus\MongoDB\Driver\CollectionInterface;
 use Rampage\Nexus\Exception\InvalidArgumentException;
 
 use Zend\Hydrator\HydratorInterface;
+use Rampage\Nexus\MongoDB\EntityStateContainer;
+use Rampage\Nexus\MongoDB\EntityState;
+use Rampage\Nexus\MongoDB\Cursor;
+use Zend\Hydrator\Strategy\StrategyInterface;
 
 
 /**
@@ -56,6 +60,11 @@ abstract class AbstractRepository implements RepositoryInterface
     protected $collection;
 
     /**
+     * @var StrategyInterface
+     */
+    protected $idStrategy;
+
+    /**
      * @param UnitOfWork $unitOfWork
      */
     public function __construct(DriverInterface $driver, HydratorInterface $hydrator, $collectionName)
@@ -64,6 +73,7 @@ abstract class AbstractRepository implements RepositoryInterface
         $this->driver = $driver;
         $this->hydrator = $hydrator;
         $this->collection = $driver->getCollection($collectionName);
+        $this->idStrategy = $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_ID);
     }
 
     /**
@@ -77,7 +87,10 @@ abstract class AbstractRepository implements RepositoryInterface
     /**
      * @return \Zend\Hydrator\Strategy\StrategyInterface
      */
-    abstract protected function getIdentifierStrategy();
+    protected function getIdentifierStrategy()
+    {
+        return $this->idStrategy;
+    }
 
     /**
      * @param array $data
@@ -192,7 +205,7 @@ abstract class AbstractRepository implements RepositoryInterface
     {
         $isAttached = $this->entityStates->isAttached($object);
         $data = $this->hydrator->extract($object);
-        $id = $this->extractIdentifier($data);
+        $id = $this->extractIdentifier($data, $object);
 
         if ($isAttached) {
             $state = $this->entityStates->getState($object);
@@ -207,7 +220,7 @@ abstract class AbstractRepository implements RepositoryInterface
             $id = $this->collection->insert($data);
             $this->hydrator->hydrate(['_id' => $id], $object);
         } else {
-            $this->collection->update(['_id' => $state->getId()], $data, true, true);
+            $this->collection->update(['_id' => $state->getId()], $data, false, !$isAttached);
         }
 
         $this->entityStates->updateState($object, new EntityState(EntityState::STATE_PERSISTED, $data, $id));

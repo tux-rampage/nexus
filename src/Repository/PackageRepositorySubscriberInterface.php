@@ -20,38 +20,26 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\Driver;
+namespace Rampage\Nexus\Repository;
 
-use Zend\Hydrator\Strategy\StrategyInterface as HydrationStrategyInterface;
+use Rampage\Nexus\Package\PackageInterface;
 
 /**
- * Interface for mongo drivers
+ * Interface for package repo subscribers
  */
-interface DriverInterface
+interface PackageRepositorySubscriberInterface
 {
-    const SORT_ASC = 1;
-    const SORT_DESC = 2;
-
-    const STRATEGY_ID = 'id';
-    const STRATEGY_DYNAMIC = 'dynamic';
-    const STRATEGY_STRING = 'string';
-    const STRATEGY_DATE = 'date';
-    const STRATEGY_BLOB = 'blob';
-    const STRATEGY_HASH = 'hash';
+    /**
+     * Called when a package is removed
+     *
+     * @param PackageInterface $package
+     */
+    public function onPackageRemove(PackageInterface $package);
 
     /**
-     * Returns the collection with the given name
+     * Called when a package ist persisted
      *
-     * @param string $name
-     * @return CollectionInterface
+     * @param PackageInterface $package
      */
-    public function getCollection($name);
-
-    /**
-     * Returns the type hydration strategy
-     *
-     * @param   int $type
-     * @return  HydrationStrategyInterface
-     */
-    public function getTypeHydrationStrategy($type);
+    public function onPackagePersist(PackageInterface $package);
 }

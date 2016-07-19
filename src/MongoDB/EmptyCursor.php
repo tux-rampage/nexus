@@ -20,23 +20,62 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\PersistenceBuilder;
+namespace Rampage\Nexus\MongoDB;
 
-trait PropertyPathTrait
+/**
+ * Wrapped cursor implementation
+ */
+final class EmptyCursor implements CursorInterface
 {
     /**
-     * Build the property path from property and prefix
-     *
-     * @param   string  $property
-     * @param   string  $prefix
-     * @return  string
+     * {@inheritDoc}
+     * @see Countable::count()
      */
-    protected function prefixPropertyPath($property, $prefix)
+    public function count($mode = null)
     {
-        if ($prefix == '') {
-            return $property;
-        }
+        return 0;
+    }
 
-        return $prefix . '.' . $property;
+    /**
+     * {@inheritDoc}
+     * @see Iterator::current()
+     */
+    public function current()
+    {
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see Iterator::key()
+     */
+    public function key()
+    {
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see Iterator::next()
+     */
+    public function next()
+    {
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see Iterator::rewind()
+     */
+    public function rewind()
+    {
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see Iterator::valid()
+     */
+    public function valid()
+    {
+        return false;
     }
 }

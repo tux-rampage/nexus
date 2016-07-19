@@ -20,38 +20,19 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\Driver;
+namespace Rampage\Nexus\Deployment;
 
-use Zend\Hydrator\Strategy\StrategyInterface as HydrationStrategyInterface;
+use Interop\Container\ContainerInterface;
 
 /**
- * Interface for mongo drivers
+ * Interface for node providers
  */
-interface DriverInterface
+interface NodeProviderInterface extends ContainerInterface
 {
-    const SORT_ASC = 1;
-    const SORT_DESC = 2;
-
-    const STRATEGY_ID = 'id';
-    const STRATEGY_DYNAMIC = 'dynamic';
-    const STRATEGY_STRING = 'string';
-    const STRATEGY_DATE = 'date';
-    const STRATEGY_BLOB = 'blob';
-    const STRATEGY_HASH = 'hash';
-
     /**
-     * Returns the collection with the given name
+     * Retuns all known node types
      *
-     * @param string $name
-     * @return CollectionInterface
+     * @return string[]
      */
-    public function getCollection($name);
-
-    /**
-     * Returns the type hydration strategy
-     *
-     * @param   int $type
-     * @return  HydrationStrategyInterface
-     */
-    public function getTypeHydrationStrategy($type);
+    public function getTypes();
 }

@@ -195,7 +195,7 @@ class EntityStateContainer
         }
 
         $object = $create();
-        $this->attach($object, $state, $class);
+        $this->attach($object, $state);
 
         return $object;
     }

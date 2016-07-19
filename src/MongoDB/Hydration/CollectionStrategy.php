@@ -22,13 +22,13 @@
 
 namespace Rampage\Nexus\MongoDB\Hydration;
 
-use Zend\Hydrator\Strategy\StrategyInterface;
-use Rampage\Nexus\MongoDB\PersistedIndexableCollection;
-use Rampage\Nexus\MongoDB\PersistedCollection;
 use Rampage\Nexus\Entities\ArrayCollection;
-use Rampage\Nexus\MongoDB\Cursor;
+use Zend\Hydrator\Strategy\StrategyInterface;
+use Traversable;
 
-
+/**
+ * Hydrates a collection
+ */
 class CollectionStrategy implements StrategyInterface
 {
     /**
@@ -64,22 +64,23 @@ class CollectionStrategy implements StrategyInterface
      */
     public function extract($value)
     {
-        return $value;
-    }
+        if (!is_array($value) && !($value instanceof Traversable)) {
+            return [];
+        }
 
-    /**
-     * Create a cursor factory
-     *
-     * @param ArrayCollection $data
-     * @return callable
-     */
-    protected function createCursorFactory(ArrayCollection $data)
-    {
-        return function() use ($data) {
-            return new Cursor($data, function($itemData) {
-                return $this->itemStrategy->hydrate($itemData);
-            });
-        };
+        $data = [];
+
+        if ($this->indexed) {
+            foreach ($value as $key => $item) {
+                $data[$key] = $this->itemStrategy->extract($item);
+            }
+        } else {
+            foreach ($value as $item) {
+                $data[] = $this->itemStrategy->extract($item);
+            }
+        }
+
+        return $data;
     }
 
     /**
@@ -88,12 +89,23 @@ class CollectionStrategy implements StrategyInterface
      */
     public function hydrate($value)
     {
+        $collection = new ArrayCollection();
+
         if (!is_array($value)) {
-            return null;
+            return new ArrayCollection();
         }
 
-        $collection = new ArrayCollection($value);
-        $cursorFactory = $this->createCursorFactory($collection);
-        return ($this->indexed)? new PersistedIndexableCollection($cursorFactory, $this->type) : new PersistedCollection($cursorFactory, $this->type);
+
+        if ($this->indexed) {
+            foreach ($value as $key => $item) {
+                $collection[$key] = $this->itemStrategy->hydrate($item);
+            }
+        } else {
+            foreach ($value as $item) {
+                $collection[] = $this->itemStrategy->hydrate($item);
+            }
+        }
+
+        return $collection;
     }
 }

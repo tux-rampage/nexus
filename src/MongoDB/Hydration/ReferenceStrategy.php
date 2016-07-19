@@ -22,26 +22,26 @@
 
 namespace Rampage\Nexus\MongoDB\Hydration;
 
-use Rampage\Nexus\MongoDB\ImmutablePersistedCollection;
-use Rampage\Nexus\Exception\UnexpectedValueException;
+use Rampage\Nexus\MongoDB\Repository\ReferenceProviderInterface;
 use Zend\Hydrator\Strategy\StrategyInterface;
 
+
 /**
- * Implements a strategy for immutable collections
+ * Implements the reference strategy
  */
-class ImmutableCollectionStrategy implements StrategyInterface
+class ReferenceStrategy implements StrategyInterface
 {
     /**
-     * @var callable
+     * @var ReferenceProviderInterface
      */
-    private $cursorProvider;
+    protected $repository;
 
     /**
-     * @param callable $cursorProvider
+     * @param ReferenceProviderInterface $repository
      */
-    public function __construct(callable $cursorProvider)
+    public function __construct(ReferenceProviderInterface $repository)
     {
-        $this->cursorProvider = $cursorProvider;
+        $this->repository = $repository;
     }
 
     /**
@@ -50,23 +50,23 @@ class ImmutableCollectionStrategy implements StrategyInterface
      */
     public function extract($value)
     {
-        return null;
+        if ($value === null) {
+            return null;
+        }
+
+        return $this->repository->getReference($value);
     }
 
     /**
      * {@inheritDoc}
      * @see \Zend\Hydrator\Strategy\StrategyInterface::hydrate()
      */
-    public function hydrate($value, $data = null)
+    public function hydrate($value)
     {
-        $collection = new ImmutablePersistedCollection(function() use ($value, $data) {
-            return call_user_func($this->cursorProvider, $value, $data);
-        });
-
-        if ($collection && !($collection instanceof ImmutablePersistedCollection)) {
-            throw new UnexpectedValueException('Expected an immutable collection instance, got ' . (is_object($value)? get_class($value) : gettype($value)));
+        if ($value === null) {
+            return null;
         }
 
-        return $collection;
+        return $this->repository->findByReference($value);
     }
 }

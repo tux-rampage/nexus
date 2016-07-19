@@ -22,7 +22,6 @@
 
 namespace Rampage\Nexus\Repository;
 
-use Rampage\Nexus\Entities\Application;
 use Rampage\Nexus\Package\PackageInterface;
 use Rampage\Nexus\Entities\ApplicationPackage;
 
@@ -33,14 +32,6 @@ use Rampage\Nexus\Entities\ApplicationPackage;
  */
 interface PackageRepositoryInterface extends RepositoryInterface
 {
-    /**
-     * Find the application group for the given package name
-     *
-     * @param   string      $packageName
-     * @return  Application
-     */
-    public function findApplication($packageName);
-
     /**
      * Find all packages for the given package name
      *
@@ -65,4 +56,11 @@ interface PackageRepositoryInterface extends RepositoryInterface
      */
     public function remove(ApplicationPackage $package);
 
+    /**
+     * Add a subscriber
+     *
+     * @param PackageRepositorySubscriberInterface $subscriber
+     * @return self
+     */
+    public function addSubscriber(PackageRepositorySubscriberInterface $subscriber);
 }

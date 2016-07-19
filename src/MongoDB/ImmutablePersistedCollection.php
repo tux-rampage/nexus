@@ -23,8 +23,8 @@
 namespace Rampage\Nexus\MongoDB;
 
 use Rampage\Nexus\Entities\CollectionInterface;
-
 use IteratorAggregate;
+
 
 /**
  * Implements an immutable persisted collection
@@ -44,7 +44,7 @@ class ImmutablePersistedCollection implements IteratorAggregate, CollectionInter
     /**
      * @param callable $cursorFactory
      */
-    public function __construct(callable $cursorFactory)
+    public function __construct(callable $cursorFactory = null)
     {
         $this->cursorFactory = $cursorFactory;
     }
@@ -73,8 +73,13 @@ class ImmutablePersistedCollection implements IteratorAggregate, CollectionInter
      */
     protected function createCursor()
     {
-        $factory = $this->cursorFactory;
-        $this->setCursor($factory());
+        if ($this->cursorFactory) {
+            $factory = $this->cursorFactory;
+            $this->setCursor($factory());
+        } else {
+            $this->setCursor(new EmptyCursor());
+        }
+
     }
 
     /**

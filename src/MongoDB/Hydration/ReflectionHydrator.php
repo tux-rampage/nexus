@@ -1,8 +1,23 @@
 <?php
 /**
- * @author    Axel Helmert <ah@luka.de>
- * @license   LUKA Proprietary
- * @copyright Copyright (c) 2016 LUKA netconsult GmbH (www.luka.de)
+ * Copyright (c) 2016 Axel Helmert
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author    Axel Helmert
+ * @copyright Copyright (c) 2016 Axel Helmert
+ * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
 namespace Rampage\Nexus\MongoDB\Hydration;
@@ -34,6 +49,18 @@ class ReflectionHydrator extends BaseReflectionHydrator
     protected $hydrationInterceptors = [];
 
     /**
+     * Specifies the properties that allow null values to be persisted
+     *
+     * @var array
+     */
+    protected $nullableProperties = [];
+
+    /**
+     * @var array
+     */
+    protected $properties = null;
+
+    /**
      * Creates the hydrator with a default property map
      *
      * __Example:__
@@ -48,17 +75,21 @@ class ReflectionHydrator extends BaseReflectionHydrator
      * @param   string[]    $properties The properties that are allowed to be hydrated/extracted
      *                                  this may also be a mapping or a combination of mapping/listing
      */
-    public function __construct(array $properties = null)
+    public function __construct(array $properties = null, $identifier = 'id')
     {
         if ($properties !== null) {
             $map = $this->buildPropertyMap($properties);
+            $map[$identifier] = '_id';
 
-            $this->setNamingStrategy(new ArrayMapNamingStrategy($map));
+            $this->properties = array_keys($map);
             $this->addFilter(self::FILTER_ALLOWED_PROPERTIES, function($property) use ($map) {
                 return array_key_exists($property, $map);
             });
+        } else {
+            $map = [ $identifier => '_id' ];
         }
 
+        $this->setNamingStrategy(new ArrayMapNamingStrategy($map));
         parent::__construct();
     }
 
@@ -69,6 +100,18 @@ class ReflectionHydrator extends BaseReflectionHydrator
     public function addHydrationInterceptor(callable $interceptor)
     {
         $this->hydrationInterceptors[] = $interceptor;
+        return $this;
+    }
+
+    /**
+     * Provides a fluent interface
+     *
+     * @param string $property
+     * @return self
+     */
+    public function addNullableProperty($property)
+    {
+        $this->nullableProperties[$property] = $property;
         return $this;
     }
 
@@ -111,7 +154,11 @@ class ReflectionHydrator extends BaseReflectionHydrator
             }
 
             $value = $property->getValue($object);
-            $result[$key] = $this->extractValue($propertyName, $value, $object);
+            $extracted = $this->extractValue($propertyName, $value, $object);
+
+            if (($extracted !== null) || isset($this->nullableProperties[$propertyName])) {
+                $result[$key] = $extracted;
+            }
         }
 
         return $result;
@@ -128,15 +175,26 @@ class ReflectionHydrator extends BaseReflectionHydrator
         }
 
         $reflProperties = self::getReflProperties($object);
+        $propertyNames = $this->properties? : array_keys($reflProperties);
+        $propertyNames = array_combine($propertyNames, $propertyNames);
 
         foreach ($data as $key => $value) {
             $name = $this->hydrateName($key, $data);
+            unset($propertyNames[$name]);
 
             if (!$this->filterComposite->filter($name) || !isset($reflProperties[$name])) {
                 continue;
             }
 
             $reflProperties[$name]->setValue($object, $this->hydrateValue($name, $value, $data));
+        }
+
+        foreach ($propertyNames as $name) {
+            if (!$this->filterComposite->filter($name) || !isset($reflProperties[$name])) {
+                continue;
+            }
+
+            $reflProperties[$name]->setValue($object, $this->hydrateValue($name, null, $data));
         }
 
         return $object;

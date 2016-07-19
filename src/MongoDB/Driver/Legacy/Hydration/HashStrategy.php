@@ -22,32 +22,50 @@
 
 namespace Rampage\Nexus\MongoDB\Driver\Legacy\Hydration;
 
-use Rampage\Nexus\MongoDB\Driver\Legacy\Driver;
-use Zend\ServiceManager\AbstractPluginManager;
+use Rampage\Nexus\Entities\Api\ArrayExportableInterface;
+use Zend\Stdlib\ArraySerializableInterface;
 use Zend\Hydrator\Strategy\StrategyInterface;
+use ArrayObject;
 
 
 /**
- * The default strategy provider
+ * Hast hydration strategy
  */
-class StrategyProvider extends AbstractPluginManager
+class HashStrategy implements StrategyInterface
 {
     /**
      * {@inheritDoc}
-     * @see \Zend\ServiceManager\AbstractPluginManager::__construct()
+     * @see \Zend\Hydrator\Strategy\StrategyInterface::extract()
      */
-    public function __construct()
+    public function extract($value)
     {
-        $this->instanceOf = StrategyInterface::class;
-        parent::__construct(null, [
-            'invokables' => [
-                Driver::STRATEGY_ID => IdStartegy::class,
-                Driver::STRATEGY_DATE => DateStrategy::class,
-                Driver::STRATEGY_DYNAMIC => DynamicStrategy::class,
-                Driver::STRATEGY_STRING => StringStrategy::class,
-                Driver::STRATEGY_BLOB => BlobStrategy::class,
-                Driver::STRATEGY_HASH => HashStrategy::class,
-            ]
-        ]);
+        if ($value instanceof ArrayExportableInterface) {
+            $value = $value->toArray();
+        } else if ($value instanceof ArraySerializableInterface) {
+            $value = $value->getArrayCopy();
+        }
+
+        if (!is_array($value) && !($value instanceof ArrayObject)) {
+            return null;
+        }
+
+        if (empty($value)) {
+            return new \stdClass();
+        }
+
+        return $value;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Zend\Hydrator\Strategy\StrategyInterface::hydrate()
+     */
+    public function hydrate($value)
+    {
+        if (($value !== null) && !is_array($value)) {
+            return [];
+        }
+
+        return $value;
     }
 }

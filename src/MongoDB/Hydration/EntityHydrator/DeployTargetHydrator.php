@@ -20,36 +20,27 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\PersistenceBuilder;
+namespace Rampage\Nexus\MongoDB\Hydration\EntityHydrator;
 
-use Rampage\Nexus\MongoDB\EntityState;
+use Rampage\Nexus\MongoDB\Hydration\ReflectionHydrator;
 
-/**
- * Interface for PErsistence builders
- */
-interface PersistenceBuilderInterface
+class DeployTargetHydrator extends ReflectionHydrator
 {
     /**
-     * Returns the class this builder is responsible for
-     *
-     * @return string
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\MongoDB\Hydration\ReflectionHydrator::__construct()
      */
-    public function getClass();
+    public function __construct()
+    {
+        // TODO Auto-generated method stub
+        return parent::__construct([
+            'name',
+            'vhosts',
+            'defaultVhost',
+            'nodes',
+            'applications',
+        ]);
+    }
 
-    /**
-     * Build the persist actions for the given object
-     *
-     * @param   object      $object The object
-     * @param   EntityState $state  The current entity state. This will be replaced with an updated state after the call
-     * @return  callable
-     */
-    public function buildPersist($object, EntityState &$state);
 
-    /**
-     * Build the remove actions for the given object
-     *
-     * @param   string      $object
-     * @return  callable
-     */
-    public function buildRemove($object, EntityState &$state);
 }
