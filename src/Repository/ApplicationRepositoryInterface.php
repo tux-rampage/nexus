@@ -20,12 +20,11 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Persistence\Predicate;
-
+namespace Rampage\Nexus\Repository;
 
 /**
- * Interface for predicates
+ * Application repository
  */
-interface PredicateInterface
+interface ApplicationRepositoryInterface extends RepositoryInterface
 {
 }

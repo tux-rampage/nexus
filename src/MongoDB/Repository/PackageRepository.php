@@ -34,8 +34,10 @@ use SplObjectStorage;
 /**
  * The default package repo
  */
-final class PackageRepository extends AbstractRepository implements PackageRepositoryInterface
+final class PackageRepository extends AbstractRepository implements PackageRepositoryInterface, ReferenceProviderInterface
 {
+    use IdReferenceProviderTrait;
+
     const COLLECTION_NAME = 'packages';
 
     /**
@@ -69,6 +71,15 @@ final class PackageRepository extends AbstractRepository implements PackageRepos
     protected function newEntityInstance(array &$data)
     {
         return new ApplicationPackage();
+    }
+
+    /**
+     * @param ApplicationPackage $package
+     * @return string
+     */
+    protected function getObjectId(ApplicationPackage $package)
+    {
+        return $package->getId();
     }
 
     /**

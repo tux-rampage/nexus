@@ -20,15 +20,14 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus;
+namespace Rampage\Nexus\Api;
 
 use Psr\Http\Message\RequestInterface as HttpRequest;
-use Zend\Http\Request as ClientHttpRequest;
 
 /**
  * Sign an http request
  */
-interface RequestSignatureInterface
+interface SignRequestInterface
 {
     /**
      * Create a request signature
@@ -36,14 +35,5 @@ interface RequestSignatureInterface
      * @param HttpRequest  $request  The request to sign
      * @param array        $data     Additional request data to sign (Commonly used to add shared secrets)
      */
-    public function sign(ClientHttpRequest $request, array $data = null);
-
-    /**
-     * Verify the request signature
-     *
-     * @param HttpRequest  $request  The request to verify
-     * @param array        $data     Additional data (commonly used to provide shared secrets)
-     * @return bool
-     */
-    public function verify(HttpRequest $request, array $data = null);
+    public function sign(HttpRequest $request, array $data = null);
 }

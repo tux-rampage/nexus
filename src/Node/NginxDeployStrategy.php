@@ -282,7 +282,7 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
      */
     public function activate(ApplicationInstance $instance)
     {
-        $this->getInstaller($instance);
+        $installer = $this->getInstaller($instance);
 
         $params = $instance->getUserParameters();
         $this->subscribers->beforeActivate($params);
@@ -292,6 +292,7 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
         $this->reloadService();
 
         $this->subscribers->afterActivate($params);
+        $this->destroyInstaller($installer);
     }
 
     /**
@@ -334,6 +335,7 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
 
         $installer->remove($instance->getUserParameters());
         $this->filesystem->delete($path);
+        $this->destroyInstaller($installer);
 
         return $this;
     }
@@ -366,6 +368,7 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
         $this->reloadService();
 
         $this->subscribers->afterRollback($instance->getUserParameters(), true);
+        $this->destroyInstaller($installer);
     }
 
     /**
@@ -378,6 +381,7 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
 
         $this->filesystem->ensureDirectory($path, 0755);
         $installer->install($instance->getUserParameters());
+        $this->destroyInstaller($installer);
 
         return $this;
     }

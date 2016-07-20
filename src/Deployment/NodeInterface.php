@@ -76,6 +76,13 @@ interface NodeInterface extends ArrayExportableInterface
     public function getName();
 
     /**
+     * Returns the type identifier
+     *
+     * @return string
+     */
+    public function getTypeId();
+
+    /**
      * Returns the deploy target, this node is attached to
      *
      * @return DeployTargetInterface

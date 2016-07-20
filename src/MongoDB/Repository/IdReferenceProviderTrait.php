@@ -20,14 +20,25 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Persistence;
+namespace Rampage\Nexus\MongoDB\Repository;
 
-/**
- * Interface for persistence builders
- */
-interface PersistenceBuilderInterface
+trait IdReferenceProviderTrait
 {
-    public function buildDelete($object);
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\MongoDB\Repository\ReferenceProviderInterface::findByReference()
+     */
+    public function findByReference($reference)
+    {
+        return $this->findOne($reference);
+    }
 
-    public function buildPersist($object);
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\MongoDB\Repository\ReferenceProviderInterface::getReference()
+     */
+    public function getReference($object)
+    {
+        return $this->getObjectId($object);
+    }
 }

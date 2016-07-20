@@ -26,7 +26,14 @@ use Rampage\Nexus\Repository\DeployTargetRepositoryInterface;
 use Rampage\Nexus\Deployment\DeployTargetInterface;
 use Rampage\Nexus\Entities\DeployTarget;
 
-class DeployTargetRepository extends AbstractRepository implements DeployTargetRepositoryInterface, ReferenceProviderInterface
+use Rampage\Nexus\MongoDB\Hydration\EntityHydrator\DeployTargetHydrator;
+use Rampage\Nexus\MongoDB\Driver\DriverInterface;
+
+
+/**
+ * Implements the repository for deploy targets
+ */
+final class DeployTargetRepository extends AbstractRepository implements DeployTargetRepositoryInterface, ReferenceProviderInterface
 {
     /**
      * The collection name
@@ -39,7 +46,19 @@ class DeployTargetRepository extends AbstractRepository implements DeployTargetR
      */
     public function __construct(DriverInterface $driver)
     {
-        parent::__construct($driver, $hydrator, self::COLLECTION_NAME);
+        parent::__construct($driver, new DeployTargetHydrator($driver), self::COLLECTION_NAME);
+    }
+
+    /**
+     * Sets the node repository
+     *
+     * @param NodeRepository $repository
+     * @return self
+     */
+    public function setNodeRepository(NodeRepository $repository)
+    {
+        $this->hydrator->setNodeRepository($repository);
+        return $this;
     }
 
     /**

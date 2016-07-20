@@ -23,24 +23,115 @@
 namespace Rampage\Nexus\MongoDB\Hydration\EntityHydrator;
 
 use Rampage\Nexus\MongoDB\Hydration\ReflectionHydrator;
+use Rampage\Nexus\MongoDB\Driver\DriverInterface;
+use Rampage\Nexus\MongoDB\Hydration\CollectionStrategy;
+use Rampage\Nexus\MongoDB\Hydration\EmbeddedStrategy;
+use Rampage\Nexus\Entities\VHost;
+use Rampage\Nexus\MongoDB\Hydration\ImmutableCollectionStrategy;
+use Rampage\Nexus\MongoDB\EmptyCursor;
+use Rampage\Nexus\MongoDB\Repository\NodeRepository;
+use Rampage\Nexus\Entities\ApplicationInstance;
+use Rampage\Nexus\Exception\LogicException;
+use Rampage\Nexus\MongoDB\CursorInterface;
+use Rampage\Nexus\Repository\ApplicationRepositoryInterface;
+use Rampage\Nexus\Repository\NodeRepositoryInterface;
 
+/**
+ * Hydrator for deploy targets
+ */
 class DeployTargetHydrator extends ReflectionHydrator
 {
+    /**
+     * @var object[]
+     */
+    private static $prototypes = [];
+
+    /**
+     * @var NodeRepositoryInterface
+     */
+    private $nodeRepository = null;
+
+    /**
+     * @return VHost|ApplicationInstance
+     */
+    protected static function getPrototype($class)
+    {
+        if (!isset(self::$prototypes[$class])) {
+            self::$prototypes[$class] = (new \ReflectionClass($class))->newInstanceWithoutConstructor();
+        }
+
+        return self::$prototypes[$class];
+    }
+
     /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\Hydration\ReflectionHydrator::__construct()
      */
-    public function __construct()
+    public function __construct(DriverInterface $driver, ApplicationRepositoryInterface $applicationRepository)
     {
-        // TODO Auto-generated method stub
-        return parent::__construct([
+        parent::__construct([
             'name',
             'vhosts',
             'defaultVhost',
             'nodes',
             'applications',
-        ]);
+        ], 'id');
+
+        $vhostStrategy = new EmbeddedStrategy(self::getPrototype(VHost::class), new VHostHydrator($driver));
+        $appStrategy = new EmbeddedStrategy(self::getPrototype(ApplicationInstance::class), new ApplicationInstanceHydrator($driver, $applicationRepository));
+
+        $this->addStrategy('id', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_ID));
+        $this->addStrategy('name', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING));
+        $this->addStrategy('vhosts', new CollectionStrategy($vhostStrategy, true, VHost::class));
+        $this->addStrategy('defaultVhost', $vhostStrategy);
+        $this->addStrategy('nodes', new ImmutableCollectionStrategy(function($value, &$data) {
+            return $this->createNodesCursor($data);
+        }));
+
+        $this->addStrategy('applications', new CollectionStrategy($appStrategy, true));
     }
 
+    /**
+     * @param NodeRepository $nodeRepository
+     * @return \Rampage\Nexus\MongoDB\Hydration\EntityHydrator\DeployTargetHydrator
+     */
+    public function setNodeRepository(NodeRepositoryInterface $nodeRepository)
+    {
+        $this->nodeRepository = $nodeRepository;
+        return $this;
+    }
 
+    /**
+     * @param   array           $data   The original hydration data
+     * @throws  LogicException          When there is no repository for getting the nodes
+     * @return  CursorInterface         The resulting cursor
+     */
+    private function createNodesCursor(&$data)
+    {
+        if (!$this->nodeRepository) {
+            throw new LogicException('Cannot provide cursor to node instances without a node repository');
+        }
+
+        if (!isset($data[self::HYDRATION_CONTEXT_KEY])) {
+            return new EmptyCursor();
+        }
+
+        return $this->nodeRepository->findByTarget($data[self::HYDRATION_CONTEXT_KEY]);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\MongoDB\Hydration\ReflectionHydrator::hydrate()
+     */
+    public function hydrate(array $data, $object)
+    {
+        // Ensure applications hydrated last
+        if (isset($data['applications'])) {
+            $value = $data['applications'];
+            unset($data['applications']);
+            $data['applications'] = $value;
+        }
+
+        return parent::hydrate($data, $object);
+    }
 }

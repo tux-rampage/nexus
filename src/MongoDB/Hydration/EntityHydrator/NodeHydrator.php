@@ -26,6 +26,8 @@ use Rampage\Nexus\MongoDB\Hydration\ReflectionHydrator;
 use Rampage\Nexus\MongoDB\Driver\DriverInterface;
 use Rampage\Nexus\MongoDB\Hydration\ReferenceStrategy;
 use Rampage\Nexus\Repository\DeployTargetRepositoryInterface;
+use Rampage\Nexus\Deployment\NodeInterface;
+use Rampage\Nexus\Exception\InvalidArgumentException;
 
 
 /**
@@ -61,5 +63,24 @@ class NodeHydrator extends ReflectionHydrator
         $this->addStrategy('serverInfo', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_HASH));
         $this->addStrategy('deployTarget', $targetStrategy);
         $this->addStrategy('*', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING));
+    }
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\MongoDB\Hydration\ReflectionHydrator::extract()
+     */
+    public function extract($object)
+    {
+        if (!$object instanceof NodeInterface) {
+            throw new InvalidArgumentException(sprintf(
+                'Invalid node type %s does not implement %s',
+                is_object($object)? get_class($object) : gettype($object),
+                NodeInterface::class
+            ));
+        }
+
+        $data = parent::extract($object);
+        $data['type'] = $object->getTypeId();
+
+        return $data;
     }
 }

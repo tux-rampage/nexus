@@ -25,6 +25,7 @@ namespace Rampage\Nexus\MongoDB\Hydration;
 use Zend\Hydrator\Strategy\StrategyInterface;
 use Zend\Hydrator\HydratorInterface;
 use Rampage\Nexus\Exception\InvalidArgumentException;
+use Rampage\Nexus\Exception\LogicException;
 
 
 /**
@@ -32,6 +33,8 @@ use Rampage\Nexus\Exception\InvalidArgumentException;
  */
 class EmbeddedStrategy implements StrategyInterface
 {
+    const ROOT_CONTEXT_KEY = '__hydrationRootObject';
+
     /**
      * @var object
      */
@@ -67,15 +70,32 @@ class EmbeddedStrategy implements StrategyInterface
     }
 
     /**
+     * @param array $data
+     */
+    private function getRootContext(array &$data)
+    {
+        if (!isset($data[self::ROOT_CONTEXT_KEY])) {
+            return $data[self::ROOT_CONTEXT_KEY];
+        }
+
+        if (isset($data[ReflectionHydrator::HYDRATION_CONTEXT_KEY])) {
+            return $data[ReflectionHydrator::HYDRATION_CONTEXT_KEY];
+        }
+
+        throw new LogicException('Cannot hydrate an embedded entity without root context');
+    }
+
+    /**
      * {@inheritDoc}
      * @see \Zend\Hydrator\Strategy\StrategyInterface::hydrate()
      */
-    public function hydrate($value)
+    public function hydrate($value, array $data = [])
     {
         if (!is_array($value)) {
             return null;
         }
 
+        $value[self::ROOT_CONTEXT_KEY] = $this->getRootContext($data);
         $object = clone $this->prototype;
         $this->hydrator->hydrate($value, $object);
 

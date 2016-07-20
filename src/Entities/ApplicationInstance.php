@@ -138,7 +138,7 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
      * @param   string  $id     The instance identifier
      * @param   string  $path   The location path within the vhost
      */
-    public function __construct($id, $path = null)
+    public function __construct(Application $application, $id, $path = null)
     {
         if (!preg_match('~^[a-z0-9-_]+$~i', $id)) {
             throw new InvalidArgumentException('Bad application instance identifier: ' . $id);
@@ -152,6 +152,7 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
             $path = '/' . trim($path, '/') . '/';
         }
 
+        $this->application = $application;
         $this->id = $id;
         $this->path = $path? : '/';
     }
@@ -208,6 +209,20 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
     public function getPath()
     {
         return $this->path;
+    }
+
+    /**
+     * Returns the application this instance references
+     *
+     * @return \Rampage\Nexus\Entities\Application
+     */
+    public function getApplication()
+    {
+        if (!$this->application) {
+            throw new LogicException('Missing application instance');
+        }
+
+        return $this->application;
     }
 
     /**

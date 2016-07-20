@@ -26,12 +26,14 @@ use Rampage\Nexus\Deployment\NodeInterface;
 use Rampage\Nexus\Deployment\DeployTargetInterface;
 
 use Traversable;
+use Rampage\Nexus\Entities\Api\ArrayExchangeInterface;
+use Zend\Stdlib\Parameters;
 
 
 /**
  * Implements the default node entity
  */
-abstract class AbstractNode implements NodeInterface
+abstract class AbstractNode implements NodeInterface, ArrayExchangeInterface
 {
     /**
      * The unique node identifier
@@ -95,6 +97,24 @@ abstract class AbstractNode implements NodeInterface
     private $flatServerInfo = null;
 
     /**
+     * Set the application states
+     *
+     * @param array|\Traversable $states
+     */
+    protected function setApplicationStates($states)
+    {
+        $this->applicationStates = [];
+
+        if (!is_array($states) && !($states instanceof \Traversable)) {
+            return;
+        }
+
+        foreach ($states as $appId => $state) {
+            $this->applicationStates[$appId] = (string)$state;
+        }
+    }
+
+    /**
      * @return string
      */
     public function getId()
@@ -116,6 +136,18 @@ abstract class AbstractNode implements NodeInterface
     public function setName($name)
     {
         $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @param string $state
+     * @param array $applicationStates
+     */
+    public function updateState($state, $applicationStates = null)
+    {
+        $this->state = (string)$state;
+        $this->setApplicationStates($applicationStates);
+
         return $this;
     }
 
@@ -274,24 +306,38 @@ abstract class AbstractNode implements NodeInterface
 
     /**
      * {@inheritDoc}
+     * @see \Rampage\Nexus\Entities\Api\ArrayExchangeInterface::exchangeArray()
+     */
+    public function exchangeArray(array $array)
+    {
+        $params = new Parameters($array);
+
+        $this->name = $params->get('name', $this->name);
+        $this->url = $params->get('url', $this->url);
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
      * @see \Rampage\Nexus\Entities\Api\ArrayExportableInterface::toArray()
      */
     public function toArray()
     {
         $array = [
-            $this->id,
-            $this->name,
-            $this->url,
-            $this->publicKey,
-            $this->serverInfo,
-            $this->state
+            'id' => $this->id,
+            'name' => $this->name,
+            'url' => (string)$this->url,
+            'serverInfo' => $this->serverInfo,
+            'state' => $this->state,
+            'isAttached' => $this->isAttached(),
         ];
 
-        if ($this->deployTarget) {
+        if ($this->isAttached()) {
             $array['deployTarget'] = $this->deployTarget->getId();
             $array['applicationStates'] = [];
 
-            foreach ($this->deployTarget->get as $application) {
+            foreach ($this->deployTarget->getApplications() as $application) {
                 $array['applicationStates'][$application->getId()] = $this->getApplicationState($application);
             }
         }

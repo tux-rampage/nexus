@@ -23,6 +23,8 @@
 namespace Rampage\Nexus\MongoDB\Repository;
 
 use Rampage\Nexus\Repository\PackageRepositoryInterface;
+use Rampage\Nexus\Repository\ApplicationRepositoryInterface;
+
 use Rampage\Nexus\Entities\Application;
 use Rampage\Nexus\Package\PackageInterface;
 
@@ -33,8 +35,10 @@ use Rampage\Nexus\MongoDB\ImmutablePersistedCollection;
 /**
  * Implements the application Repository
  */
-final class ApplicationRepository extends AbstractRepository
+final class ApplicationRepository extends AbstractRepository implements ApplicationRepositoryInterface, ReferenceProviderInterface
 {
+    use IdReferenceProviderTrait;
+
     /**
      * The collection name
      */
@@ -73,6 +77,15 @@ final class ApplicationRepository extends AbstractRepository
     protected function newEntityInstance(array &$data)
     {
         return new Application();
+    }
+
+    /**
+     * @param ApplicationPackage $package
+     * @return string
+     */
+    protected function getObjectId(Application $application)
+    {
+        return $application->getId();
     }
 
     /**

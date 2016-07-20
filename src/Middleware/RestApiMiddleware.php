@@ -25,7 +25,6 @@ namespace Rampage\Nexus\Middleware;
 use Rampage\Nexus\Entities\Api\ArrayExchangeInterface;
 use Rampage\Nexus\Entities\Api\ArrayExportableInterface;
 use Rampage\Nexus\Exception\UnexpectedValueException;
-use Rampage\Nexus\Exception\RuntimeException;
 use Rampage\Nexus\Exception\InvalidArgumentException;
 use Rampage\Nexus\Repository\PrototypeProviderInterface;
 use Rampage\Nexus\Repository\RepositoryInterface;
@@ -47,6 +46,8 @@ use Traversable;
  */
 class RestApiMiddleware implements MiddlewareInterface
 {
+    use DecodeRequestBodyTrait;
+
     /**
      * @var RepositoryInterface|PrototypeProviderInterface
      */
@@ -98,31 +99,6 @@ class RestApiMiddleware implements MiddlewareInterface
     {
         $this->identifierAttribute = (string)$name;
         return $this;
-    }
-
-    /**
-     * Returns the data array from JSON encoded body
-     *
-     * @param ServerRequestInterface $request
-     * @throws UnexpectedValueException
-     * @return array
-     */
-    protected function createDataFromRequestBody(ServerRequestInterface $request)
-    {
-        $contentType = $request->getHeader('content-type');
-
-        if (!preg_match('~^application/json~i', $contentType)) {
-            throw new UnexpectedValueException('Unsupported content type: ' . $contentType);
-        }
-
-        $body = $request->getBody()->getContents();
-        $data = json_decode($body, true);
-
-        if (!is_array($data)) {
-            throw new RuntimeException('Failed to parse response body: ' . json_last_error_msg());
-        }
-
-        return $data;
     }
 
     /**
@@ -280,12 +256,12 @@ class RestApiMiddleware implements MiddlewareInterface
 
             case 'put':
                 $id = $request->getAttribute($this->identifierAttribute);
-                $data = $this->createDataFromRequestBody($request);
+                $data = $this->decodeJsonRequestBody($request);
                 $result = $this->update($id, $data);
                 break;
 
             case 'post':
-                $data = $this->createDataFromRequestBody($request);
+                $data = $this->decodeJsonRequestBody($request);
                 $result = $this->create($data);
                 break;
 

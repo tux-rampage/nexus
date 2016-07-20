@@ -20,43 +20,9 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Persistence\Predicate;
+namespace Rampage\Nexus\Exception;
 
-/**
- * Interface for predicate sets
- */
-interface PredicateSetInterface extends PredicateInterface
+
+class SecurityViolationException extends RuntimeException
 {
-    /**
-     * Combine the predicates with logical `or`
-     */
-    const COMBINE_BY_OR = 'or';
-
-    /**
-     * Combine the predicates with logical `and`
-     */
-    const COMBINE_BY_AND = 'and';
-
-    /**
-     * Returns the combination type
-     *
-     * @see     COMBINE_BY_AND  Logical `and` combination
-     * @see     COMBINE_BY_OR   Logical `or` combination
-     * @return  string
-     */
-    public function getCombination();
-
-    /**
-     * Check if there are predicates in this predicate set
-     *
-     * @return bool
-     */
-    public function hasPredicates();
-
-    /**
-     * Returns all predicates
-     *
-     * @return PredicateInterface[]
-     */
-    public function getPredicates();
 }

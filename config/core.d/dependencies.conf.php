@@ -2,9 +2,11 @@
 
 namespace Rampage\Nexus;
 
+use Zend\Diactoros\Response\EmitterInterface;
 use Zend\Expressive\Application;
 use Zend\Expressive\Container\ApplicationFactory;
 use Zend\Expressive\Helper;
+
 
 return [
     // Provides application-wide services.
@@ -22,6 +24,7 @@ return [
         'factories' => [
             Application::class => ApplicationFactory::class,
             Helper\UrlHelper::class => Helper\UrlHelperFactory::class,
+            EmitterInterface::class => ServiceFactory\ResponseEmitterFactory::class,
         ],
     ],
 ];

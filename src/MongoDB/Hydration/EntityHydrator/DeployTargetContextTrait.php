@@ -20,8 +20,27 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Persistence;
+namespace Rampage\Nexus\MongoDB\Hydration\EntityHydrator;
 
-class UnitOfWork
+use Rampage\Nexus\MongoDB\Hydration\EmbeddedStrategy;
+use Rampage\Nexus\Exception\LogicException;
+use Rampage\Nexus\Deployment\DeployTargetInterface;
+
+/**
+ * Trait to extract the deploy target context from the hydration data
+ */
+trait DeployTargetContextTrait
 {
+    /**
+     * @param array $data
+     * @return DeployTargetInterface
+     */
+    private function getContext(array &$data)
+    {
+        if (!isset($data[EmbeddedStrategy::ROOT_CONTEXT_KEY]) || !($data[EmbeddedStrategy::ROOT_CONTEXT_KEY] instanceof DeployTargetInterface)) {
+            throw new LogicException(__CLASS__ . ' requires a root context of type ' . DeployTargetInterface::class . ' for hydration');
+        }
+
+        return $data[EmbeddedStrategy::ROOT_CONTEXT_KEY];
+    }
 }

@@ -27,11 +27,16 @@ use Rampage\Nexus\Entities\AbstractNode;
 
 /**
  * Node repository
+ *
+ * @method \Rampage\Nexus\Entities\AbstractNode findOne($id)
  */
 interface NodeRepositoryInterface extends RepositoryInterface, PrototypeProviderInterface
 {
     /**
+     * Find nodes for a target
+     *
      * @param DeployTarget $target
+     * @return AbstractNode[]
      */
     public function findByTarget(DeployTargetInterface $target);
 

@@ -25,6 +25,7 @@ namespace Rampage\Nexus\Deployment;
 use Zend\ServiceManager\AbstractPluginManager;
 use Interop\Container\ContainerInterface;
 use Rampage\Nexus\Exception\LogicException;
+use Rampage\Nexus\Entities\Node\RampageNode;
 
 /**
  * The default node implementation provider
@@ -57,6 +58,7 @@ class NodeProvider implements NodeProviderInterface
     public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
+        $this->addType('rampage', RampageNode::class);
     }
 
     /**

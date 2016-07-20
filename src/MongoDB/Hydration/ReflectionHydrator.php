@@ -24,6 +24,7 @@ namespace Rampage\Nexus\MongoDB\Hydration;
 
 use Zend\Hydrator\Reflection as BaseReflectionHydrator;
 use Zend\Hydrator\NamingStrategy\ArrayMapNamingStrategy;
+use Rampage\Nexus\Exception\InvalidArgumentException;
 
 
 /**
@@ -42,6 +43,11 @@ class ReflectionHydrator extends BaseReflectionHydrator
      * The filter index for allowed properties
      */
     const FILTER_ALLOWED_PROPERTIES = 'allowedProperties';
+
+    /**
+     * The key in data where the hydration context is registered
+     */
+    const HYDRATION_CONTEXT_KEY = '__hydrationContextObject';
 
     /**
      * @var callable[]
@@ -79,17 +85,22 @@ class ReflectionHydrator extends BaseReflectionHydrator
     {
         if ($properties !== null) {
             $map = $this->buildPropertyMap($properties);
-            $map[$identifier] = '_id';
+
+            if ($identifier !== null) {
+                $map[$identifier] = '_id';
+            }
 
             $this->properties = array_keys($map);
+            $this->setNamingStrategy(new ArrayMapNamingStrategy($map));
             $this->addFilter(self::FILTER_ALLOWED_PROPERTIES, function($property) use ($map) {
                 return array_key_exists($property, $map);
             });
-        } else {
+        } else if ($identifier !== null) {
             $map = [ $identifier => '_id' ];
+            $this->setNamingStrategy(new ArrayMapNamingStrategy($map));
         }
 
-        $this->setNamingStrategy(new ArrayMapNamingStrategy($map));
+
         parent::__construct();
     }
 
@@ -170,6 +181,12 @@ class ReflectionHydrator extends BaseReflectionHydrator
      */
     public function hydrate(array $data, $object)
     {
+        if (!is_object($object)) {
+            throw new InvalidArgumentException(sprintf('The hydration target must be an object, %s given', gettype($object)));
+        }
+
+        $data[self::HYDRATION_CONTEXT_KEY] = $object;
+
         foreach ($this->hydrationInterceptors as $interceptor) {
             $interceptor($data, $object);
         }
