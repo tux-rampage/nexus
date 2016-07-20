@@ -32,6 +32,7 @@ use Rampage\Nexus\MongoDB\EntityStateContainer;
 use Rampage\Nexus\MongoDB\EntityState;
 use Rampage\Nexus\MongoDB\Cursor;
 use Zend\Hydrator\Strategy\StrategyInterface;
+use Rampage\Nexus\MongoDB\CalculateUpdateStrategy;
 
 
 /**
@@ -220,7 +221,16 @@ abstract class AbstractRepository implements RepositoryInterface
             $id = $this->collection->insert($data);
             $this->hydrator->hydrate(['_id' => $id], $object);
         } else {
-            $this->collection->update(['_id' => $state->getId()], $data, false, !$isAttached);
+            $previousData = $state->getData();
+
+            if (is_array($previousData)) {
+                $updates = new CalculateUpdateStrategy($previousData);
+                $updates->calculate($data);
+
+                // FIXME perform updates
+            } else {
+                $this->collection->update(['_id' => $state->getId()], [ '$set' => $data ], false, !$isAttached);
+            }
         }
 
         $this->entityStates->updateState($object, new EntityState(EntityState::STATE_PERSISTED, $data, $id));
