@@ -24,6 +24,9 @@ namespace Rampage\Nexus\MongoDB;
 
 use Rampage\Nexus\Exception\LogicException;
 
+/**
+ * Strategy for calculating document updates
+ */
 class CalculateUpdateStrategy
 {
     const STRATEGY_ADDTOSET = 1;
@@ -45,11 +48,17 @@ class CalculateUpdateStrategy
     private $fieldStrategies = [];
 
     /**
+     * @var string
+     */
+    private $field;
+
+    /**
      * @param array $previousData
      */
-    public function __construct(array $previousData)
+    public function __construct(array $previousData, $field = null)
     {
         $this->previousData = $previousData;
+        $this->field = $field;
     }
 
     /**
@@ -90,76 +99,18 @@ class CalculateUpdateStrategy
      * @param array $doc
      * @param array $previous
      * @param string $field
+     * @return CalculateUpdateStrategy
      */
     private function calculateDocumentChanges(array $doc, array $previous, $field = null)
     {
-        if (!$this->isAssoc($previous)) {
-            if ($field !== null) {
-                $this->instructions['$set'][$field] = $doc;
-            } else {
-                $this->instructions['$set'] = $doc;
-            }
-
-            return;
-        }
-
-        $previousKeys = array_keys($previous);
-        $removedKeys = array_diff($previousKeys, array_keys($doc));
-        $keptKeys = array_diff($previousKeys, $removedKeys);
-        $prefix = ($field !== null)? $field . '.' : '';
-
-        if (empty($keptKeys)) {
-            if ($field !== null) {
-                $this->instructions['$set'][$field] = $doc;
-            } else {
-                $this->instructions['$set'] = $doc;
-            }
-
-            return;
-        }
-
-        if (!empty($removedKeys)) {
-            foreach ($removedKeys as $key) {
-                $key = $prefix . $key;
-                $this->instructions['$unset'][$key] = true;
-            }
-        }
-
-        foreach ($doc as $key => $value) {
-            $fieldPath = $prefix . $key;
-
-            if (!array_key_exists($key, $previous) || (gettype($value) != gettype($previous[$key]))) {
-                $this->instructions['$set'][$fieldPath] = $value;
-                continue;
-            }
-
-            if (is_array($value)) {
-                if ($this->isAssoc($value)) {
-                    $this->calculateDocumentChanges($value, $previous[$key], $fieldPath);
-                } else {
-                    $strategy = $this->getFieldStrategy($fieldPath);
-
-                    if ($strategy == self::STRATEGY_SET) {
-                        $this->instructions['$set'][$fieldPath] = $value;
-                    } else {
-                        $this->calculateCollectionChanges($value, $previous[$key], $fieldPath, $strategy);
-                    }
-                }
-
-                continue;
-            }
-
-            if ($value !== $previous[$key]) {
-                $this->instructions['$set'][$fieldPath] = $value;
-            }
-        }
+        return (new self($previous, $field))->calculate($doc);
     }
 
     /**
      * @param string $fieldName
      * @return int|NULL
      */
-    private function getFieldStrategy($fieldName)
+    protected function getFieldStrategy($fieldName)
     {
         if (isset($this->fieldStrategies[$fieldName])) {
             return $this->fieldStrategies[$fieldName];
@@ -213,7 +164,8 @@ class CalculateUpdateStrategy
                 if (!is_array($previousValue)) {
                     $this->instructions['$set'][$path] = $value;
                 } else if ($this->isAssoc($value)) {
-                    $this->calculateDocumentChanges($value, $previousValue, $path);
+                    $changes = $this->calculateDocumentChanges($value, $previousValue, $path);
+                    $this->merge($changes);
                 } else {
                     $this->calculateCollectionChanges($value, $previousValue, $path, $this->getFieldStrategy($path));
                 }
@@ -234,7 +186,13 @@ class CalculateUpdateStrategy
         }
     }
 
-    public function merge(CalculateUpdateStrategy $strategy)
+    /**
+     * Merge an update strategy result
+     *
+     * @param CalculateUpdateStrategy $strategy
+     * @return \Rampage\Nexus\MongoDB\CalculateUpdateStrategy
+     */
+    protected function merge(CalculateUpdateStrategy $strategy)
     {
         foreach ($strategy->instructions as $key => $instructions) {
             if (!isset($this->instructions[$key])) {
@@ -290,6 +248,27 @@ class CalculateUpdateStrategy
     }
 
     /**
+     * Returns all update instruction in execution order
+     *
+     * @return array[]
+     */
+    public function getOrderedInstructions()
+    {
+        $updates = array_filter($this->instructions, 'count');
+        $pulls = [];
+
+        foreach (['$pull', '$pullAll'] as $op) {
+            if (isset($updates[$op])) {
+                $pulls[$op] = $updates[$op];
+                unset($updates[$op]);
+            }
+        }
+
+        $all = [ $updates, $pulls ];
+        return array_filter($all, 'count');
+    }
+
+    /**
      * Returns the update instructions
      *
      * @return array
@@ -297,7 +276,75 @@ class CalculateUpdateStrategy
     public function calculate(array $data)
     {
         $this->instructions = [];
-        $this->calculateDocumentChanges($data, $this->previousData);
+
+        if (empty($data) || !$this->isAssoc($this->previousData)) {
+            if (empty($data)) {
+                $data = new \stdClass();
+            }
+
+            if ($this->field !== null) {
+                $this->instructions['$set'][$this->field] = $data;
+            } else {
+                $this->instructions['$set'] = $data;
+            }
+
+            return;
+        }
+
+        $previousKeys = array_keys($this->previousData);
+        $removedKeys = array_diff($previousKeys, array_keys($data));
+        $keptKeys = array_diff($previousKeys, $removedKeys);
+        $prefix = ($this->field !== null)? $this->field . '.' : '';
+
+        if (empty($keptKeys)) {
+            if ($this->field !== null) {
+                $this->instructions['$set'][$this->field] = $data;
+            } else {
+                $this->instructions['$set'] = $data;
+            }
+
+            return;
+        }
+
+        if (!empty($removedKeys)) {
+            foreach ($removedKeys as $key) {
+                $key = $prefix . $key;
+                $this->instructions['$unset'][$key] = true;
+            }
+        }
+
+        foreach ($data as $key => $value) {
+            $fieldPath = $prefix . $key;
+
+            if (!array_key_exists($key, $this->previousData) || (gettype($value) != gettype($this->previousData[$key]))) {
+                $this->instructions['$set'][$fieldPath] = $value;
+                continue;
+            }
+
+            if (is_array($value)) {
+                if ($this->isAssoc($value)) {
+                    $changes = $this->calculateDocumentChanges($value, $this->previousData[$key], $fieldPath);
+
+                    if (!$changes->isEmpty()) {
+                        $this->merge($changes);
+                    }
+                } else {
+                    $strategy = $this->getFieldStrategy($fieldPath);
+
+                    if ($strategy == self::STRATEGY_SET) {
+                        $this->instructions['$set'][$fieldPath] = $value;
+                    } else {
+                        $this->calculateCollectionChanges($value, $this->previousData[$key], $fieldPath, $strategy);
+                    }
+                }
+
+                continue;
+            }
+
+            if ($value !== $this->previousData[$key]) {
+                $this->instructions['$set'][$fieldPath] = $value;
+            }
+        }
 
         return $this;
     }

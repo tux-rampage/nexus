@@ -20,26 +20,41 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\ServiceFactory;
+namespace Rampage\Nexus\Node\Entities;
 
-use Zend\ServiceManager\Factory\FactoryInterface;
-use Interop\Container\ContainerInterface;
-use Zend\Expressive\Emitter\EmitterStack;
-use Rampage\Nexus\Response\SapiStreamEmitter;
-use Zend\Diactoros\Response\SapiEmitter;
+use Rampage\Nexus\Entities\ApplicationInstance;
+use Rampage\Nexus\Package\PackageInterface;
 
-class ResponseEmitterFactory implements FactoryInterface
+class StatefulApplicationInstance extends ApplicationInstance
 {
     /**
-     * {@inheritDoc}
-     * @see \Zend\ServiceManager\Factory\FactoryInterface::__invoke()
+     * Currently deployed version
+     *
+     * @var string
      */
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
-    {
-        $stack = new EmitterStack();
-        $stack->push(new SapiEmitter());
-        $stack->unshift(new SapiStreamEmitter());
+    private $deployedPackageId = null;
 
-        return $stack;
+    /**
+     * @return bool
+     */
+    public function isOutOfSync()
+    {
+        if (!$this->getState() == self::STATE_REMOVING) {
+            return ($this->deployedPackageId !== null);
+        }
+
+        $package = $this->getPackage();
+        return ($package && ($package->getId() != $this->deployedPackageId));
+    }
+
+    /**
+     * Perform state update
+     *
+     * @return bool
+     */
+    public function setDeployedPackage(PackageInterface $package)
+    {
+        $this->deployedPackageId = $package->getId();
+        return $this;
     }
 }

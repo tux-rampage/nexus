@@ -54,7 +54,7 @@ class FileSystem implements FileSystemInterface
      */
     public function delete($fileOrDirectory)
     {
-        if (!is_dir($fileOrDirectory)) {
+        if (!is_dir($fileOrDirectory) || is_link($fileOrDirectory)) {
             return unlink($fileOrDirectory);
         }
 

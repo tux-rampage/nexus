@@ -243,7 +243,7 @@ class DeployTarget implements DeployTargetInterface
             $node->refresh();
         }
 
-        foreach ($this->applications as $application) {
+        foreach ($this->applications as $key => $application) {
             $state = ApplicationInstance::STATE_UNKNOWN;
             $level = 0;
 
@@ -259,6 +259,10 @@ class DeployTarget implements DeployTargetInterface
             }
 
             $application->setState($state);
+
+            if ($application->isRemoved() && ($application->getState() == ApplicationInstance::STATE_REMOVED)) {
+                unset($this->applications[$key]);
+            }
         }
     }
 
@@ -299,7 +303,7 @@ class DeployTarget implements DeployTargetInterface
      */
     public function removeApplication(ApplicationInstance $instance)
     {
-        unset($this->applications[$instance->getId()]);
+        $instance->remove();
         return $this;
     }
 

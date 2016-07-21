@@ -24,10 +24,12 @@ namespace Rampage\Nexus\MongoDB\Driver\Legacy\Hydration;
 
 use Zend\Hydrator\Strategy\StrategyInterface;
 use MongoBinData;
+use Psr\Http\Message\StreamInterface;
+use Zend\Diactoros\Stream;
 
 
 /**
- * Implements a binary string data hydration strategy
+ * Implements a binary data to stream hydration strategy
  */
 class BlobStrategy implements StrategyInterface
 {
@@ -37,11 +39,15 @@ class BlobStrategy implements StrategyInterface
      */
     public function extract($value)
     {
-        if (!is_resource($value)) {
-            $value = stream_get_contents($value);
+        if ($value instanceof BinDataStream) {
+            return $value->getBinData();
         }
 
-        return new MongoBinData($value, MongoBinData::GENERIC);
+        if (!$value instanceof StreamInterface) {
+            return null;
+        }
+
+        return new MongoBinData($value->getContents(), MongoBinData::GENERIC);
     }
 
     /**
@@ -50,14 +56,10 @@ class BlobStrategy implements StrategyInterface
      */
     public function hydrate($value)
     {
-        if (!is_string($value) && !($value instanceof MongoBinData)) {
+        if (!$value instanceof MongoBinData) {
             return null;
         }
 
-        $fp = fopen('php://memory', 'w+');
-        $fp = fwrite($fp, (string)$value);
-        fseek($fp, 0, SEEK_SET);
-
-        return $fp;
+        return new BinDataStream($value);
     }
 }

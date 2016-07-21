@@ -123,6 +123,16 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
     }
 
     /**
+     * @param ApplicationInstance $application
+     * @return string
+     */
+    protected function getVersionsPath(ApplicationInstance $application)
+    {
+        $path = sprintf('%s/versions/%s', $this->applicationsPath, $application->getId());
+        return $path;
+    }
+
+    /**
      * Returns the application symlink
      *
      * @param   ApplicationInstance $instance   The application instance to get the symlink for
@@ -155,15 +165,35 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
     protected function getConfigPath(ApplicationInstance $instance, $dir)
     {
         $vhost = $instance->getVHost();
+        $prefix = ($instance->getPath() == '/')? '10' : '90';
+
         $path = sprintf(
-            '%s/%s/%s/%s.conf',
+            '%s/%s/%s/%s-%s.conf',
             $this->configsPath,
             $vhost->isDefault()? '__default__' : $vhost->getName(),
             $dir,
+            $prefix,
             (string)$instance->getId()
         );
 
         return $path;
+    }
+
+    /**
+     * Returns a glob to all path s to an instance specific config
+     *
+     * @param   ApplicationInstance $instance   The instance context
+     * @return  string                          The glob expression to the config file
+     */
+    protected function getConfigPathsGlob(ApplicationInstance $instance)
+    {
+        $glob = sprintf(
+            '%s/*/*/*-%s.conf',
+            $this->configsPath,
+            (string)$instance->getId()
+        );
+
+        return $glob;
     }
 
     /**
@@ -315,6 +345,26 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
         $this->filesystem->purgeDirectory($this->applicationsPath);
 
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Node\DeployStrategyInterface::purgeApplication()
+     */
+    public function purgeApplication(ApplicationInstance $instance)
+    {
+        $glob = $this->getConfigPathsGlob($instance);
+        $configs = new \GlobIterator($glob);
+
+        /* @var $file \SplFileInfo */
+        foreach ($configs as $file) {
+            $this->filesystem->delete($file->getPathname());
+        }
+
+        $this->reloadService();
+
+        $this->filesystem->delete($this->getApplicationSymlinkPath($instance));
+        $this->filesystem->delete($this->getVersionsPath($instance));
     }
 
     /**

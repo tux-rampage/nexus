@@ -20,26 +20,47 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\ServiceFactory;
+namespace Rampage\Nexus\Node\Entities;
 
-use Zend\ServiceManager\Factory\FactoryInterface;
-use Interop\Container\ContainerInterface;
-use Zend\Expressive\Emitter\EmitterStack;
-use Rampage\Nexus\Response\SapiStreamEmitter;
-use Zend\Diactoros\Response\SapiEmitter;
+use Rampage\Nexus\Entities\VHost;
 
-class ResponseEmitterFactory implements FactoryInterface
+class StatefulVHost extends VHost
 {
     /**
-     * {@inheritDoc}
-     * @see \Zend\ServiceManager\Factory\FactoryInterface::__invoke()
+     * @var VHost
      */
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
-    {
-        $stack = new EmitterStack();
-        $stack->push(new SapiEmitter());
-        $stack->unshift(new SapiStreamEmitter());
+    private $deployedState;
 
-        return $stack;
+    /**
+     * @var boolean
+     */
+    private $removed = false;
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Entities\VHost::__construct()
+     */
+    public function __construct(VHost $deployedState = null)
+    {
+        $this->deployedState = $deployedState;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isRemoved()
+    {
+        return $this->removed;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isOutOfSync()
+    {
+        return $this->removed
+            || ($this->aliases != $this->deployedState->aliases)
+            || ($this->enableSsl != $this->deployedState->enableSsl)
+            || ($this->flavor != $this->deployedState->flavor);
     }
 }

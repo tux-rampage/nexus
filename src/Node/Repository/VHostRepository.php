@@ -20,26 +20,23 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\ServiceFactory;
+namespace Rampage\Nexus\Node\Repository;
 
-use Zend\ServiceManager\Factory\FactoryInterface;
-use Interop\Container\ContainerInterface;
-use Zend\Expressive\Emitter\EmitterStack;
-use Rampage\Nexus\Response\SapiStreamEmitter;
-use Zend\Diactoros\Response\SapiEmitter;
+use Rampage\Nexus\Entities\VHost;
+use Rampage\Nexus\Node\Entities\StatefulVHost;
 
-class ResponseEmitterFactory implements FactoryInterface
+/**
+ * Defines the vhost repository
+ */
+interface VHostRepositoryInterface
 {
     /**
-     * {@inheritDoc}
-     * @see \Zend\ServiceManager\Factory\FactoryInterface::__invoke()
+     * @return StatefulVHost
      */
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
-    {
-        $stack = new EmitterStack();
-        $stack->push(new SapiEmitter());
-        $stack->unshift(new SapiStreamEmitter());
+    public function findAll();
 
-        return $stack;
-    }
+    /**
+     * @param VHost $vhost
+     */
+    public function updateState(VHost $vhost);
 }

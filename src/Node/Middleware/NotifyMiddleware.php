@@ -22,11 +22,100 @@
 
 namespace Rampage\Nexus\Node\Middleware;
 
+use Rampage\Nexus\Node\DeployStrategyInterface;
+use Rampage\Nexus\Node\Repository\ApplicationRepositoryInterface;
+use Rampage\Nexus\Node\Repository\VHostRepositoryInterface;
+
+use Rampage\Nexus\Deployment\NodeInterface;
+use Rampage\Nexus\Entities\ApplicationInstance;
+use Rampage\Nexus\Middleware\DecodeRequestBodyTrait;
+
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\RequestInterface;
 
+use Zend\Diactoros\Response\JsonResponse;
+use Rampage\Nexus\Node\VHostDeployStrategyInterface;
+
+
+/**
+ * Notification middleware
+ */
 class NotifyMiddleware
 {
+    use DecodeRequestBodyTrait;
+
+    /**
+     * @var ApplicationRepositoryInterface
+     */
+    private $applicationRepository;
+
+    /**
+     * @var VHostRepositoryInterface
+     */
+    private $vhostRepository;
+
+    /**
+     * @var DeployStrategyInterface
+     */
+    private $deployStrategy;
+
+    /**
+     * @param unknown $applicationState
+     * @param unknown $nodeState
+     * @return string|unknown
+     */
+    protected function getNodeState($applicationState, $nodeState)
+    {
+        if (($nodeState == NodeInterface::STATE_FAILURE) || ($applicationState == ApplicationInstance::STATE_ERROR)) {
+            return NodeInterface::STATE_FAILURE;
+        }
+
+        if ($applicationState != ApplicationInstance::STATE_DEPLOYED) {
+            return NodeInterface::STATE_BUILDING;
+        }
+
+        return $nodeState;
+    }
+
+    /**
+     *
+     * @param   string  $state  The current node state
+     * @return  string          The new node state
+     */
+    protected function synchronizeVHosts($state)
+    {
+        if (!$this->deployStrategy instanceof VHostDeployStrategyInterface) {
+            return $state;
+        }
+
+        foreach ($this->vhostRepository->findAll() as $vhost) {
+            if (!$vhost->isOutOfSync()) {
+                continue;
+            }
+
+            $state = NodeInterface::STATE_BUILDING;
+            // FIXME: Add to queue
+        }
+    }
+
+    /**
+     * @param   string  $state  The current node state
+     * @return  string          The new node state
+     */
+    protected function synchronizeApplications($state)
+    {
+        foreach ($this->applicationRepository->findAll() as $application) {
+            if ($application->isOutOfSync()) {
+                // TODO: Schedule
+                $application->setState(ApplicationInstance::STATE_PENDING);
+            }
+
+            $state = $this->getNodeState($application->getState(), $state);
+        }
+
+        return $state;
+    }
+
     /**
      * @param RequestInterface $request
      * @param ResponseInterface $response
@@ -34,5 +123,13 @@ class NotifyMiddleware
      */
     public function __invoke(RequestInterface $request, ResponseInterface $response, callable $next = null)
     {
+        try {
+            $state = $this->synchronizeVHosts(NodeInterface::STATE_READY);
+            $state = $this->synchronizeApplications($state);
+        } catch (Throwable $e) {
+            $state = NodeInterface::STATE_FAILURE;
+        }
+
+        return new JsonResponse(['state' => $state]);
     }
 }

@@ -133,6 +133,11 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
     protected $previousUserParameters = null;
 
     /**
+     * @var bool
+     */
+    private $isRemoved = false;
+
+    /**
      * Construct
      *
      * @param   string  $id     The instance identifier
@@ -303,6 +308,23 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
         return $this->previousParameters;
     }
 
+    public function isRemoved()
+    {
+        return $this->isRemoved;
+    }
+
+    /**
+     * Perform application removal
+     *
+     * @return self
+     */
+    public function remove()
+    {
+        $this->state = self::STATE_REMOVING;
+        $this->isRemoved = true;
+        return $this;
+    }
+
     /**
      * Rollback to the previouis instance state
      *
@@ -364,9 +386,10 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
             'id' => $this->id,
             'label' => $this->label,
             'application' => [
-                'id' => $this->application->getId(),
-                'package' => $this->package->getId(),
-                'previousPackage' => $this->previousPackage? $this->previousPackage->getId() : null,
+                'id' => $this->getApplication()->getId(),
+                'label' => $this->getApplication()->getLabel(),
+                'package' => $this->package? $this->package->toArray() : null,
+                'previousPackage' => $this->previousPackage? $this->previousPackage->toArray() : null,
             ],
             'flavor' => $this->flavor,
             'path' => $this->path,

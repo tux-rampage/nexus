@@ -35,6 +35,16 @@ interface DeployStrategyInterface
     public function purge();
 
     /**
+     * Remove an application instance completely
+     *
+     * Consider the application to be in an invalid state. It may contain nothing but the application id
+     *
+     * @param   ApplicationInstance $instance
+     */
+    public function purgeApplication(ApplicationInstance $instance);
+
+
+    /**
      * Stage the given application instance and prepare it for activation
      *
      * @param ApplicationInstance $instance

@@ -224,12 +224,16 @@ abstract class AbstractRepository implements RepositoryInterface
             $previousData = $state->getData();
 
             if (is_array($previousData)) {
+                $updateId = $state->getId();
                 $updates = new CalculateUpdateStrategy($previousData);
                 $updates->calculate($data);
 
-                // FIXME perform updates
+                foreach ($updates->getOrderedInstructions() as $update) {
+                    $this->collection->update(['_id' => $updateId], $update);
+                    $updateId = $id; // The first update may have changed the identifier
+                }
             } else {
-                $this->collection->update(['_id' => $state->getId()], [ '$set' => $data ], false, !$isAttached);
+                $this->collection->update(['_id' => $state->getId()], [ '$set' => $data ], false, ($state->getState() != EntityState::STATE_PERSISTED));
             }
         }
 

@@ -20,26 +20,35 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\ServiceFactory;
+namespace Rampage\Nexus\Node\Repository;
 
-use Zend\ServiceManager\Factory\FactoryInterface;
-use Interop\Container\ContainerInterface;
-use Zend\Expressive\Emitter\EmitterStack;
-use Rampage\Nexus\Response\SapiStreamEmitter;
-use Zend\Diactoros\Response\SapiEmitter;
 
-class ResponseEmitterFactory implements FactoryInterface
+use Rampage\Nexus\Node\Entities\StatefulApplicationInstance;
+
+interface ApplicationRepositoryInterface
 {
     /**
-     * {@inheritDoc}
-     * @see \Zend\ServiceManager\Factory\FactoryInterface::__invoke()
+     * @return StatefulApplicationInstance[]
      */
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
-    {
-        $stack = new EmitterStack();
-        $stack->push(new SapiEmitter());
-        $stack->unshift(new SapiStreamEmitter());
+    public function findAll();
 
-        return $stack;
-    }
+    /**
+     * @param string $id
+     * @return StatefulApplicationInstance
+     */
+    public function find($id);
+
+    /**
+     * Update the application state
+     *
+     * @param StatefulApplicationInstance $application
+     */
+    public function updateState(StatefulApplicationInstance $application);
+
+    /**
+     * Returns the aggregated node state
+     *
+     * @return string
+     */
+    public function aggregateNodeState();
 }

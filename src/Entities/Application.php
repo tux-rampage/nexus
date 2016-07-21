@@ -25,6 +25,7 @@ namespace Rampage\Nexus\Entities;
 
 use Rampage\Nexus\Package\PackageInterface;
 use Zend\Stdlib\Parameters;
+use Psr\Http\Message\StreamInterface;
 
 
 /**
@@ -57,7 +58,7 @@ class Application implements Api\ArrayExchangeInterface
     /**
      * Represents the icon as binary data
      *
-     * @var string
+     * @var StreamInterface
      */
     protected $icon = null;
 
@@ -77,8 +78,19 @@ class Application implements Api\ArrayExchangeInterface
     }
 
     /**
-     * Returns the application name
+     * Returns the application label
      *
+     * @return string
+     */
+    public function getLabel()
+    {
+        return $this->label;
+    }
+
+    /**
+     * Returns the application name
+     * @deprecated 0.9.0
+     * @see getLabel() Use `getLabel()` instead
      * @return string
      */
     public function getName()
@@ -87,7 +99,7 @@ class Application implements Api\ArrayExchangeInterface
     }
 
     /**
-     * @return MongoBinData
+     * @return StreamInterface
      */
     public function getIcon()
     {
@@ -95,10 +107,10 @@ class Application implements Api\ArrayExchangeInterface
     }
 
     /**
-     * @param string $icon
+     * @param StreamInterface $icon
      * @return self
      */
-    public function setIcon($icon)
+    public function setIcon(StreamInterface $icon)
     {
         $this->icon = $icon;
         return $this;
