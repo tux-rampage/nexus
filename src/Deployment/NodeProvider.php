@@ -58,7 +58,7 @@ class NodeProvider implements NodeProviderInterface
     public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
-        $this->addType('rampage', RampageNode::class);
+        $this->addType(RampageNode::TYPE_ID, RampageNode::class);
     }
 
     /**
