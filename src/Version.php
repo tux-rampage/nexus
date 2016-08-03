@@ -22,6 +22,8 @@
 
 namespace Rampage\Nexus;
 
+use DateTime;
+
 /**
  * Provides the application version
  */
@@ -55,8 +57,8 @@ final class Version
      */
     private function loadFromInfoFile()
     {
-        if (is_readable(__DIR__ . '/../version.info')) {
-            return file_get_contents(__DIR__ . '/../version.info');
+        if (is_readable(__DIR__ . '/../resources/version.info')) {
+            return file_get_contents(__DIR__ . '/../resources/version.info');
         }
 
         return null;
@@ -144,13 +146,9 @@ final class Version
 
             if (!$this->isSemVer($version)) {
                 if ($this->validateTagOrBranchName((string)$version)) {
-                    $version .= '-' . $gitDate;
+                    $version =  'dev-' . $version . '@' . $gitDate;
                 } else {
                     $version = $gitDate;
-                }
-
-                if ($this->buildId != '') {
-                    $version .= '.' . $this->buildId;
                 }
             }
         }

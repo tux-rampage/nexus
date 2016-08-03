@@ -22,6 +22,9 @@
 
 namespace Rampage\Nexus\Ansible;
 
+use Rampage\Nexus\Repository\NodeRepositoryInterface;
+use Rampage\Nexus\MongoDB\Repository\NodeRepository as DefaultNodeRepository;
+
 /**
  * Config provider for ansible module
  */
@@ -37,11 +40,21 @@ class ConfigProvider
                 'preferences' => [
                     Repository\GroupRepositoryInterface::class => MongoDB\GroupRepository::class,
                     Repository\HostRepositoryInterface::class => MongoDB\HostRepository::class,
+                    NodeRepositoryInterface::class => MongoDB\NodeRepository::class,
                 ],
                 'instances' => [
                     MongoDB\HostRepository::class => [
+                        'preferences' => [
+                            NodeRepositoryInterface::class => DefaultNodeRepository::class,
+                        ],
                         'params' => [
                             'groupRepository' => MongoDB\GroupRepository::class,
+                        ]
+                    ],
+
+                    MongoDB\NodeRepository::class => [
+                        'preferences' => [
+                            NodeRepositoryInterface::class => DefaultNodeRepository::class,
                         ]
                     ]
                 ]

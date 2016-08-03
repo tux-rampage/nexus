@@ -80,7 +80,7 @@ class NodeRepository implements NodeRepositoryInterface
      */
     public function save(AbstractNode $node)
     {
-        $this->decorated->save($node);
+        return $this->decorated->save($node);
     }
 
     /**
@@ -98,7 +98,7 @@ class NodeRepository implements NodeRepositoryInterface
      */
     public function findAll()
     {
-        $this->decorated->findAll();
+        return $this->hostRepository->findDeployableHosts();
     }
 
     /**

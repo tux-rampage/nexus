@@ -32,6 +32,10 @@ use Rampage\Nexus\MongoDB\Repository\ReferenceProviderInterface;
 use Rampage\Nexus\Repository\DeployTargetRepositoryInterface;
 use Rampage\Nexus\Exception\LogicException;
 use Rampage\Nexus\Repository\NodeRepositoryInterface;
+use Rampage\Nexus\MongoDB\Cursor;
+use Zend\Hydrator\HydratorInterface;
+use Rampage\Nexus\MongoDB\Hydration\EntityHydrator\NodeHydrator;
+use Rampage\Nexus\Deployment\NodeInterface;
 
 class HostRepository extends AbstractRepository implements HostRepositoryInterface
 {
@@ -39,6 +43,16 @@ class HostRepository extends AbstractRepository implements HostRepositoryInterfa
      * @var Host
      */
     private $prototype = null;
+
+    /**
+     * @var NodeRepositoryInterface
+     */
+    private $nodeRepository = null;
+
+    /**
+     * @var HydratorInterface
+     */
+    private $nodeHydrator = null;
 
     /**
      * @param DriverInterface               $driver             The MongoDB driver
@@ -49,7 +63,10 @@ class HostRepository extends AbstractRepository implements HostRepositoryInterfa
     public function __construct(DriverInterface $driver, ReferenceProviderInterface $groupRepository, NodeRepositoryInterface $nodeRepository, DeployTargetRepositoryInterface $targetRepository)
     {
         parent::__construct($driver, new Hydration\HostHydrator($driver, $groupRepository, $nodeRepository, $targetRepository), 'ansible_hosts');
+
         $this->idStrategy = $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING);
+        $this->nodeHydrator = new NodeHydrator($driver, $targetRepository);
+        $this->nodeRepository = $nodeRepository;
     }
 
     /**
@@ -104,8 +121,35 @@ class HostRepository extends AbstractRepository implements HostRepositoryInterfa
      */
     public function findDeployableHosts()
     {
-        return new \CallbackFilterIterator($this->findAll(), function(Host $host) {
+        $result = $this->collection->find([]);
+        $cursor = new Cursor($result, function($data) {
+            /* @var $host Host */
+            /* @var $node \Rampage\Nexus\Entities\AbstractNode */
+            $host = $this->getOrCreate($data);
 
+            if (!$host->getNode() && $host->getDefaultNodeType()) {
+                $node = $this->nodeRepository->getPrototypeByData([
+                    'type' => $host->getDefaultNodeType()
+                ]);
+
+                if ($node) {
+                    $hostname = $host->getName();
+                    $node->exchangeArray([
+                        'name' => $hostname,
+                        'url' => sprintf('https://%s:20080/', $hostname),
+                    ]);
+
+                    $this->nodeRepository->save($node);
+                    $host->setNode($node);
+                    $this->save($host);
+                }
+            }
+
+            return $host;
+        });
+
+        return new \CallbackFilterIterator($cursor, function(Host $host) {
+            return ($host->getNode() !== null);
         });
     }
 
@@ -113,9 +157,11 @@ class HostRepository extends AbstractRepository implements HostRepositoryInterfa
      * {@inheritDoc}
      * @see \Rampage\Nexus\Ansible\Repository\HostRepositoryInterface::isNodeAttached()
      */
-    public function isNodeAttached(\Rampage\Nexus\Entities\AbstractNode $node)
+    public function isNodeAttached(NodeInterface $node)
     {
-        // TODO Auto-generated method stub
+        $nodeId = $this->driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_ID)->extract($node->getId());
+        $result = $this->collection->find(['node' => $nodeId], ['_id' => true], 1);
 
+        return ($result->count() > 0);
     }
 }

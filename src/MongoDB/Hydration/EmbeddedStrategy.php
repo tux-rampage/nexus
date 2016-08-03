@@ -22,10 +22,9 @@
 
 namespace Rampage\Nexus\MongoDB\Hydration;
 
+use Rampage\Nexus\Exception\InvalidArgumentException;
 use Zend\Hydrator\Strategy\StrategyInterface;
 use Zend\Hydrator\HydratorInterface;
-use Rampage\Nexus\Exception\InvalidArgumentException;
-use Rampage\Nexus\Exception\LogicException;
 
 
 /**

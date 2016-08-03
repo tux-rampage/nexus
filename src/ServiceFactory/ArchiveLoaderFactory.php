@@ -20,9 +20,26 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-require_once __DIR__ . '/vendor/autoload.php';
+namespace Rampage\Nexus\ServiceFactory;
 
-// Polyfill: Legacy alias for PHP < 7.0
-if (!class_exists('Throwable') && !interface_exists('Throwable')) {
-    @class_alias('Exception', 'Throwable');
+use Interop\Container\ContainerInterface;
+use Zend\ServiceManager\Factory\FactoryInterface;
+use Rampage\Nexus\Archive\ArchiveLoader;
+
+/**
+ * Factory for archive loader
+ */
+class ArchiveLoaderFactory implements FactoryInterface
+{
+    /**
+     * {@inheritDoc}
+     * @see \Zend\ServiceManager\Factory\FactoryInterface::__invoke()
+     */
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    {
+        $config = $container->has('config')? $container->get('config') : [];
+        $dir = isset($config['archives']['storageDir'])? $config['archives']['storageDir'] : __DIR__ . '/../../data/archives';
+
+        return new ArchiveLoader($dir);
+    }
 }

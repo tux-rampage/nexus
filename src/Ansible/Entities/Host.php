@@ -23,6 +23,8 @@
 namespace Rampage\Nexus\Ansible\Entities;
 
 use Rampage\Nexus\Entities\AbstractNode;
+use Rampage\Nexus\Deployment\NodeInterface;
+use Rampage\Nexus\Exception\LogicException;
 
 class Host
 {
@@ -100,6 +102,22 @@ class Host
     public function getNode()
     {
         return $this->node;
+    }
+
+    /**
+     * Attach a node to this host
+     *
+     * @param \Rampage\Nexus\Entities\AbstractNode $node
+     * @return self
+     */
+    public function setNode(NodeInterface $node = null)
+    {
+        if ($this->node) {
+            throw new LogicException('This host already has a deployment node');
+        }
+
+        $this->node = $node;
+        return $this;
     }
 
     /**

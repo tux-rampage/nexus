@@ -63,7 +63,7 @@ class ArrayConfig implements PropertyConfigInterface
         $current = $this->data;
 
         foreach ($parts as $key) {
-            if (!is_array($current) || !isset($current[$key])) {
+            if ((!is_array($current) && !($current instanceof \ArrayAccess)) || !isset($current[$key])) {
                 return null;
             }
 
