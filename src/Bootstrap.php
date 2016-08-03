@@ -22,12 +22,15 @@
 
 namespace Rampage\Nexus;
 
+use Rampage\Nexus\Config\ConfigProviderInterface;
+
+use Interop\Container\ContainerInterface;
+use Symfony\Component\Console\Application as ConsoleApplication;
+
+use Zend\Expressive\Application as HttpApplication;
 use Zend\ServiceManager\ServiceManager;
 use Zend\ServiceManager\Config as ServiceConfig;
-use Rampage\Nexus\Config\ConfigProviderInterface;
-use Interop\Container\ContainerInterface;
-use Zend\Expressive\Application;
-use Zend\Di\ConfigProvider;
+
 
 /**
  * Default application instance
@@ -59,6 +62,11 @@ class Bootstrap
     public function app(ConfigProviderInterface $configProvider)
     {
         $container = $this->createContainer($configProvider);
-        return $container->get(Application::class);
+
+        if (PHP_SAPI == 'cli') {
+            return $container->get(ConsoleApplication::class);
+        }
+
+        return $container->get(HttpApplication::class);
     }
 }

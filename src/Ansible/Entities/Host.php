@@ -47,6 +47,13 @@ class Host
     protected $groups = [];
 
     /**
+     * @var string
+     */
+    private $defaultNodeType = null;
+
+    private $isNodeByGroup = null;
+
+    /**
      * @param string $name
      */
     public function __construct($name)
@@ -61,6 +68,30 @@ class Host
     public function getName()
     {
         return $this->name;
+    }
+
+    /**
+     * Returns the node type by assigned groups
+     *
+     * @return bool
+     */
+    public function getDefaultNodeType()
+    {
+        if ($this->isNodeByGroup === null) {
+            $this->defaultNodeType = null;
+            $this->isNodeByGroup = false;
+
+            foreach ($this->groups as $group) {
+                $this->defaultNodeType = $group->getDeploymentType();
+
+                if ($this->defaultNodeType) {
+                    $this->isNodeByGroup = true;
+                    break;
+                }
+            }
+        }
+
+        return $this->defaultNodeType;
     }
 
     /**

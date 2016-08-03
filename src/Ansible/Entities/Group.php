@@ -23,6 +23,9 @@
 namespace Rampage\Nexus\Ansible\Entities;
 
 use Rampage\Nexus\Entities\Api\ArrayExchangeInterface;
+use Rampage\Nexus\Entities\ArrayCollection;
+use SplObjectStorage;
+
 
 class Group implements ArrayExchangeInterface
 {
@@ -37,9 +40,19 @@ class Group implements ArrayExchangeInterface
     protected $label;
 
     /**
-     * @var Group[]
+     * Defines the deployment node type
+     *
+     * If this is set, all hosts affected by this group will be
+     * be auto-attached with a deployment node instance of the given type
+     *
+     * @var string
      */
-    protected $children = [];
+    protected $deploymentType = null;
+
+    /**
+     * @var ArrayCollection|Group[]
+     */
+    protected $children;
 
     /**
      * @var array
@@ -53,6 +66,7 @@ class Group implements ArrayExchangeInterface
     {
         $this->id = $id;
         $this->label = $id;
+        $this->children = new ArrayCollection();
     }
 
     /**
@@ -141,6 +155,47 @@ class Group implements ArrayExchangeInterface
     public function hasChildren()
     {
         return (count($this->children) > 0);
+    }
+
+    /**
+     * @param Group $group
+     * @param \SplObjectStorage $visited
+     * @return string|null
+     */
+    private function findDeploymentTypeByChildren(SplObjectStorage $visited)
+    {
+        if ($visited->contains($this)) {
+            return null;
+        }
+
+        $type = null;
+        $visited->attach($this);
+
+        foreach ($this->children as $child) {
+            $type = $child->getDeploymentType();
+
+            if (!$type) {
+                $type = $child->findDeploymentTypeByChildren($visited);
+            }
+
+            if ($type) {
+                break;
+            }
+        }
+
+        return $type;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDeploymentType()
+    {
+        if (!$this->deploymentType) {
+            return $this->findDeploymentTypeByChildren(new SplObjectStorage());
+        }
+
+        return $this->deploymentType;
     }
 
     /**

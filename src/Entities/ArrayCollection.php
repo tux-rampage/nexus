@@ -26,4 +26,34 @@ use ArrayObject;
 
 class ArrayCollection extends ArrayObject implements IndexableCollectionInterface
 {
+    /**
+     * Find an item by using a predicate callback
+     *
+     * ```php
+     * $collection = new ArrayCollection([
+     *      'a' => 'Foo',
+     *      'b' => 'Bar'
+     * ]);
+     *
+     * // $key will be "b"
+     * $key = $collection->find(function($item) {
+     *      return ($item == 'Bar');
+     * });
+     * ```
+     *
+     * @param   callable        $predicate  The predicate for matching. This callback should accept two parameters.
+     *                                      The first parameter is the value to check, the second parameter the key. it
+     *                                      should return true if the item matches the predicate or false if not.
+     * @return  int|string|null             The index of the first match or null if $predicate matches nothing
+     */
+    public function find(callable $predicate)
+    {
+        foreach ($this as $key => $item) {
+            if ($predicate($item, $key)) {
+                return $key;
+            }
+        }
+
+        return null;
+    }
 }

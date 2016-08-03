@@ -42,7 +42,7 @@ class InventoryProvider
      *
      * @return array
      */
-    public function list()
+    public function listInventory()
     {
         $list = [];
 

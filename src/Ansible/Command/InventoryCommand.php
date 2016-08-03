@@ -22,22 +22,29 @@
 
 namespace Rampage\Nexus\Ansible\Command;
 
-use Rampage\Nexus\Ansible\InventoryProvider;
+use Rampage\Nexus\Ansible\InventoryProviderInterface;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use function GuzzleHttp\json_encode;
 
 
 class InventoryCommand extends Command
 {
     /**
-     * @var InventoryProvider
+     * @var InventoryProviderInterface
      */
     private $inventoryProvider;
+
+    /**
+     * @param InventoryProviderInterface $inventoryProvider
+     */
+    public function __construct(InventoryProviderInterface $inventoryProvider)
+    {
+        $this->inventoryProvider = $inventoryProvider;
+    }
 
     /**
      * {@inheritDoc}
@@ -69,11 +76,9 @@ class InventoryCommand extends Command
 
             $data = $this->inventoryProvider->host($hostname);
         } else {
-            $data = $this->inventoryProvider->list();
+            $data = $this->inventoryProvider->listInventory();
         }
 
         $output->write(json_encode($data, JSON_PRETTY_PRINT), true, OutputInterface::OUTPUT_RAW);
     }
-
-
 }

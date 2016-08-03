@@ -20,43 +20,30 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Ansible\Repository;
+namespace Rampage\Nexus\MongoDB\Hydration;
 
-use Rampage\Nexus\Repository\RepositoryInterface;
-use Rampage\Nexus\Ansible\Entities\Host;
-use Rampage\Nexus\Ansible\Entities\Group;
-use Rampage\Nexus\Entities\AbstractNode;
+use Rampage\Nexus\Exception\LogicException;
 
-interface HostRepositoryInterface extends RepositoryInterface
+/**
+ * Implements object embedding
+ */
+trait RootContextTrait
 {
-    /**
-     * @param Group $group
-     * @return Host[]
-     */
-    public function findByGroup(Group $group);
+    const ROOT_CONTEXT_KEY = '__hydrationRootObject';
 
     /**
-     * Finds hosts that can act as deploy nodes
-     *
-     * @return Host[]
+     * @param array $data
      */
-    public function findDeployableHosts();
+    private function getRootContext(array &$data)
+    {
+        if (isset($data[self::ROOT_CONTEXT_KEY])) {
+            return $data[self::ROOT_CONTEXT_KEY];
+        }
 
-    /**
-     * Check if the given node is attached to any host
-     *
-     * @param AbstractNode $node
-     * @return bool
-     */
-    public function isNodeAttached(AbstractNode $node);
+        if (isset($data[ReflectionHydrator::HYDRATION_CONTEXT_KEY])) {
+            return $data[ReflectionHydrator::HYDRATION_CONTEXT_KEY];
+        }
 
-    /**
-     * @param Host $host
-     */
-    public function save(Host $host);
-
-    /**
-     * @param Host $host
-     */
-    public function remove(Host $host);
+        throw new LogicException('Cannot hydrate an embedded entity without root context');
+    }
 }

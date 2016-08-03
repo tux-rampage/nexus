@@ -117,8 +117,9 @@ abstract class AbstractRepository implements RepositoryInterface
         $id = $this->extractIdentifier($data);
         $state = new EntityState(EntityState::STATE_PERSISTED, $data, $id);
 
-        return $this->entityStates->getOrCreate($state, function() use ($data) {
+        return $this->entityStates->getOrCreate($state, function() use ($data, $state) {
             $entity = $this->newEntityInstance($data);
+            $this->entityStates->attach($entity, $state);
             $this->hydrator->hydrate($data, $entity);
 
             return $entity;

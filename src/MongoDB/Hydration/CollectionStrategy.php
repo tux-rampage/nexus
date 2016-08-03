@@ -92,7 +92,7 @@ class CollectionStrategy implements StrategyInterface
         $collection = new ArrayCollection();
 
         if (!is_array($value)) {
-            return new ArrayCollection();
+            return $collection;
         }
 
 

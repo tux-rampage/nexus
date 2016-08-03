@@ -2,6 +2,7 @@
 
 namespace Rampage\Nexus;
 
+use Symfony\Component\Console\Application as ConsoleApplication;
 use Zend\Diactoros\Response\EmitterInterface;
 use Zend\Expressive\Application;
 use Zend\Expressive\Container\ApplicationFactory;
@@ -25,6 +26,8 @@ return [
             Application::class => ApplicationFactory::class,
             Helper\UrlHelper::class => Helper\UrlHelperFactory::class,
             EmitterInterface::class => ServiceFactory\ResponseEmitterFactory::class,
+
+            ConsoleApplication::class => ServiceFactory\ConsoleApplicationFactory::class,
         ],
     ],
 ];

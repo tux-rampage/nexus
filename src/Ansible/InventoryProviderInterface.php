@@ -20,43 +20,25 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Ansible\Repository;
+namespace Rampage\Nexus\Ansible;
 
-use Rampage\Nexus\Repository\RepositoryInterface;
-use Rampage\Nexus\Ansible\Entities\Host;
-use Rampage\Nexus\Ansible\Entities\Group;
-use Rampage\Nexus\Entities\AbstractNode;
-
-interface HostRepositoryInterface extends RepositoryInterface
+/**
+ * Defines the provider for ansible inventory data
+ */
+interface InventoryProviderInterface
 {
     /**
-     * @param Group $group
-     * @return Host[]
-     */
-    public function findByGroup(Group $group);
-
-    /**
-     * Finds hosts that can act as deploy nodes
+     * Builds the ansible inventory list structure
      *
-     * @return Host[]
+     * @return array
      */
-    public function findDeployableHosts();
+    public function listInventory();
 
     /**
-     * Check if the given node is attached to any host
+     * Returns the host's variables
      *
-     * @param AbstractNode $node
-     * @return bool
+     * @param string $name
+     * @return array
      */
-    public function isNodeAttached(AbstractNode $node);
-
-    /**
-     * @param Host $host
-     */
-    public function save(Host $host);
-
-    /**
-     * @param Host $host
-     */
-    public function remove(Host $host);
+    public function host($name);
 }

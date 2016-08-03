@@ -33,7 +33,7 @@ use Rampage\Nexus\Exception\LogicException;
  */
 class EmbeddedStrategy implements StrategyInterface
 {
-    const ROOT_CONTEXT_KEY = '__hydrationRootObject';
+    use RootContextTrait;
 
     /**
      * @var object
@@ -66,23 +66,11 @@ class EmbeddedStrategy implements StrategyInterface
      */
     public function extract($value)
     {
-        return $value;
-    }
-
-    /**
-     * @param array $data
-     */
-    private function getRootContext(array &$data)
-    {
-        if (!isset($data[self::ROOT_CONTEXT_KEY])) {
-            return $data[self::ROOT_CONTEXT_KEY];
+        if ($value === null) {
+            return null;
         }
 
-        if (isset($data[ReflectionHydrator::HYDRATION_CONTEXT_KEY])) {
-            return $data[ReflectionHydrator::HYDRATION_CONTEXT_KEY];
-        }
-
-        throw new LogicException('Cannot hydrate an embedded entity without root context');
+        return $this->hydrator->extract($value);
     }
 
     /**
