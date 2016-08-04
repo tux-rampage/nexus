@@ -58,7 +58,7 @@ class PackageHydrator extends ReflectionHydrator
         ];
 
         parent::__construct($properties);
-        $this->parameterHydrator = $this->createParameterHydrator();
+        $this->parameterHydrator = $this->createParameterHydrator($driver);
 
         $this->addStrategy('id', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING));
         $this->addStrategy('extra', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_DYNAMIC));

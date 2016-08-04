@@ -32,6 +32,8 @@ use Zend\Hydrator\HydratorInterface;
  */
 class EmbeddedStrategy implements StrategyInterface
 {
+    const ROOT_CONTEXT_KEY = '__hydrationRootObject';
+
     use RootContextTrait;
 
     /**

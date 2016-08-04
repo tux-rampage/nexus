@@ -23,6 +23,7 @@
 namespace Rampage\Nexus\MongoDB\Repository;
 
 use Rampage\Nexus\Repository\PackageRepositoryInterface;
+use Rampage\Nexus\Repository\PackageRepositorySubscriberInterface;
 use Rampage\Nexus\Repository\ApplicationRepositoryInterface;
 
 use Rampage\Nexus\Entities\Application;
@@ -35,7 +36,7 @@ use Rampage\Nexus\MongoDB\ImmutablePersistedCollection;
 /**
  * Implements the application Repository
  */
-final class ApplicationRepository extends AbstractRepository implements ApplicationRepositoryInterface, ReferenceProviderInterface
+final class ApplicationRepository extends AbstractRepository implements ApplicationRepositoryInterface, ReferenceProviderInterface, PackageRepositorySubscriberInterface
 {
     use IdReferenceProviderTrait;
 

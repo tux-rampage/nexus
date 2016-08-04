@@ -29,7 +29,12 @@ class Collection implements CollectionInterface
     /**
      * @var \MongoCollection
      */
-    private $mongoCollection;
+    private $mongoCollection = null;
+
+    /**
+     * @var Driver
+     */
+    private $driver;
 
     /**
      * @var string
@@ -40,10 +45,22 @@ class Collection implements CollectionInterface
      * @param string $name
      * @param \MongoDB $database
      */
-    public function __construct($name, \MongoDB $database)
+    public function __construct(Driver $driver, $name)
     {
         $this->name = $name;
-        $this->mongoCollection = $database->selectCollection($name);
+        $this->driver = $driver;
+    }
+
+    /**
+     * @return \MongoCollection
+     */
+    private function getMongoCollection()
+    {
+        if (!$this->mongoCollection) {
+            $this->mongoCollection = $this->driver->selectCollection($this->name);
+        }
+
+        return $this->mongoCollection;
     }
 
     /**
@@ -61,7 +78,7 @@ class Collection implements CollectionInterface
      */
     public function find(array $query, array $fields = null, $limit = null, $skip = null, array $order = null)
     {
-        $cursor = $this->mongoCollection->find($query, $fields);
+        $cursor = $this->getMongoCollection()->find($query, $fields);
 
         if ($skip) {
             $cursor->skip($skip);
@@ -84,7 +101,7 @@ class Collection implements CollectionInterface
      */
     public function findOne(array $query, array $fields = null, array $order = null)
     {
-        return $this->mongoCollection->findOne($query, $fields);
+        return $this->getMongoCollection()->findOne($query, $fields);
     }
 
     /**
@@ -102,7 +119,7 @@ class Collection implements CollectionInterface
      */
     public function insert(array $document, $upsert = false)
     {
-        $this->mongoCollection->insert($document);
+        $this->getMongoCollection()->insert($document);
         return $document['_id'];
     }
 
@@ -112,7 +129,7 @@ class Collection implements CollectionInterface
      */
     public function remove(array $query, $multiple = false)
     {
-        $this->mongoCollection->remove($query, [
+        $this->getMongoCollection()->remove($query, [
             'justOne' => !$multiple
         ]);
     }
@@ -123,7 +140,7 @@ class Collection implements CollectionInterface
      */
     public function update(array $query, array $document, $multiple = false, $upsert = false)
     {
-        $this->mongoCollection->update($query, $document, [
+        $this->getMongoCollection()->update($query, $document, [
             'multiple' => $multiple,
             'upsert' => $upsert
         ]);

@@ -35,6 +35,7 @@ use Psr\Http\Message\RequestInterface;
 
 use Zend\Diactoros\Response\JsonResponse;
 use Rampage\Nexus\Node\VHostDeployStrategyInterface;
+use Rampage\Nexus\Jobs\QueueInterface;
 
 
 /**
@@ -58,6 +59,25 @@ class NotifyMiddleware
      * @var DeployStrategyInterface
      */
     private $deployStrategy;
+
+    /**
+     * @var QueueInterface
+     */
+    private $jobQueue;
+
+    /**
+     * @param ApplicationRepositoryInterface $applicationRepository
+     * @param VHostRepositoryInterface $vhostRepository
+     * @param DeployStrategyInterface $deployStrategy
+     * @param QueueInterface $jobQueue
+     */
+    public function __construct(ApplicationRepositoryInterface $applicationRepository, VHostRepositoryInterface $vhostRepository, DeployStrategyInterface $deployStrategy, QueueInterface $jobQueue)
+    {
+        $this->applicationRepository = $applicationRepository;
+        $this->vhostRepository = $vhostRepository;
+        $this->deployStrategy = $deployStrategy;
+        $this->jobQueue = $jobQueue;
+    }
 
     /**
      * @param unknown $applicationState

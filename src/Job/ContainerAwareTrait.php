@@ -20,4 +20,30 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-// TODO
+namespace Rampage\Nexus\Job;
+
+use Interop\Container\ContainerInterface;
+
+
+/**
+ * Trai to implement container awareness
+ */
+trait ContainerAwareTrait
+{
+    /**
+     * @var ContainerInterface
+     */
+    protected $container = null;
+
+    /**
+     * Set the ioc container context
+     *
+     * @param   ContainerInterface  $container
+     * @return  self
+     */
+    public function setContainer(ContainerInterface $container)
+    {
+        $this->container = $container;
+        return $this;
+    }
+}

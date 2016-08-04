@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "79780be0a9bc2ae6e68382828c317bd8",
-    "content-hash": "8773716bdccaed502e2d4f79c7b122b7",
+    "hash": "0e3dddaff84f058bc269c0ee479d179f",
+    "content-hash": "718aaf06a38b3e6578f67146033c1ae1",
     "packages": [
         {
             "name": "container-interop/container-interop",
@@ -342,6 +342,44 @@
                 "response"
             ],
             "time": "2015-05-04 20:22:00"
+        },
+        {
+            "name": "psr/log",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/log.git",
+                "reference": "fe0936ee26643249e916849d48e3a51d5f5e278b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/log/zipball/fe0936ee26643249e916849d48e3a51d5f5e278b",
+                "reference": "fe0936ee26643249e916849d48e3a51d5f5e278b",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Psr\\Log\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for logging libraries",
+            "keywords": [
+                "log",
+                "psr",
+                "psr-3"
+            ],
+            "time": "2012-12-21 11:40:51"
         },
         {
             "name": "symfony/console",
@@ -1117,6 +1155,77 @@
                 "zf2"
             ],
             "time": "2016-04-18 17:59:29"
+        },
+        {
+            "name": "zendframework/zend-log",
+            "version": "2.9.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zendframework/zend-log.git",
+                "reference": "0325ad00505b8f39d79f26e666dc851bfd25fdaa"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zendframework/zend-log/zipball/0325ad00505b8f39d79f26e666dc851bfd25fdaa",
+                "reference": "0325ad00505b8f39d79f26e666dc851bfd25fdaa",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^5.6 || ^7.0",
+                "psr/log": "^1.0",
+                "zendframework/zend-servicemanager": "^2.7.5 || ^3.0.3",
+                "zendframework/zend-stdlib": "^2.7 || ^3.0"
+            },
+            "provide": {
+                "psr/log-implementation": "1.0.0"
+            },
+            "require-dev": {
+                "fabpot/php-cs-fixer": "1.7.*",
+                "mikey179/vfsstream": "^1.6",
+                "phpunit/phpunit": "~4.0",
+                "zendframework/zend-console": "^2.6",
+                "zendframework/zend-db": "^2.6",
+                "zendframework/zend-escaper": "^2.5",
+                "zendframework/zend-filter": "^2.5",
+                "zendframework/zend-mail": "^2.6.1",
+                "zendframework/zend-validator": "^2.6"
+            },
+            "suggest": {
+                "ext-mongodb": "mongodb extension to use MongoDB writer",
+                "zendframework/zend-console": "Zend\\Console component to use the RequestID log processor",
+                "zendframework/zend-db": "Zend\\Db component to use the database log writer",
+                "zendframework/zend-escaper": "Zend\\Escaper component, for use in the XML log formatter",
+                "zendframework/zend-mail": "Zend\\Mail component to use the email log writer",
+                "zendframework/zend-validator": "Zend\\Validator component to block invalid log messages"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.9-dev",
+                    "dev-develop": "2.10-dev"
+                },
+                "zf": {
+                    "component": "Zend\\Log",
+                    "config-provider": "Zend\\Log\\ConfigProvider"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Zend\\Log\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": "component for general purpose logging",
+            "homepage": "https://github.com/zendframework/zend-log",
+            "keywords": [
+                "log",
+                "logging",
+                "zf2"
+            ],
+            "time": "2016-06-22 22:25:25"
         },
         {
             "name": "zendframework/zend-servicemanager",

@@ -29,8 +29,6 @@ use Rampage\Nexus\Exception\LogicException;
  */
 trait RootContextTrait
 {
-    const ROOT_CONTEXT_KEY = '__hydrationRootObject';
-
     /**
      * @param array $data
      */

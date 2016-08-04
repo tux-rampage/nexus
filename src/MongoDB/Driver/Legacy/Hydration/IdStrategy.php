@@ -24,7 +24,7 @@ namespace Rampage\Nexus\MongoDB\Driver\Legacy\Hydration;
 
 use Zend\Hydrator\Strategy\StrategyInterface;
 
-class IdStartegy implements StrategyInterface
+class IdStrategy implements StrategyInterface
 {
     /**
      * {@inheritDoc}

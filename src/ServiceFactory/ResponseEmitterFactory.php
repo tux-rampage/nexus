@@ -22,12 +22,17 @@
 
 namespace Rampage\Nexus\ServiceFactory;
 
-use Zend\ServiceManager\Factory\FactoryInterface;
 use Interop\Container\ContainerInterface;
-use Zend\Expressive\Emitter\EmitterStack;
 use Rampage\Nexus\Response\SapiStreamEmitter;
+use Rampage\Nexus\Response\PostProcessingEmitter;
+use Rampage\Nexus\Job\PostResponseQueue;
 use Zend\Diactoros\Response\SapiEmitter;
+use Zend\Expressive\Emitter\EmitterStack;
+use Zend\ServiceManager\Factory\FactoryInterface;
 
+/**
+ * Factory for response emitters
+ */
 class ResponseEmitterFactory implements FactoryInterface
 {
     /**
@@ -39,6 +44,9 @@ class ResponseEmitterFactory implements FactoryInterface
         $stack = new EmitterStack();
         $stack->push(new SapiEmitter());
         $stack->unshift(new SapiStreamEmitter());
+
+        $emitter = new PostProcessingEmitter($stack, $container);
+        $emitter->addPostProcessingAction(PostResponseQueue::class);
 
         return $stack;
     }

@@ -20,23 +20,21 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus;
+namespace Rampage\Nexus\Middleware\NodeApi;
 
-use Zend\Expressive\Router;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Zend\Stratigility\MiddlewareInterface;
 
-return [
-    'dependencies' => [
-        'invokables' => [
-            Router\RouterInterface::class => Router\FastRouteRouter::class,
-        ],
-    ],
-
-    'routes' => [
-        [
-            'name' => 'index',
-            'path' => '/',
-            'middleware' => Middleware\IndexAction::class,
-            'allowed_methods' => ['GET'],
-        ],
-    ],
-];
+class NodeContextMiddleware implements MiddlewareInterface
+{
+    /**
+     * {@inheritDoc}
+     * @see \Zend\Stratigility\MiddlewareInterface::__invoke()
+     */
+    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $out = null)
+    {
+        // TODO Auto-generated method stub
+        return $out($request, $response);
+    }
+}

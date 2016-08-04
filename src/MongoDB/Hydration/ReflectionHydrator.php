@@ -83,6 +83,8 @@ class ReflectionHydrator extends BaseReflectionHydrator
      */
     public function __construct(array $properties = null, $identifier = 'id')
     {
+        parent::__construct();
+
         if ($properties !== null) {
             $map = $this->buildPropertyMap($properties);
 
@@ -99,9 +101,6 @@ class ReflectionHydrator extends BaseReflectionHydrator
             $map = [ $identifier => '_id' ];
             $this->setNamingStrategy(new ArrayMapNamingStrategy($map));
         }
-
-
-        parent::__construct();
     }
 
     /**

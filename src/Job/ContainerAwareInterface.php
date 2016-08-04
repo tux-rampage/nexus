@@ -20,23 +20,15 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus;
+namespace Rampage\Nexus\Job;
 
-use Zend\Expressive\Router;
+use Interop\Container\ContainerInterface;
 
-return [
-    'dependencies' => [
-        'invokables' => [
-            Router\RouterInterface::class => Router\FastRouteRouter::class,
-        ],
-    ],
 
-    'routes' => [
-        [
-            'name' => 'index',
-            'path' => '/',
-            'middleware' => Middleware\IndexAction::class,
-            'allowed_methods' => ['GET'],
-        ],
-    ],
-];
+/**
+ * Interface for container aware job components
+ */
+interface ContainerAwareInterface
+{
+    public function setContainer(ContainerInterface $container);
+}

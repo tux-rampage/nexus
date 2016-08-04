@@ -20,23 +20,30 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus;
+namespace Rampage\Nexus\Job;
 
-use Zend\Expressive\Router;
+use Psr\Log\LoggerAwareInterface;
 
-return [
-    'dependencies' => [
-        'invokables' => [
-            Router\RouterInterface::class => Router\FastRouteRouter::class,
-        ],
-    ],
+/**
+ * Defines the interface for queues/schedulers
+ */
+interface QueueInterface extends LoggerAwareInterface
+{
+    /**
+     * Schedule a job for execution
+     *
+     * @param   JobInterface    $job
+     * @return  void
+     */
+    public function schedule(JobInterface $job);
 
-    'routes' => [
-        [
-            'name' => 'index',
-            'path' => '/',
-            'middleware' => Middleware\IndexAction::class,
-            'allowed_methods' => ['GET'],
-        ],
-    ],
-];
+    /**
+     * Request cancellation of the given job
+     *
+     * This may or may not succeed (i.e. if the job is already running).
+     *
+     * @param   JobInterface    $job
+     * @return  void
+     */
+    public function cancel(JobInterface $job);
+}

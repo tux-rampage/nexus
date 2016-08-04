@@ -20,4 +20,30 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-// TODO
+namespace Rampage\Nexus\Job;
+
+use Serializable;
+
+/**
+ * Defines the interface for jobs
+ */
+interface JobInterface extends Serializable
+{
+    /**
+     * Returns the job priority
+     *
+     * This is only a hint for the Queue/Scheduler implementation
+     * It's up to the Scheduler implementation whether to respect it or not
+     *
+     * @return  int The job priority
+     */
+    public function getPriority();
+
+    /**
+     * Execute the job
+     *
+     * @throws  \Throwable  This method may throw any exception. It's up to the Queue/Scheduler implementation to handle it properly
+     * @return void
+     */
+    public function run();
+}

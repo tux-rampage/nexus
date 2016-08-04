@@ -148,7 +148,7 @@ final class Version
                 if ($this->validateTagOrBranchName((string)$version)) {
                     $version =  'dev-' . $version . '@' . $gitDate;
                 } else {
-                    $version = $gitDate;
+                    $version = 'UNKNOWN@' . $gitDate;
                 }
             }
         }

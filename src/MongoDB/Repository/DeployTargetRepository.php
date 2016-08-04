@@ -28,6 +28,7 @@ use Rampage\Nexus\Entities\DeployTarget;
 
 use Rampage\Nexus\MongoDB\Hydration\EntityHydrator\DeployTargetHydrator;
 use Rampage\Nexus\MongoDB\Driver\DriverInterface;
+use Rampage\Nexus\Repository\ApplicationRepositoryInterface;
 
 
 /**
@@ -44,9 +45,9 @@ final class DeployTargetRepository extends AbstractRepository implements DeployT
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\Repository\AbstractRepository::__construct()
      */
-    public function __construct(DriverInterface $driver)
+    public function __construct(DriverInterface $driver, ApplicationRepositoryInterface $applicationRepository)
     {
-        parent::__construct($driver, new DeployTargetHydrator($driver), self::COLLECTION_NAME);
+        parent::__construct($driver, new DeployTargetHydrator($driver, $applicationRepository), self::COLLECTION_NAME);
     }
 
     /**

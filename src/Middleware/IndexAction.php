@@ -20,34 +20,26 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\Driver\Legacy\Hydration;
+namespace Rampage\Nexus\Middleware;
 
-use Rampage\Nexus\MongoDB\Driver\Legacy\Driver;
-use Zend\ServiceManager\AbstractPluginManager;
-use Zend\Hydrator\Strategy\StrategyInterface;
+use Rampage\Nexus\Version;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Zend\Stratigility\MiddlewareInterface;
 
 
 /**
- * The default strategy provider
+ * Index action
  */
-class StrategyProvider extends AbstractPluginManager
+class IndexAction implements MiddlewareInterface
 {
     /**
      * {@inheritDoc}
-     * @see \Zend\ServiceManager\AbstractPluginManager::__construct()
+     * @see \Zend\Stratigility\MiddlewareInterface::__invoke()
      */
-    public function __construct()
+    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $out = null)
     {
-        $this->instanceOf = StrategyInterface::class;
-        parent::__construct($this, [
-            'invokables' => [
-                Driver::STRATEGY_ID => IdStrategy::class,
-                Driver::STRATEGY_DATE => DateStrategy::class,
-                Driver::STRATEGY_DYNAMIC => DynamicStrategy::class,
-                Driver::STRATEGY_STRING => StringStrategy::class,
-                Driver::STRATEGY_BLOB => BlobStrategy::class,
-                Driver::STRATEGY_HASH => HashStrategy::class,
-            ]
-        ]);
+        $response->getBody()->write('Rampage Nexus Deployment - ' . Version::getVersion());
+        return $response->withHeader('Content-Type', 'text/plain');
     }
 }

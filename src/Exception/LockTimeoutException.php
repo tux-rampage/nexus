@@ -20,23 +20,11 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus;
+namespace Rampage\Nexus\Exception;
 
-use Zend\Expressive\Router;
-
-return [
-    'dependencies' => [
-        'invokables' => [
-            Router\RouterInterface::class => Router\FastRouteRouter::class,
-        ],
-    ],
-
-    'routes' => [
-        [
-            'name' => 'index',
-            'path' => '/',
-            'middleware' => Middleware\IndexAction::class,
-            'allowed_methods' => ['GET'],
-        ],
-    ],
-];
+/**
+ * Exception for timeouts when acquiring process locks
+ */
+class LockTimeoutException extends RuntimeException
+{
+}

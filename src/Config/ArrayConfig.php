@@ -22,6 +22,9 @@
 
 namespace Rampage\Nexus\Config;
 
+use Rampage\Nexus\Exception\InvalidArgumentException;
+use ArrayAccess;
+
 /**
  * Array config
  *
@@ -46,8 +49,12 @@ class ArrayConfig implements PropertyConfigInterface
     /**
      * @param array $data
      */
-    public function __construct(array $data)
+    public function __construct($data)
     {
+        if (!is_array($data) && !($data instanceof ArrayAccess)) {
+            throw new InvalidArgumentException('$data must be an array or implement array access');
+        }
+
         $this->data = $data;
     }
 

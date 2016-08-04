@@ -26,12 +26,12 @@ use Rampage\Nexus\MongoDB\Driver\DriverInterface;
 use Rampage\Nexus\MongoDB\Driver\Legacy\Hydration\StrategyProvider;
 use Interop\Container\ContainerInterface;
 
-class Driver implements DriverInterface
+final class Driver implements DriverInterface
 {
     /**
      * @var \MongoDB
      */
-    private $database;
+    private $database = null;
 
     /**
      * @var string
@@ -41,7 +41,17 @@ class Driver implements DriverInterface
     /**
      * @var \MongoClient
      */
-    private $client;
+    private $client = null;
+
+    /**
+     * @var string
+     */
+    private $server;
+
+    /**
+     * @var array
+     */
+    private $options;
 
     /**
      * @var ContainerInterface
@@ -53,11 +63,24 @@ class Driver implements DriverInterface
      * @param string $databaseName
      * @param array $options
      */
-    public function __construct($server, $databaseName, array $options = null)
+    public function __construct($server, $databaseName, array $options = [])
     {
-        $this->client = new \MongoClient($server, $options);
+        $this->server = $server;
+        $this->options = $options;
         $this->dbName = $databaseName;
         $this->strategyProvider = new Hydration\StrategyProvider();
+    }
+
+    /**
+     * @return \MongoClient
+     */
+    protected function connect()
+    {
+        if (!$this->client) {
+            $this->client = new \MongoClient($this->server, $this->options);
+        }
+
+        return $this->client;
     }
 
     /**
@@ -66,7 +89,7 @@ class Driver implements DriverInterface
      */
     protected function selectDatabase($name)
     {
-        return $this->client->selectDB($name);
+        return $this->connect()->selectDB($name);
     }
 
     /**
@@ -83,12 +106,23 @@ class Driver implements DriverInterface
     }
 
     /**
+     * @param string $name
+     * @param string $database
+     * @return \MongoCollection
+     */
+    public function selectCollection($name, $database = null)
+    {
+        $db = ($database)? $this->selectDatabase($database) : $this->getDatabase();
+        return $db->selectCollection($name);
+    }
+
+    /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\Driver\DriverInterface::getCollection()
      */
     public function getCollection($name)
     {
-        return new Collection($name, $this->getDatabase());
+        return new Collection($this, $name);
     }
 
     /**

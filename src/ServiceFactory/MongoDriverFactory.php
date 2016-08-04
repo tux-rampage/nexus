@@ -40,7 +40,7 @@ class MongoDriverFactory implements FactoryInterface
         $config = new ArrayConfig($container->has('config')? $container->get('config') : []);
         $server = $config->get('mongodb.server', 'localhost');
         $database = $config->get('mongodb.database', 'deployment');
-        $driverOptions = $config->get('mongodb.driver.options');
+        $driverOptions = $config->get('mongodb.driver.options', []);
 
         if (extension_loaded('mongo')) {
             return new LegacyDriver($server, $database, $driverOptions);
