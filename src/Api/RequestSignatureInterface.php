@@ -33,8 +33,8 @@ interface RequestSignatureInterface
      * Verify the request signature
      *
      * @param HttpRequest  $request  The request to verify
-     * @param array        $data     Additional data (commonly used to provide shared secrets)
+     * @param string       $data     Additional data (commonly used to provide shared secrets)
      * @return bool
      */
-    public function verify(HttpRequest $request, array $data = null);
+    public function verify(HttpRequest $request, $data = null);
 }

@@ -33,7 +33,8 @@ interface SignRequestInterface
      * Create a request signature
      *
      * @param HttpRequest  $request  The request to sign
-     * @param array        $data     Additional request data to sign (Commonly used to add shared secrets)
+     * @param string       $data     Additional request data to sign (Commonly used to add shared secrets)
+     * @return HttpRequest
      */
-    public function sign(HttpRequest $request, array $data = null);
+    public function sign(HttpRequest $request, $data = null);
 }
