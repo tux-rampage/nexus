@@ -26,6 +26,7 @@ use Rampage\Nexus\Repository\RepositoryInterface;
 use Rampage\Nexus\Ansible\Entities\Host;
 use Rampage\Nexus\Ansible\Entities\Group;
 use Rampage\Nexus\Entities\AbstractNode;
+use Rampage\Nexus\Deployment\NodeInterface;
 
 interface HostRepositoryInterface extends RepositoryInterface
 {
@@ -48,7 +49,7 @@ interface HostRepositoryInterface extends RepositoryInterface
      * @param AbstractNode $node
      * @return bool
      */
-    public function isNodeAttached(AbstractNode $node);
+    public function isNodeAttached(NodeInterface $node);
 
     /**
      * @param Host $host

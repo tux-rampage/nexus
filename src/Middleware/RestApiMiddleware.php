@@ -46,8 +46,6 @@ use Traversable;
  */
 class RestApiMiddleware implements MiddlewareInterface
 {
-    use DecodeRequestBodyTrait;
-
     /**
      * @var RepositoryInterface|PrototypeProviderInterface
      */
@@ -232,6 +230,24 @@ class RestApiMiddleware implements MiddlewareInterface
     }
 
     /**
+     * Ensures there is a usable persed request body
+     *
+     * @param ServerRequestInterface $request
+     * @throws RuntimeException
+     * @return array
+     */
+    protected function ensureParsedBody(ServerRequestInterface $request)
+    {
+        $body = $request->getParsedBody();
+
+        if (!is_array($body)) {
+            throw new UnexpectedValueException('Bad request body');
+        }
+
+        return $body;
+    }
+
+    /**
      * {@inheritDoc}
      * @see \Zend\Stratigility\MiddlewareInterface::__invoke()
      */
@@ -256,12 +272,12 @@ class RestApiMiddleware implements MiddlewareInterface
 
             case 'put':
                 $id = $request->getAttribute($this->identifierAttribute);
-                $data = $this->decodeJsonRequestBody($request);
+                $data = $this->ensureParsedBody($request);
                 $result = $this->update($id, $data);
                 break;
 
             case 'post':
-                $data = $this->decodeJsonRequestBody($request);
+                $data = $this->ensureParsedBody($request);
                 $result = $this->create($data);
                 break;
 

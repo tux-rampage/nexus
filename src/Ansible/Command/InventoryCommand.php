@@ -44,6 +44,7 @@ class InventoryCommand extends Command
     public function __construct(InventoryProviderInterface $inventoryProvider)
     {
         $this->inventoryProvider = $inventoryProvider;
+        parent::__construct('ansible:inventory');
     }
 
     /**
@@ -52,11 +53,10 @@ class InventoryCommand extends Command
      */
     protected function configure()
     {
-        $this->setName('ansible:inventory')
-            ->setDescription('Provides the inventory for ansible')
+        $this->setDescription('Provides the inventory for ansible')
             ->setHelp('Provides the groups and hostvars hash for as described in the ansible documentation.')
-            ->addOption('list', null, InputOption::VALUE_NONE, 'Create the input listing', false)
-            ->addOption('host', null, InputOption::VALUE_NONE, 'Get the host variables hash', false)
+            ->addOption('list', null, InputOption::VALUE_NONE, 'Create the input listing')
+            ->addOption('host', null, InputOption::VALUE_NONE, 'Get the host variables hash')
             ->addArgument('hostname', InputArgument::OPTIONAL, 'The hostname when using --host');
     }
 
@@ -66,7 +66,7 @@ class InventoryCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        if ($input->getOption('host') !== false) {
+        if ($input->getOption('host')) {
             $hostname = $input->getArgument('hostname');
 
             if (!$hostname) {

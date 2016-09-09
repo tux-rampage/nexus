@@ -34,6 +34,11 @@ return [
 
             Package\Installer\InstallerProviderInterface::class => Package\Installer\InstallerManager::class,
             Archive\ArchiveLoaderInterface::class => Archive\ArchiveLoader::class,
+
+            Api\RequestSignatureInterface::class => Api\PublicKeySignature::class,
+            Api\SignRequestInterface::class => Api\PublicKeySignature::class,
+
+            Deployment\NodeProviderInterface::class => Deployment\NodeProvider::class,
         ]
     ]
 ];

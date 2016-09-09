@@ -41,13 +41,14 @@ class ConfigProvider
                     Repository\GroupRepositoryInterface::class => MongoDB\GroupRepository::class,
                     Repository\HostRepositoryInterface::class => MongoDB\HostRepository::class,
                     NodeRepositoryInterface::class => MongoDB\NodeRepository::class,
+                    InventoryProviderInterface::class => InventoryProvider::class,
                 ],
                 'instances' => [
                     MongoDB\HostRepository::class => [
                         'preferences' => [
                             NodeRepositoryInterface::class => DefaultNodeRepository::class,
                         ],
-                        'params' => [
+                        'parameters' => [
                             'groupRepository' => MongoDB\GroupRepository::class,
                         ]
                     ],

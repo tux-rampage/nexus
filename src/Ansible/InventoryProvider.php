@@ -25,7 +25,7 @@ namespace Rampage\Nexus\Ansible;
 use Rampage\Nexus\Ansible\Repository\HostRepositoryInterface;
 use Rampage\Nexus\Ansible\Repository\GroupRepositoryInterface;
 
-class InventoryProvider
+class InventoryProvider implements InventoryProviderInterface
 {
     /**
      * @var GroupRepositoryInterface
@@ -36,6 +36,16 @@ class InventoryProvider
      * @var HostRepositoryInterface
      */
     private $hostRepo;
+
+    /**
+     * @param HostRepositoryInterface $hostRepo
+     * @param GroupRepositoryInterface $groupRepo
+     */
+    public function __construct(HostRepositoryInterface $hostRepo, GroupRepositoryInterface $groupRepo)
+    {
+        $this->hostRepo = $hostRepo;
+        $this->groupRepo = $groupRepo;
+    }
 
     /**
      * Builds the ansible inventory list structure

@@ -20,7 +20,7 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Middleware;
+namespace Rampage\Nexus\Action;
 
 use Rampage\Nexus\Version;
 use Psr\Http\Message\ServerRequestInterface;

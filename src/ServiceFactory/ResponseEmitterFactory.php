@@ -43,11 +43,11 @@ class ResponseEmitterFactory implements FactoryInterface
     {
         $stack = new EmitterStack();
         $stack->push(new SapiEmitter());
-        $stack->unshift(new SapiStreamEmitter());
+        $stack->push(new SapiStreamEmitter());
 
         $emitter = new PostProcessingEmitter($stack, $container);
         $emitter->addPostProcessingAction(PostResponseQueue::class);
 
-        return $stack;
+        return $emitter;
     }
 }

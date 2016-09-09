@@ -32,7 +32,7 @@ use Rampage\Nexus\MongoDB\Hydration\EntityHydrator\NodeHydrator;
 use Rampage\Nexus\Repository\DeployTargetRepositoryInterface;
 use Rampage\Nexus\Exception\InvalidArgumentException;
 
-final class NodeRepository extends AbstractRepository implements NodeRepositoryInterface
+final class NodeRepository extends AbstractRepository implements NodeRepositoryInterface, ReferenceProviderInterface
 {
     const COLLECTION_NAME = 'nodes';
 
@@ -91,6 +91,25 @@ final class NodeRepository extends AbstractRepository implements NodeRepositoryI
     public function findByTarget(DeployTargetInterface $target)
     {
         return $this->doFindOne(['deployTarget' => $this->getIdentifierStrategy()->extract($target->getId())]);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\MongoDB\Repository\ReferenceProviderInterface::findByReference()
+     */
+    public function findByReference($reference)
+    {
+        return $this->doFindOne(['_id' => $reference]);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\MongoDB\Repository\ReferenceProviderInterface::getReference()
+     * @param AbstractNode $object
+     */
+    public function getReference($object)
+    {
+        return $this->getIdentifierStrategy()->hydrate($object->getId());
     }
 
     /**

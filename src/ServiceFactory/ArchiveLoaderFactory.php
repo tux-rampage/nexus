@@ -31,14 +31,22 @@ use Rampage\Nexus\Archive\ArchiveLoader;
  */
 class ArchiveLoaderFactory implements FactoryInterface
 {
+    use RuntimeConfigTrait;
+
     /**
      * {@inheritDoc}
      * @see \Zend\ServiceManager\Factory\FactoryInterface::__invoke()
      */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $config = $container->has('config')? $container->get('config') : [];
-        $dir = isset($config['archives']['storageDir'])? $config['archives']['storageDir'] : __DIR__ . '/../../data/archives';
+        $path = __DIR__ . '/../../';
+
+        if ('' != ($pharPath = \Phar::running(false))) {
+            $path = dirname($pharPath);
+        }
+
+        $config = $this->getRuntimeConfig($container);
+        $dir = $config->get('archives.storageDir', $path . '/data/archives');
 
         return new ArchiveLoader($dir);
     }

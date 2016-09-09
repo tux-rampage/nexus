@@ -34,12 +34,6 @@ return [
             'name' => 'nodes',
             'path' => '/nodes[/{id}]',
             'middleware' => RestApiMiddleware::class . '\Node',
-        ]
-//         [
-//             'name' => 'index',
-//             'path' => '/',
-//             'middleware' => Rampage\Nexus\Middleware\Index::class,
-//             'allowed_methods' => ['GET'],
-//         ],
+        ],
     ],
 ];

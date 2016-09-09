@@ -42,8 +42,6 @@ use Zend\Stdlib\Parameters;
  */
 class NodeMiddleware implements MiddlewareInterface
 {
-    use DecodeRequestBodyTrait;
-
     /**
      * @var NodeRepositoryInterface
      */

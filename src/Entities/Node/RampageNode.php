@@ -37,6 +37,7 @@ use Psr\Http\Message\StreamInterface;
 
 use Zend\Stdlib\Parameters;
 use Zend\Diactoros\Uri;
+use Rampage\Nexus\Middleware\DecodeJsonTrait;
 
 
 /**
@@ -44,6 +45,8 @@ use Zend\Diactoros\Uri;
  */
 class RampageNode extends AbstractNode
 {
+    use DecodeJsonTrait;
+
     const TYPE_ID = 'rampage';
 
     /**

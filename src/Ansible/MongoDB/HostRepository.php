@@ -23,20 +23,27 @@
 namespace Rampage\Nexus\Ansible\MongoDB;
 
 use Rampage\Nexus\Ansible\Repository\HostRepositoryInterface;
-use Rampage\Nexus\MongoDB\Repository\AbstractRepository;
-use Rampage\Nexus\MongoDB\Driver\DriverInterface;
 use Rampage\Nexus\Ansible\Entities\Host;
 use Rampage\Nexus\Ansible\Entities\Group;
+
+use Rampage\Nexus\MongoDB\Repository\AbstractRepository;
+use Rampage\Nexus\MongoDB\Driver\DriverInterface;
 use Rampage\Nexus\MongoDB\Repository\ReferenceProviderInterface;
+use Rampage\Nexus\MongoDB\Hydration\EntityHydrator\NodeHydrator;
+use Rampage\Nexus\MongoDB\Cursor;
 
 use Rampage\Nexus\Repository\DeployTargetRepositoryInterface;
-use Rampage\Nexus\Exception\LogicException;
 use Rampage\Nexus\Repository\NodeRepositoryInterface;
-use Rampage\Nexus\MongoDB\Cursor;
-use Zend\Hydrator\HydratorInterface;
-use Rampage\Nexus\MongoDB\Hydration\EntityHydrator\NodeHydrator;
-use Rampage\Nexus\Deployment\NodeInterface;
 
+use Rampage\Nexus\Deployment\NodeInterface;
+use Rampage\Nexus\Exception\LogicException;
+
+use Zend\Hydrator\HydratorInterface;
+
+
+/**
+ * Host repo implementation
+ */
 class HostRepository extends AbstractRepository implements HostRepositoryInterface
 {
     /**

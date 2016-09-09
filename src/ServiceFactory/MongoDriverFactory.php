@@ -24,20 +24,21 @@ namespace Rampage\Nexus\ServiceFactory;
 
 use Rampage\Nexus\MongoDB\Driver\Legacy\Driver as LegacyDriver;
 use Rampage\Nexus\Exception\RuntimeException;
-use Rampage\Nexus\Config\ArrayConfig;
 
 use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\Factory\FactoryInterface;
 
 class MongoDriverFactory implements FactoryInterface
 {
+    use RuntimeConfigTrait;
+
     /**
      * {@inheritDoc}
      * @see \Zend\ServiceManager\Factory\FactoryInterface::__invoke()
      */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $config = new ArrayConfig($container->has('config')? $container->get('config') : []);
+        $config = $this->getRuntimeConfig($container);
         $server = $config->get('mongodb.server', 'localhost');
         $database = $config->get('mongodb.database', 'deployment');
         $driverOptions = $config->get('mongodb.driver.options', []);

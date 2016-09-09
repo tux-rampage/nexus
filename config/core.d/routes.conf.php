@@ -32,10 +32,10 @@ return [
     ],
 
     'routes' => [
-        [
+        'index' => [
             'name' => 'index',
             'path' => '/',
-            'middleware' => Middleware\IndexAction::class,
+            'middleware' => Action\IndexAction::class,
             'allowed_methods' => ['GET'],
         ],
     ],

@@ -64,20 +64,25 @@ return [
                 // - pre-conditions
                 // - modifications to outgoing responses
                 Helper\ServerUrlMiddleware::class,
+                Middleware\ParseRequestMiddleware::class
             ],
             'priority' => 10000,
         ],
 
         'routing' => [
             'middleware' => [
-                ApplicationFactory::ROUTING_MIDDLEWARE,
-                Helper\UrlHelperMiddleware::class,
+                'route' => ApplicationFactory::ROUTING_MIDDLEWARE,
                 // Add more middleware here that needs to introspect the routing
                 // results; this might include:
                 // - route-based authentication
                 // - route-based validation
                 // - etc.
-                ApplicationFactory::DISPATCH_MIDDLEWARE,
+                'beforeDispatch' => [
+                    'middleware' => [
+                        Helper\UrlHelperMiddleware::class,
+                    ]
+                ],
+                'dispatch' => ApplicationFactory::DISPATCH_MIDDLEWARE,
             ],
             'priority' => 1,
         ],

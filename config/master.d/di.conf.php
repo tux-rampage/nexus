@@ -23,6 +23,7 @@
 namespace Rampage\Nexus;
 
 use Rampage\Nexus\Middleware\RestApiMiddleware;
+use GuzzleHttp\ClientInterface as HttpClientInterface;
 
 return [
     'di' => [
@@ -31,6 +32,12 @@ return [
                 'aliasOf' => RestApiMiddleware::class,
                 'params' => [
                     'repository' => Repository\NodeRepositoryInterface::class,
+                ]
+            ],
+
+            Entities\Node\RampageNode::class => [
+                'preferences' => [
+                    HttpClientInterface::class => Api\RestClient::class,
                 ]
             ]
         ]
