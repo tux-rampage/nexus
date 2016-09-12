@@ -57,8 +57,8 @@ class Cursor implements CursorInterface
      */
     public function __construct(Traversable $wrapped, callable $hydration)
     {
-        if (!$wrapped instanceof Countable) {
-            throw new InvalidArgumentException('The wrapped cursor must implement Countable');
+        if (!($wrapped instanceof Countable) && !method_exists($wrapped, 'count')) {
+            throw new InvalidArgumentException(sprintf('The wrapped cursor must implement Countable, but %s doesn\'t', is_object($wrapped)? get_class($wrapped) : gettype($wrapped)));
         }
 
         $this->wrapped = ($wrapped instanceof Iterator)? $wrapped : new IteratorIterator($wrapped);

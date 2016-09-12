@@ -23,6 +23,8 @@
 namespace Rampage\Nexus\MongoDB\Driver\Legacy;
 
 use Rampage\Nexus\MongoDB\Driver\CollectionInterface;
+use Rampage\Nexus\Exception\InvalidArgumentException;
+use Rampage\Nexus\MongoDB\EmptyCursor;
 
 class Collection implements CollectionInterface
 {
@@ -78,7 +80,19 @@ class Collection implements CollectionInterface
      */
     public function find(array $query, array $fields = null, $limit = null, $skip = null, array $order = null)
     {
-        $cursor = $this->getMongoCollection()->find($query, $fields);
+        if (!is_array($query)) {
+            throw new InvalidArgumentException('Query must be an array');
+        }
+
+        if (!$fields) {
+            $cursor = $this->getMongoCollection()->find($query);
+        } else {
+            $cursor = $this->getMongoCollection()->find($query, $fields);
+        }
+
+        if (!$cursor) {
+            return new EmptyCursor();
+        }
 
         if ($skip) {
             $cursor->skip($skip);
@@ -101,7 +115,13 @@ class Collection implements CollectionInterface
      */
     public function findOne(array $query, array $fields = null, array $order = null)
     {
-        return $this->getMongoCollection()->findOne($query, $fields);
+        if ($fields) {
+            $cursor = $this->getMongoCollection()->findOne($query, $fields);
+        } else {
+            $cursor = $this->getMongoCollection()->findOne($query);
+        }
+
+        return $cursor?: new EmptyCursor();
     }
 
     /**

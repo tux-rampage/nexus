@@ -23,7 +23,7 @@
 namespace Rampage\Nexus\MongoDB;
 
 /**
- * Wrapped cursor implementation
+ * Implements an empty cursor
  */
 final class EmptyCursor implements CursorInterface
 {
