@@ -20,19 +20,17 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Action;
+namespace Rampage\Nexus\Middleware;
 
-use Rampage\Nexus\Version;
+use Zend\Stratigility\MiddlewareInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Zend\Stratigility\MiddlewareInterface;
-use Zend\Diactoros\Response\JsonResponse;
-
+use Zend\Diactoros\Stream;
 
 /**
- * Index action
+ * Implements sanitizing of head request responses
  */
-class IndexAction implements MiddlewareInterface
+class HeadRequestMiddleware implements MiddlewareInterface
 {
     /**
      * {@inheritDoc}
@@ -40,9 +38,13 @@ class IndexAction implements MiddlewareInterface
      */
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $out = null)
     {
-        return new JsonResponse([
-            'name' => 'Rampage Nexus Deployment',
-            'version' => Version::getVersion()
-        ]);
+        return $response = $out($request, $response);
+
+        if ((strtolower($request->getMethod()) != 'head') || !($response instanceof ResponseInterface)) {
+            return $response;
+        }
+
+        return $response->withoutHeader('Content-Length')
+                        ->withBody(new Stream('php://temp', 'r'));
     }
 }

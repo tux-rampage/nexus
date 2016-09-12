@@ -64,7 +64,9 @@ return [
                 // - pre-conditions
                 // - modifications to outgoing responses
                 Helper\ServerUrlMiddleware::class,
-                Middleware\ParseRequestMiddleware::class
+                Middleware\ParseRequestMiddleware::class,
+                Middleware\PrettyJsonMiddleware::class,
+                Middleware\HeadRequestMiddleware::class,
             ],
             'priority' => 10000,
         ],

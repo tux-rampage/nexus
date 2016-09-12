@@ -58,7 +58,7 @@ final class Version
     private function loadFromInfoFile()
     {
         if (is_readable(__DIR__ . '/../resources/version.info')) {
-            return file_get_contents(__DIR__ . '/../resources/version.info');
+            return trim(file_get_contents(__DIR__ . '/../resources/version.info'));
         }
 
         return null;

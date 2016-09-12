@@ -20,29 +20,36 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Action;
+namespace Rampage\Nexus\ServiceFactory;
 
-use Rampage\Nexus\Version;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Zend\Stratigility\MiddlewareInterface;
-use Zend\Diactoros\Response\JsonResponse;
+use Interop\Container\ContainerInterface;
+
+use League\OAuth2\Server\AuthorizationServer;
+
+use Zend\Crypt\PublicKey\Rsa\PrivateKey;
+use Zend\Di\DependencyInjectionInterface;
+use Zend\ServiceManager\Factory\FactoryInterface;
 
 
 /**
- * Index action
+ * Factory for the authorization service
  */
-class IndexAction implements MiddlewareInterface
+class AuthorizationServerFactory implements FactoryInterface
 {
     /**
      * {@inheritDoc}
-     * @see \Zend\Stratigility\MiddlewareInterface::__invoke()
+     * @see \Zend\ServiceManager\Factory\FactoryInterface::__invoke()
      */
-    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $out = null)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        return new JsonResponse([
-            'name' => 'Rampage Nexus Deployment',
-            'version' => Version::getVersion()
+        /* @var $di DependencyInjectionInterface */
+        /* @var $pk PrivateKey */
+        $di = $container->get(DependencyInjectionInterface::class);
+        $pk = $container->get(PrivateKey::class);
+
+        return $di->newInstance(AuthorizationServer::class, [
+            'privateKey' => $pk->toString(),
+            'publicKey' => $pk->getPublicKey()->toString()
         ]);
     }
 }

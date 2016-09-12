@@ -20,27 +20,22 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Middleware\NodeApi;
+namespace Rampage\Nexus\Action\NodeApi;
 
-use Rampage\Nexus\Entities\AbstractNode;
-use Rampage\Nexus\Middleware\DecodeRequestBodyTrait;
 use Rampage\Nexus\Repository\NodeRepositoryInterface;
+use Rampage\Nexus\Archive\ArchiveLoaderInterface;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
-use Zend\Diactoros\Response\EmptyResponse;
-use Zend\Diactoros\Response\JsonResponse;
 use Zend\Stratigility\MiddlewareInterface;
-use Zend\Stdlib\Parameters;
+use Zend\Diactoros\Stream;
+
 
 /**
- * Implements the primary entry point for the node
- *
- * This middleware will perform node updates on post requests and
- * Return the deploy target information for get requests
+ * Package middleware
  */
-class NodeMiddleware implements MiddlewareInterface
+class PackageAction implements MiddlewareInterface
 {
     /**
      * @var NodeRepositoryInterface
@@ -48,21 +43,17 @@ class NodeMiddleware implements MiddlewareInterface
     protected $repository;
 
     /**
-     * @param NodeRepositoryInterface $repository
+     * @var ArchiveLoaderInterface
      */
-    public function __construct(NodeRepositoryInterface $repository)
-    {
-        $this->repository = $repository;
-    }
+    private $archiveLoader;
 
     /**
-     * @param array $data
+     * @param NodeRepositoryInterface $repository
      */
-    protected function updateNodeState(AbstractNode $node, array $data)
+    public function __construct(NodeRepositoryInterface $repository, ArchiveLoaderInterface $archiveLoader)
     {
-        $params = new Parameters($data);
-        $node->updateState($params->get('state', $node->getState()), $params->get('applicationsState'));
-        $this->repository->save($node);
+        $this->repository = $repository;
+        $this->archiveLoader = $archiveLoader;
     }
 
     /**
@@ -71,23 +62,22 @@ class NodeMiddleware implements MiddlewareInterface
      */
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $next = null)
     {
-        $method = strtolower($request->getMethod());
-        $nodeId = $request->getAttribute('nodeId');
-        $node = $nodeId? $this->repository->findOne($nodeId) : null;
+        $node = $request->getAttribute('node');
+        $applicationId = $request->getAttribute('applicationId');
 
-        if (!$node) {
+        if (!$applicationId || !$node || !$node->isAttached()) {
             return $next($request, $response);
         }
 
-        switch ($method) {
-            case 'get':
-                return new JsonResponse($node->toArray());
+        $application = $node->getDeployTarget()->findApplication($applicationId);
+        $package = $application? $application->getPackage() : null;
+        $archive = $package->getArchive();
 
-            case 'put':
-                $this->updateNodeState($nodeId, $this->decodeJsonRequestBody($request));
-                return new EmptyResponse();
+        if (!$archive) {
+            return $next($request, $response);
         }
 
-        return $next($request, $response);
+        $file = $this->archiveLoader->ensureLocalArchiveFile($archive);
+        return $response->withBody(new Stream($file->getPathname()));
     }
 }

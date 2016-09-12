@@ -20,21 +20,62 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Middleware\NodeApi;
+namespace Rampage\Nexus\Action\NodeApi;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Zend\Stratigility\MiddlewareInterface;
+use Rampage\Nexus\Repository\NodeRepositoryInterface;
+use Rampage\Nexus\Exception\Http\BadRequestException;
+use Rampage\Nexus\Api\RequestSignatureInterface;
 
+/**
+ * Prepares the node context after routing
+ */
 class NodeContextMiddleware implements MiddlewareInterface
 {
+    /**
+     * @var NodeRepositoryInterface
+     */
+    private $nodeRepository;
+
+    /**
+     * @var RequestSignatureInterface
+     */
+    private $signatureStrategy;
+
+    /**
+     * @param NodeRepositoryInterface $nodeRepository
+     */
+    public function __construct(NodeRepositoryInterface $nodeRepository, RequestSignatureInterface $signatureStrategy)
+    {
+        $this->nodeRepository = $nodeRepository;
+        $this->signatureStrategy = $signatureStrategy;
+    }
+
     /**
      * {@inheritDoc}
      * @see \Zend\Stratigility\MiddlewareInterface::__invoke()
      */
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $out = null)
     {
-        // TODO Auto-generated method stub
+        $nodeId = $request->getHeaderLine('X-Node-Id');
+
+        if (!$nodeId) {
+            throw new BadRequestException('Missing X-Node-Id header');
+        }
+
+        $node = $this->nodeRepository->findOne($nodeId);
+        if (!$node) {
+            throw new BadRequestException('Invalid node id');
+        }
+
+        $this->signatureStrategy->setKey($node->getPublicKey());
+        if (!$this->signatureStrategy->verify($request)) {
+            throw new BadRequestException('Invalid request signature', BadRequestException::UNAUTHORIZED);
+        }
+
+        $request = $request->withAttribute('node', $node);
         return $out($request, $response);
     }
 }

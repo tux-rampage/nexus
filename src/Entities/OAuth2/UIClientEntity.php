@@ -20,29 +20,41 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Action;
+namespace Rampage\Nexus\Entities\OAuth2;
 
-use Rampage\Nexus\Version;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Zend\Stratigility\MiddlewareInterface;
-use Zend\Diactoros\Response\JsonResponse;
-
+use League\OAuth2\Server\Entities\ClientEntityInterface;
 
 /**
- * Index action
+ * Client entity
  */
-class IndexAction implements MiddlewareInterface
+class UIClientEntity implements ClientEntityInterface
 {
+    const ID = 'nexus-ui';
+
     /**
      * {@inheritDoc}
-     * @see \Zend\Stratigility\MiddlewareInterface::__invoke()
+     * @see \League\OAuth2\Server\Entities\ClientEntityInterface::getIdentifier()
      */
-    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $out = null)
+    public function getIdentifier()
     {
-        return new JsonResponse([
-            'name' => 'Rampage Nexus Deployment',
-            'version' => Version::getVersion()
-        ]);
+        return self::ID;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \League\OAuth2\Server\Entities\ClientEntityInterface::getName()
+     */
+    public function getName()
+    {
+        return 'Rampage Nexus User Interface';
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \League\OAuth2\Server\Entities\ClientEntityInterface::getRedirectUri()
+     */
+    public function getRedirectUri()
+    {
+        return '/';
     }
 }

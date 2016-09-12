@@ -39,6 +39,12 @@ return [
                 'preferences' => [
                     HttpClientInterface::class => Api\RestClient::class,
                 ]
+            ],
+
+            MongoDB\Repository\OAuth2\ClientRepository::class => [
+                'preferences' => [
+                    Config\PropertyConfigInterface::class => 'RuntimeConfig',
+                ]
             ]
         ]
     ],

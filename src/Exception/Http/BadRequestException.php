@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2015 Axel Helmert
+ * Copyright (c) 2016 Axel Helmert
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,33 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @author    Axel Helmert
- * @copyright Copyright (c) 2015 Axel Helmert
+ * @copyright Copyright (c) 2016 Axel Helmert
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Api;
+namespace Rampage\Nexus\Exception\Http;
 
-use Psr\Http\Message\RequestInterface as HttpRequest;
+use Rampage\Nexus\Exception\RuntimeException;
+
 
 /**
- * Sign an http request
+ * Exception for bad requests
  */
-interface RequestSignatureInterface
+class BadRequestException extends RuntimeException implements ExceptionInterface
 {
-    /**
-     * Sets the associated key for verification
-     *
-     * @param   string  $key    The key used for authentication
-     * @return  self            $this
-     */
-    public function setKey($key);
+    const BAD_REQUEST = 400;
+    const UNAUTHORIZED = 401;
+    const NOT_ALLOWED = 405;
+    const UNPROCESSABLE = 422;
 
-    /**
-     * Verify the request signature
-     *
-     * @param HttpRequest  $request  The request to verify
-     * @param string       $data     Additional data (commonly used to provide shared secrets)
-     * @return bool
-     */
-    public function verify(HttpRequest $request, $data = null);
+    public function __construct($message, $code = self::BAD_REQUEST, $previous = null)
+    {
+        if ($code == 0) {
+            $code = self::BAD_REQUEST;
+        }
+
+        parent::__construct($message, $code, $previous);
+    }
 }

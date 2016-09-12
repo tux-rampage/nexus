@@ -39,6 +39,10 @@ return [
             Api\SignRequestInterface::class => Api\PublicKeySignature::class,
 
             Deployment\NodeProviderInterface::class => Deployment\NodeProvider::class,
-        ]
+        ],
+
+        'instances' => [
+            'RuntimeConfig' => [ 'aliasOf' => Config\ArrayConfig::class ],
+        ],
     ]
 ];

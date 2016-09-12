@@ -20,22 +20,26 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Middleware\NodeApi;
+namespace Rampage\Nexus\Action\NodeApi;
 
+use Rampage\Nexus\Entities\AbstractNode;
 use Rampage\Nexus\Repository\NodeRepositoryInterface;
-use Rampage\Nexus\Archive\ArchiveLoaderInterface;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
+use Zend\Diactoros\Response\EmptyResponse;
+use Zend\Diactoros\Response\JsonResponse;
 use Zend\Stratigility\MiddlewareInterface;
-use Zend\Diactoros\Stream;
-
+use Zend\Stdlib\Parameters;
 
 /**
- * Package middleware
+ * Implements the primary entry point for the node
+ *
+ * This middleware will perform node updates on put requests and
+ * Return the deploy target information for get requests
  */
-class PackageMiddleware implements MiddlewareInterface
+class NodeAction implements MiddlewareInterface
 {
     /**
      * @var NodeRepositoryInterface
@@ -43,17 +47,21 @@ class PackageMiddleware implements MiddlewareInterface
     protected $repository;
 
     /**
-     * @var ArchiveLoaderInterface
-     */
-    private $archiveLoader;
-
-    /**
      * @param NodeRepositoryInterface $repository
      */
-    public function __construct(NodeRepositoryInterface $repository, ArchiveLoaderInterface $archiveLoader)
+    public function __construct(NodeRepositoryInterface $repository)
     {
         $this->repository = $repository;
-        $this->archiveLoader = $archiveLoader;
+    }
+
+    /**
+     * @param array $data
+     */
+    protected function updateNodeState(AbstractNode $node, array $data)
+    {
+        $params = new Parameters($data);
+        $node->updateState($params->get('state', $node->getState()), $params->get('applicationsState'));
+        $this->repository->save($node);
     }
 
     /**
@@ -62,23 +70,22 @@ class PackageMiddleware implements MiddlewareInterface
      */
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $next = null)
     {
-        $nodeId = $request->getAttribute('nodeId');
-        $applicationId = $request->getAttribute('applicationId');
-        $node = $nodeId? $this->repository->findOne($nodeId) : null;
+        $method = strtolower($request->getMethod());
+        $node = $request->getAttribute('node');
 
-        if (!$applicationId || !$node || !$node->isAttached()) {
+        if (!$node) {
             return $next($request, $response);
         }
 
-        $application = $node->getDeployTarget()->findApplication($applicationId);
-        $package = $application? $application->getPackage() : null;
-        $archive = $package->getArchive();
+        switch ($method) {
+            case 'get':
+                return new JsonResponse($node->toArray());
 
-        if (!$archive) {
-            return $next($request, $response);
+            case 'put':
+                $this->updateNodeState($node, $this->decodeJsonRequestBody($request));
+                return new EmptyResponse();
         }
 
-        $file = $this->archiveLoader->ensureLocalArchiveFile($archive);
-        return $response->withBody(new Stream($file->getPathname()));
+        return $next($request, $response);
     }
 }

@@ -20,29 +20,46 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Action;
+namespace Rampage\Nexus\Middleware;
 
-use Rampage\Nexus\Version;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Zend\Stratigility\MiddlewareInterface;
 use Zend\Diactoros\Response\JsonResponse;
 
-
 /**
- * Index action
+ * Middleware that allows pretty printing json responses
  */
-class IndexAction implements MiddlewareInterface
+class PrettyJsonMiddleware implements MiddlewareInterface
 {
+    /**
+     * @param ServerRequestInterface $request
+     * @return boolean
+     */
+    private function isPrettyRequested(ServerRequestInterface $request)
+    {
+        return array_key_exists('pretty', $request->getQueryParams());
+    }
+
     /**
      * {@inheritDoc}
      * @see \Zend\Stratigility\MiddlewareInterface::__invoke()
      */
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $out = null)
     {
-        return new JsonResponse([
-            'name' => 'Rampage Nexus Deployment',
-            'version' => Version::getVersion()
-        ]);
+        $response = $out($request, $response);
+
+        if (!($response instanceof JsonResponse) || !$this->isPrettyRequested($request)) {
+            return $response;
+        }
+
+        $pretty = new JsonResponse(
+            json_decode($response->getBody()->__toString()),
+            $response->getStatusCode(),
+            $response->getHeaders(),
+            JsonResponse::DEFAULT_JSON_FLAGS | JSON_PRETTY_PRINT
+        );
+
+        return $pretty->withStatus($response->getStatusCode(), $response->getReasonPhrase());
     }
 }
