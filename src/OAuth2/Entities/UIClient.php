@@ -20,14 +20,14 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Entities\OAuth2;
+namespace Rampage\Nexus\OAuth2\Entities;
 
 use League\OAuth2\Server\Entities\ClientEntityInterface;
 
 /**
  * Client entity
  */
-class UIClientEntity implements ClientEntityInterface
+class UIClient implements ClientEntityInterface
 {
     const ID = 'nexus-ui';
 

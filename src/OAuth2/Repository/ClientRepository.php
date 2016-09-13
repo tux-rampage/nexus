@@ -20,17 +20,21 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB\Repository\OAuth2;
+namespace Rampage\Nexus\OAuth2\Repository;
 
-use League\OAuth2\Server\Repositories\ClientRepositoryInterface;
+use Rampage\Nexus\OAuth2\Entities\UIClient;
 use Rampage\Nexus\Config\PropertyConfigInterface;
-use Rampage\Nexus\Entities\OAuth2\UIClientEntity;
+use Rampage\Nexus\Exception\RuntimeException;
+use League\OAuth2\Server\Repositories\ClientRepositoryInterface;
+
 
 /**
  * Client repository
  */
-final class ClientRepository implements ClientRepositoryInterface
+final class UIClientRepository implements ClientRepositoryInterface
 {
+    const GRANT_TYPE_PASSWORD = 'password';
+
     /**
      * @var PropertyConfigInterface
      */
@@ -44,9 +48,17 @@ final class ClientRepository implements ClientRepositoryInterface
         $this->config = $config;
     }
 
+    /**
+     * @param unknown $secret
+     * @throws RuntimeException
+     * @return unknown
+     */
     private function ensureUiSecret($secret)
     {
-        // FIXME: ui secret
+        if (!$secret) {
+            throw new RuntimeException('No frontend app secret specified. Please specify a UI secret.');
+        }
+
         return $secret;
     }
 
@@ -56,18 +68,17 @@ final class ClientRepository implements ClientRepositoryInterface
      */
     public function getClientEntity($clientIdentifier, $grantType, $clientSecret = null, $mustValidateSecret = true)
     {
-        if ($clientIdentifier != UIClientEntity::ID) {
+        if (($clientIdentifier != UIClient::ID) || ($grantType != self::GRANT_TYPE_PASSWORD)) {
             return null;
         }
 
-        $secret = $this->ensureUiSecret($this->config->get('ui.secret'));
-        $client = new UIClientEntity();
+        if ($mustValidateSecret) {
+            $secret = $this->ensureUiSecret($this->config->get('ui.secret'));
+            if ($secret != $clientSecret) {
+                return null;
+            }
+        }
 
-
-
-        // TODO Auto-generated method stub
-
+        return new UIClient();
     }
-
-
 }
