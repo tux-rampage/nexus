@@ -22,11 +22,10 @@
 
 namespace Rampage\Nexus\Archive;
 
-use Zend\Http\Client as HttpClient;
-use Zend\Http\Client\Adapter\Curl;
+use GuzzleHttp\Client as HttpClient;
 use Zend\Uri\Http as HttpUri;
-
 use Throwable;
+
 
 /**
  * Http downloader
@@ -43,13 +42,12 @@ class HttpDownloader implements DownloaderInterface
      */
     public function __construct()
     {
-        $adapter = new Curl();
-
-        $adapter->setCurlOption(CURLOPT_CONNECTTIMEOUT, 4);
-        $adapter->setCurlOption(CURLOPT_TIMEOUT, 14400);
-
-        $this->client = new HttpClient(null, ['timeout' => null]);
-        $this->client->setAdapter($adapter);
+        $this->client = new HttpClient([
+            'defaults' =>  [
+                'timeout' => 14400,
+                'connect_timeout' => 4,
+            ]
+        ]);
     }
 
     /**
@@ -73,16 +71,12 @@ class HttpDownloader implements DownloaderInterface
      */
     public function download($url, $targetFile)
     {
-        $this->client->setUri($url);
-        $this->client->setStream($targetFile);
+        /* @var $response \Psr\Http\Message\ResponseInterface */
+        $response = $this->client->get($url, [
+            'save_to' => $targetFile
+        ]);
 
-        $response = $this->client->send();
-
-        if (!$response->isOk()) {
-            return false;
-        }
-
-        return true;
+        return ($response->getStatusCode() == 200);
     }
 
     /**

@@ -19,6 +19,7 @@
         "zendframework/zend-di" : "dev-zf3 as 3.0.0",
         "zendframework/zend-hydrator" : "^1.1 | ^2.0",
         "zendframework/Zend-log" : "^2.9",
+        "zendframework/zend-uri": "^2.5",
         "league/oauth2-server" : "^5.1.0",
         "guzzlehttp/guzzle" : "^6.0",
         "mtymek/expressive-config-manager" : "^0.4.0",
