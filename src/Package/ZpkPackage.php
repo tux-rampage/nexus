@@ -36,6 +36,7 @@ class ZpkPackage implements PackageInterface
 {
     use ArrayExportableTrait;
     use BuildIdAwareTrait;
+    use VersionStabilityTrait;
 
     const TYPE_ZPK = 'zpk';
 
@@ -64,7 +65,6 @@ class ZpkPackage implements PackageInterface
     {
         $this->descriptor = $descriptor;
         $this->validate();
-        $this->setBuildId(null);
     }
 
     /**
@@ -86,7 +86,7 @@ class ZpkPackage implements PackageInterface
      */
     public function getId()
     {
-        return $this->buildId;
+        return $this->getName() . '@' . $this->getVersion();
     }
 
     /**
@@ -214,7 +214,13 @@ class ZpkPackage implements PackageInterface
      */
     public function getVersion()
     {
-        return (string)$this->descriptor->version;
+        $version = (string)$this->descriptor->version;
+
+        if ($this->buildId) {
+            $version .= '+' . $this->buildId;
+        }
+
+        return $version;
     }
 
     /**

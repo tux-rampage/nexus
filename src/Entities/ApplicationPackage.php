@@ -59,6 +59,11 @@ class ApplicationPackage implements PackageInterface
     /**
      * @var string
      */
+    protected $isStable = true;
+
+    /**
+     * @var string
+     */
     protected $type = null;
 
     /**
@@ -133,6 +138,7 @@ class ApplicationPackage implements PackageInterface
         $this->parameters = [];
         $this->type = $package->getType();
         $this->version = $package->getVersion();
+        $this->isStable = $package->isStable();
 
         foreach ($package->getParameters() as $param) {
             $this->parameters[$param->getName()] = new PackageParameter($param);
@@ -195,5 +201,26 @@ class ApplicationPackage implements PackageInterface
     public function getVersion()
     {
         return $this->version;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Package\PackageInterface::isStable()
+     */
+    public function isStable()
+    {
+        return $this->isStable;
+    }
+
+    /**
+     * Override stability
+     *
+     * @param string $flag
+     * @return \Rampage\Nexus\Entities\ApplicationPackage
+     */
+    public function setIsStable($flag)
+    {
+        $this->isStable = (bool)$flag;
+        return $this;
     }
 }

@@ -86,4 +86,11 @@ interface PackageInterface extends ArrayExportableInterface
      * @return  array|string
      */
     public function getExtra($name = null);
+
+    /**
+     * Returns whethter the package is stable or not
+     *
+     * @return bool
+     */
+    public function isStable();
 }

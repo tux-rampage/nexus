@@ -34,6 +34,7 @@ class ComposerPackage implements PackageInterface
 {
     use ArrayExportableTrait;
     use BuildIdAwareTrait;
+    use VersionStabilityTrait;
 
     /**
      * Composer package type constant
@@ -72,7 +73,6 @@ class ComposerPackage implements PackageInterface
 
         $this->data = $json;
         $this->validate();
-        $this->setBuildId(null);
     }
 
     /**
@@ -108,7 +108,7 @@ class ComposerPackage implements PackageInterface
      */
     public function getId()
     {
-        return $this->buildId;
+        return $this->getName() . '@' . $this->getVersion();
     }
 
     /**
@@ -218,6 +218,12 @@ class ComposerPackage implements PackageInterface
      */
     public function getVersion()
     {
-        return $this->data['version'];
+        $version = $this->data['version'];
+
+        if ($this->buildId !== null) {
+            $version .= '+' . $this->buildId;
+        }
+
+        return $version;
     }
 }

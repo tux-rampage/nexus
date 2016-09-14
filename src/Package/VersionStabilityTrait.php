@@ -22,36 +22,28 @@
 
 namespace Rampage\Nexus\Package;
 
-use Rampage\Nexus\Exception\InvalidArgumentException;
-
-/**
- * Trait for build id aware packages
- */
-trait BuildIdAwareTrait
+trait VersionStabilityTrait
 {
     /**
-     * @var string
-     */
-    protected $buildId = null;
-
-    /**
-     * Sets the build identifier
+     * Implements the stability check
      *
-     * The provided build ID must follow semantic versioning
-     * according to semantic versioning
+     * Utilizes the package version and analyzes it for unstable
+     * markers which are:
      *
-     * @param string $buildId
-     * @return self
+     *  - A develoment branch beginning with "dev-"
+     *  - A semantic version number denoted with dev, alpha, beta or rc
+     *    i.e. 1.0.0-rc1
+     *  - A semantic version with major version 0
+     *
+     * @return bool
      */
-    public function setBuildId($buildId)
+    public function isStable()
     {
-        if ($buildId == '') {
-            $buildId = null;
-        } else if (!preg_match('/^([a-z0-9]+\.)*[a-z0-9]+/i', $buildId)) {
-            throw new InvalidArgumentException('Invalid build id');
+        if (!$this instanceof PackageInterface) {
+            return false;
         }
 
-        $this->buildId = $buildId;
-        return $this;
+        $version = $this->getVersion();
+        return (bool)preg_match('/^dev-|^(\d+\.)*\d+-(dev|alpha|beta|rc)\.?\d*(\+([a-z0-9]+\.)?[a-z0-9]+)?$|^0\.\d/i', $version);
     }
 }

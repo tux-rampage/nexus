@@ -20,38 +20,31 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Package;
+namespace Rampage\Nexus\BuildSystem\Jenkins\Repository;
 
-use Rampage\Nexus\Exception\InvalidArgumentException;
+use Rampage\Nexus\BuildSystem\Jenkins\PackageScanner\InstanceConfig;
+use Rampage\Nexus\BuildSystem\Jenkins\BuildNotification;
 
-/**
- * Trait for build id aware packages
- */
-trait BuildIdAwareTrait
+interface InstanceRepositoryInterface
 {
     /**
-     * @var string
+     * @return InstanceConfig
      */
-    protected $buildId = null;
+    public function findAll();
 
     /**
-     * Sets the build identifier
+     * Find an instance config by key
      *
-     * The provided build ID must follow semantic versioning
-     * according to semantic versioning
-     *
-     * @param string $buildId
-     * @return self
+     * @param string $key
+     * @return InstanceConfig
      */
-    public function setBuildId($buildId)
-    {
-        if ($buildId == '') {
-            $buildId = null;
-        } else if (!preg_match('/^([a-z0-9]+\.)*[a-z0-9]+/i', $buildId)) {
-            throw new InvalidArgumentException('Invalid build id');
-        }
+    public function find($key);
 
-        $this->buildId = $buildId;
-        return $this;
-    }
+    /**
+     * Find instances for a build notification
+     *
+     * @param BuildNotification $notification
+     * @return InstanceConfig[]
+     */
+    public function findByBuildNotification(BuildNotification $notification);
 }

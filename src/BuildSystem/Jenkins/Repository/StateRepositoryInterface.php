@@ -20,38 +20,15 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Package;
+namespace Rampage\Nexus\BuildSystem\Jenkins\Repository;
 
-use Rampage\Nexus\Exception\InvalidArgumentException;
+use Rampage\Nexus\BuildSystem\Jenkins\PackageScanner\InstanceConfig;
+use Rampage\Nexus\BuildSystem\Jenkins\Job;
 
 /**
- * Trait for build id aware packages
+ *
  */
-trait BuildIdAwareTrait
+interface StateRepositoryInterface
 {
-    /**
-     * @var string
-     */
-    protected $buildId = null;
-
-    /**
-     * Sets the build identifier
-     *
-     * The provided build ID must follow semantic versioning
-     * according to semantic versioning
-     *
-     * @param string $buildId
-     * @return self
-     */
-    public function setBuildId($buildId)
-    {
-        if ($buildId == '') {
-            $buildId = null;
-        } else if (!preg_match('/^([a-z0-9]+\.)*[a-z0-9]+/i', $buildId)) {
-            throw new InvalidArgumentException('Invalid build id');
-        }
-
-        $this->buildId = $buildId;
-        return $this;
-    }
+    public function getProcessedBuilds(InstanceConfig $config, Job $job);
 }
