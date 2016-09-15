@@ -43,10 +43,10 @@ class Build
      * @param Job $job
      * @param unknown $data
      */
-    public function __construct(Job $job, $data)
+    public function __construct(Job $job, $data, ClientInterface $api)
     {
         $this->job = $job;
-        $this->_construct($data);
+        $this->_construct($data, $api);
     }
 
     /**

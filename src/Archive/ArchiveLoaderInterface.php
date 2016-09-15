@@ -33,6 +33,13 @@ use PharData;
 interface ArchiveLoaderInterface
 {
     /**
+     * Adds a downloader implementation
+     *
+     * @param DownloaderInterface $downloader
+     */
+    public function addDownloader(DownloaderInterface $downloader);
+
+    /**
      * Ensures the archive is available locally
      *
      * @param   string      $archive    The path or URI to the archive

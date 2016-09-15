@@ -20,31 +20,19 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\BuildSystem\Jenkins\Repository;
+namespace Rampage\Nexus;
 
-use Rampage\Nexus\BuildSystem\Jenkins\PackageScanner\InstanceConfig;
-use Rampage\Nexus\BuildSystem\Jenkins\Job;
-use Rampage\Nexus\BuildSystem\Jenkins\Build;
-
-/**
- * Defines the state repository for jenkins scanners
- */
-interface StateRepositoryInterface
-{
-    /**
-     * Returns all processed builds for the given job and instance
-     *
-     * @param InstanceConfig $config
-     * @param Job $job
-     * @return int[]
-     */
-    public function getProcessedBuilds(InstanceConfig $config, Job $job);
-
-    /**
-     * Add a build as processed
-     *
-     * @param InstanceConfig $config
-     * @param Build $build
-     */
-    public function addProcessedBuild(InstanceConfig $config, Build $build);
-}
+return [
+    'dependencies' => [
+        'delegators' => [
+            Archive\ArchiveLoader::class => BuildSystem\Jenkins\ServiceFactory\ArchiveLoaderDelegator::class,
+        ]
+    ],
+    'di' => [
+        'preferences' => [
+            BuildSystem\Jenkins\ClientFactoryInterface::class => BuildSystem\Jenkins\ClientFactory::class,
+            BuildSystem\Jenkins\Repository\InstanceRepositoryInterface::class => BuildSystem\Jenkins\Repository\ConfiguredInstancesRepository::class,
+            BuildSystem\Jenkins\PackageScanner\PackageScannerInterface::class => BuildSystem\Jenkins\PackageScanner\PackageScanner::class,
+        ]
+    ]
+];

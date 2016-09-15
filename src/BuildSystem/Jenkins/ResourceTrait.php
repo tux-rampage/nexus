@@ -43,14 +43,14 @@ trait ResourceTrait
     private $properties;
 
     /**
-     * @var ApiClient
+     * @var ClientInterface
      */
     private $api;
 
     /**
      * @param array $data
      */
-    private function _construct(array $data, ApiClient $api = null)
+    private function _construct(array $data, ClientInterface $api = null)
     {
         $this->api = $api;
         $this->data = new ArrayObject($data);
@@ -60,10 +60,10 @@ trait ResourceTrait
     /**
      * Sets the API client to use
      *
-     * @param ApiClient $api
+     * @param ClientInterface $api
      * @return self
      */
-    public function setApiClient(ApiClient $api)
+    public function setApiClient(ClientInterface $api)
     {
         $this->api = $api;
         return $this;
@@ -73,7 +73,7 @@ trait ResourceTrait
      * Returns the api client
      *
      * @throws LogicException
-     * @return \Rampage\Nexus\BuildSystem\Jenkins\ApiClient
+     * @return \Rampage\Nexus\BuildSystem\Jenkins\ClientInterface
      */
     protected function getApi()
     {

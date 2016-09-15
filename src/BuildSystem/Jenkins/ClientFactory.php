@@ -20,31 +20,27 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\BuildSystem\Jenkins\Repository;
+namespace Rampage\Nexus\BuildSystem\Jenkins;
 
-use Rampage\Nexus\BuildSystem\Jenkins\PackageScanner\InstanceConfig;
-use Rampage\Nexus\BuildSystem\Jenkins\Job;
-use Rampage\Nexus\BuildSystem\Jenkins\Build;
+use GuzzleHttp\Client as HttpClient;
 
 /**
- * Defines the state repository for jenkins scanners
+ * Jenkins client factory
  */
-interface StateRepositoryInterface
+class ClientFactory implements ClientFactoryInterface
 {
     /**
-     * Returns all processed builds for the given job and instance
-     *
-     * @param InstanceConfig $config
-     * @param Job $job
-     * @return int[]
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\BuildSystem\Jenkins\ClientFactoryInterface::createJenkinsClient()
      */
-    public function getProcessedBuilds(InstanceConfig $config, Job $job);
+    public function createJenkinsClient($url)
+    {
+        $http = new HttpClient([
+            'base_uri' => $url,
+            'timeout' => 20,
+            'connect_timeout' => 2
+        ]);
 
-    /**
-     * Add a build as processed
-     *
-     * @param InstanceConfig $config
-     * @param Build $build
-     */
-    public function addProcessedBuild(InstanceConfig $config, Build $build);
+        return new RestClient($http);
+    }
 }

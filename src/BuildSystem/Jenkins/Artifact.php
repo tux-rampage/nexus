@@ -35,7 +35,7 @@ class Artifact
      * @param Build $build
      * @param array $data
      */
-    public function __construct(Build $build, array $data, ApiClient $api = null)
+    public function __construct(Build $build, array $data, ClientInterface $api = null)
     {
         $this->build = $build;
         $this->_construct($data, $api);

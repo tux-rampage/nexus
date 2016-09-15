@@ -20,31 +20,17 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\BuildSystem\Jenkins\Repository;
-
-use Rampage\Nexus\BuildSystem\Jenkins\PackageScanner\InstanceConfig;
-use Rampage\Nexus\BuildSystem\Jenkins\Job;
-use Rampage\Nexus\BuildSystem\Jenkins\Build;
+namespace Rampage\Nexus\BuildSystem\Jenkins;
 
 /**
- * Defines the state repository for jenkins scanners
+ * Jenkins client factory
  */
-interface StateRepositoryInterface
+interface ClientFactoryInterface
 {
     /**
-     * Returns all processed builds for the given job and instance
+     * Create a new jenkins client
      *
-     * @param InstanceConfig $config
-     * @param Job $job
-     * @return int[]
+     * @return ClientInterface
      */
-    public function getProcessedBuilds(InstanceConfig $config, Job $job);
-
-    /**
-     * Add a build as processed
-     *
-     * @param InstanceConfig $config
-     * @param Build $build
-     */
-    public function addProcessedBuild(InstanceConfig $config, Build $build);
+    public function createJenkinsClient($url);
 }

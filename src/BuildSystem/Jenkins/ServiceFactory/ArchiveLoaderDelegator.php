@@ -20,31 +20,34 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\BuildSystem\Jenkins\Repository;
+namespace Rampage\Nexus\BuildSystem\Jenkins\ServiceFactory;
 
-use Rampage\Nexus\BuildSystem\Jenkins\PackageScanner\InstanceConfig;
-use Rampage\Nexus\BuildSystem\Jenkins\Job;
-use Rampage\Nexus\BuildSystem\Jenkins\Build;
+use Rampage\Nexus\Archive\ArchiveLoaderInterface;
+use Rampage\Nexus\BuildSystem\Jenkins\ArchiveDownloader;
+
+use Interop\Container\ContainerInterface;
+use Zend\ServiceManager\Factory\DelegatorFactoryInterface;
+
 
 /**
- * Defines the state repository for jenkins scanners
+ * Service delegator for the archive loader
  */
-interface StateRepositoryInterface
+class ArchiveLoaderDelegator implements DelegatorFactoryInterface
 {
     /**
-     * Returns all processed builds for the given job and instance
-     *
-     * @param InstanceConfig $config
-     * @param Job $job
-     * @return int[]
+     * {@inheritDoc}
+     * @see \Zend\ServiceManager\Factory\DelegatorFactoryInterface::__invoke()
      */
-    public function getProcessedBuilds(InstanceConfig $config, Job $job);
+    public function __invoke(ContainerInterface $container, $name, callable $callback, array $options = null)
+    {
+        $loader = $callback();
 
-    /**
-     * Add a build as processed
-     *
-     * @param InstanceConfig $config
-     * @param Build $build
-     */
-    public function addProcessedBuild(InstanceConfig $config, Build $build);
+        if ($loader instanceof ArchiveLoaderInterface) {
+            $loader->addDownloader($container->get(ArchiveDownloader::class));
+        }
+
+        return $loader;
+    }
+
+
 }

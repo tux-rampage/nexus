@@ -54,7 +54,7 @@ class Job
      * @param string $name
      * @param array $data
      */
-    public function __construct($data, Job $group = null, ApiClient $api = null)
+    public function __construct($data, Job $group = null, ClientInterface $api = null)
     {
         if ($group && !$group->isGroup()) {
             throw new LogicException('Cannot define non-group job as group');

@@ -26,12 +26,13 @@ use Rampage\Nexus\Exception\RuntimeException;
 use Rampage\Nexus\Exception\UnexpectedValueException;
 use GuzzleHttp\ClientInterface as HttpClientInterface;
 use Psr\Http\Message\ResponseInterface;
+use Rampage\Nexus\Exception\InvalidArgumentException;
 
 
 /**
  * Implements the api client
  */
-class ApiClient
+class RestClient implements ClientInterface
 {
     /**
      * @var HttpClientInterface
@@ -61,7 +62,7 @@ class ApiClient
      * @throws UnexpectedValueException
      * @return array
      */
-    private function getJson($path)
+    private function getJson($path, $asArray = true)
     {
         $response = $this->http->request('GET', $path . '/api/json');
         $contentType = $response->getHeaderLine('Content-Type');
@@ -70,7 +71,7 @@ class ApiClient
             throw new UnexpectedValueException('Unexpected Content type: '  .$contentType);
         }
 
-        $data = json_decode($response->getBody()->getContents(), true);
+        $data = json_decode($response->getBody()->getContents(), $asArray);
         $error = json_last_error();
 
         if ($error != JSON_ERROR_NONE) {
@@ -89,11 +90,57 @@ class ApiClient
     }
 
     /**
+     * @param string[] $names
+     */
+    private function buildDummyGroups($names)
+    {
+        $group = null;
+
+        while (count($names) > 0) {
+            $name = array_shift($names);
+            $drop = array_shift($names);
+
+            if ($drop != 'job') {
+                throw new InvalidArgumentException('Bad job name path semantics, expected "/job/"');
+            }
+
+            $group = new Job(['name' => $name], $group);
+        }
+
+        return $group;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\BuildSystem\Jenkins\ClientInterface::getJobs()
+     */
+    public function getJobs()
+    {
+        $data = $this->getJson('', false);
+
+        if (!isset($data->jobs) || !is_array($data->jobs)) {
+            return [];
+        }
+
+        $mapper = function($job) {
+            return $job->name;
+        };
+
+        return array_map($mapper, $data->jobs);
+    }
+
+    /**
      * @param string $name
-     * @return Project
+     * @return Job
      */
     public function getJob($name, Job $group = null)
     {
+        if (strpos($name, '/') && !$group) {
+            $names = explode('/', $name);
+            $name = array_pop($names);
+            $group = $this->buildDummyGroups($names);
+        }
+
         $groupPath = $group? '/job/' . $group->getFullName() : '';
         $data = $this->getJson($groupPath . '/job/' . $name);
 
@@ -122,7 +169,9 @@ class ApiClient
         $build = $artifact->getBuild();
         $job = $build->getJob();
         $path = sprintf('/job/%s/%s/artifact/%s', $job->getFullName(), $build->getId(), $artifact->getRelativePath());
-        $options = [];
+        $options = [
+            'timeout' => 600
+        ];
 
         if ($toFile !== null) {
             $options['save_to'] = $toFile;
