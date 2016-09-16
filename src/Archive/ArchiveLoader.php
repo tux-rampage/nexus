@@ -71,6 +71,15 @@ class ArchiveLoader implements ArchiveLoaderInterface
     }
 
     /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Archive\ArchiveLoaderInterface::getDownloadDirectory()
+     */
+    public function getDownloadDirectory()
+    {
+        return $this->downloadDirectory;
+    }
+
+    /**
      * Add a downloader
      *
      * @param   DownloaderInterface $downloader

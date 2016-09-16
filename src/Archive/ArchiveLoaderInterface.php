@@ -33,6 +33,13 @@ use PharData;
 interface ArchiveLoaderInterface
 {
     /**
+     * Returns the download directory
+     *
+     * @return string
+     */
+    public function getDownloadDirectory();
+
+    /**
      * Adds a downloader implementation
      *
      * @param DownloaderInterface $downloader

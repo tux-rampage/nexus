@@ -40,6 +40,8 @@ use Rampage\Nexus\Entities\ApplicationPackage;
 
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use Rampage\Nexus\BuildSystem\Jenkins\ArchiveDownloader;
+use Rampage\Nexus\Archive\ArchiveLoaderInterface;
 
 
 
@@ -63,13 +65,20 @@ class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
     private $clientFactory;
 
     /**
+     * @var ArchiveLoaderInterface
+     */
+    private $archiveLoader;
+
+    /**
      * @param StateRepositoryInterface $stateRepository
      * @param ClientInterface $api
      */
-    public function __construct(PackageRepositoryInterface $repository, StateRepositoryInterface $stateRepository, ClientFactoryInterface $clientFactory)
+    public function __construct(PackageRepositoryInterface $repository, StateRepositoryInterface $stateRepository, ClientFactoryInterface $clientFactory, ArchiveLoaderInterface $archiveLoader)
     {
+        $this->repository = $repository;
         $this->stateRepository = $stateRepository;
         $this->clientFactory = $clientFactory;
+        $this->archiveLoader = $archiveLoader;
         $this->logger = new NoopLogger();
     }
 
@@ -138,16 +147,33 @@ class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
     }
 
     /**
+     * @param Artifact $artifact
+     * @param InstanceConfig $instance
+     * @return string
+     */
+    private function buildLocalFilename(Artifact $artifact, InstanceConfig $instance)
+    {
+        return sprintf(
+            '%s.%d.%s-$%s',
+            $instance->getId(),
+            $artifact->getBuild()->getId(),
+            md5($artifact->getBuild()->getJob()->getFullName()),
+            $artifact->getFileName()
+        );
+    }
+
+    /**
      * Returns the Package information for this build
      *
      * @param Build $build
      * @param Artifact $artifact
      * @return ZpkPackage|ComposerPackage
      */
-    private function getPackage(Build $build, Artifact $artifact)
+    private function getPackage(InstanceConfig $instance, Artifact $artifact)
     {
         $zpk = $artifact->getFileName() . '.xml';
         $composer = $artifact->getFileName() . '.json';
+        $build = $artifact->getBuild();
 
         if (null !== ($zpkDesc = $build->getArtifact($zpk))) {
             return new ZpkPackage($zpkDesc->getContents());
@@ -157,7 +183,20 @@ class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
             return new ComposerPackage($composerDesc->getContents());
         }
 
-        return null;
+        // Try pulling the archive
+        // TODO: Make this configurable!
+        $filename = $this->downloadDirectory . '/' . $this->buildLocalFilename($artifact, $instance);
+        $artifact->download($filename);
+
+        try {
+            $archive = new \PharData($filename);
+            $package = $this->archiveLoader->getPackage($archive);
+        } catch (\Throwable $e) {
+            // FIXME: Remove file
+            return null;
+        }
+
+        return $package;
     }
 
     /**
@@ -181,8 +220,11 @@ class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
      * @param ClientInterface $client
      * @param Build $build
      */
-    private function scanArtifacts(ClientInterface $client, Build $build, $instanceId)
+    private function scanArtifacts(ClientInterface $client, Build $build, InstanceConfig $instance)
     {
+        $instanceId = $instance->getId();
+        $job = $build->getJob();
+
         if (!$build->isUsable()) {
             $this->logger->debug(sprintf('Unusable build %d in job "%s" (%s).', $build->getId(), $job->getFullName(), $build->getResult()));
             return;
@@ -192,7 +234,7 @@ class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
         $artifacts = $this->getFilteredArtifacts($build);
 
         foreach ($artifacts as $artifact) {
-            $package = $this->getPackage($build, $artifact);
+            $package = $this->getPackage($instance, $artifact);
             if (!$package) {
                 $this->logger->debug(sprintf('Skip artifact "%s" of build %d in job "%s" - no package descriptor', $artifact, $build->getId(), $job->getFullName()));
                 continue;
@@ -244,7 +286,7 @@ class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
 
         $build = $job->getBuild($notification->getBuildId());
 
-        $this->scanArtifacts($client, $build);
+        $this->scanArtifacts($client, $build, $instance);
         $this->stateRepository->addProcessedBuild($instance, $build);
     }
 
@@ -288,7 +330,7 @@ class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
                         continue;
                     }
 
-                    $this->scanArtifacts($client, $build, $instance->getId());
+                    $this->scanArtifacts($client, $build, $instance);
                     $this->stateRepository->addProcessedBuild($instance, $build);
                 } catch (\Throwable $e) {
                     $this->logger->error($e->__toString());

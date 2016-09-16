@@ -22,6 +22,8 @@
 
 namespace Rampage\Nexus\BuildSystem\Jenkins;
 
+use Psr\Http\Message\ResponseInterface;
+
 /**
  * Interface to interact with Jenkins instances
  */

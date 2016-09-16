@@ -22,6 +22,8 @@
 
 namespace Rampage\Nexus\BuildSystem\Jenkins;
 
+use Psr\Http\Message\ResponseInterface;
+
 class Artifact
 {
     use ResourceTrait;
@@ -68,6 +70,17 @@ class Artifact
                     ->downloadArtifact($this)
                     ->getBody()
                     ->getContents();
+    }
+
+    /**
+     * Download the artifact to the given file
+     *
+     * @param string $file
+     * @return ResponseInterface
+     */
+    public function download($file)
+    {
+        return $this->getApi()->downloadArtifact($this, $file);
     }
 
     /**
