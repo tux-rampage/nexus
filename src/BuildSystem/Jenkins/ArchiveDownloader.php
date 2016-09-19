@@ -24,6 +24,7 @@ namespace Rampage\Nexus\BuildSystem\Jenkins;
 
 use Rampage\Nexus\Archive\DownloaderInterface;
 use Rampage\Nexus\Exception\InvalidArgumentException;
+use Rampage\Nexus\Exception\RuntimeException;
 
 class ArchiveDownloader implements DownloaderInterface
 {
@@ -81,6 +82,11 @@ class ArchiveDownloader implements DownloaderInterface
     {
         $args = $this->parseUrl($url);
         $instance = $this->instanceRepository->find($args['id']);
+
+        if (!$instance) {
+            throw new RuntimeException('Could not find jenkins instance ' . $args['id']);
+        }
+
         $client = $this->clientFactory->createJenkinsClient($instance->getJenkinsUrl());
         $job = $client->getJob($args['job']);
         $build = $job->getBuild($args['build']);

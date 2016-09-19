@@ -34,5 +34,9 @@ return [
             BuildSystem\Jenkins\Repository\InstanceRepositoryInterface::class => BuildSystem\Jenkins\Repository\ConfiguredInstancesRepository::class,
             BuildSystem\Jenkins\PackageScanner\PackageScannerInterface::class => BuildSystem\Jenkins\PackageScanner\PackageScanner::class,
         ]
-    ]
+    ],
+
+    'commands' => [
+        'jenkins:scan' => BuildSystem\Jenkins\Console\ScanCommand::class,
+    ],
 ];

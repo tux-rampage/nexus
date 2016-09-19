@@ -34,17 +34,18 @@ use Rampage\Nexus\Package\ZpkPackage;
 use Rampage\Nexus\Package\ComposerPackage;
 use Rampage\Nexus\Package\PackageInterface;
 
+use Rampage\Nexus\Archive\ArchiveLoaderInterface;
 use Rampage\Nexus\NoopLogger;
 use Rampage\Nexus\Repository\PackageRepositoryInterface;
 use Rampage\Nexus\Entities\ApplicationPackage;
 
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
-use Rampage\Nexus\BuildSystem\Jenkins\ArchiveDownloader;
-use Rampage\Nexus\Archive\ArchiveLoaderInterface;
 
 
-
+/**
+ * Implements the package scanner
+ */
 class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;
