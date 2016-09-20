@@ -23,8 +23,9 @@
 namespace Rampage\Nexus\BuildSystem\Jenkins;
 
 use Rampage\Nexus\Exception\UnexpectedValueException;
+use Rampage\Nexus\Entities\Api\ArrayExportableInterface;
 
-class BuildNotification
+class BuildNotification implements ArrayExportableInterface
 {
     use ResourceTrait;
 
@@ -120,5 +121,14 @@ class BuildNotification
     public function isUsable()
     {
         return in_array($this->getStatus(), ['SUCCESS', 'UNSTABLE']);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Entities\Api\ArrayExportableInterface::toArray()
+     */
+    public function toArray()
+    {
+        return $this->data->getArrayCopy();
     }
 }

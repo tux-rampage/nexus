@@ -25,14 +25,25 @@ namespace Rampage\Nexus;
 return [
     'dependencies' => [
         'delegators' => [
-            Archive\ArchiveLoader::class => BuildSystem\Jenkins\ServiceFactory\ArchiveLoaderDelegator::class,
+            Archive\ArchiveLoader::class => [
+                'jenkins' => BuildSystem\Jenkins\ServiceFactory\ArchiveLoaderDelegator::class,
+            ]
         ]
     ],
     'di' => [
         'preferences' => [
             BuildSystem\Jenkins\ClientFactoryInterface::class => BuildSystem\Jenkins\ClientFactory::class,
             BuildSystem\Jenkins\Repository\InstanceRepositoryInterface::class => BuildSystem\Jenkins\Repository\ConfiguredInstancesRepository::class,
+            BuildSystem\Jenkins\Repository\StateRepositoryInterface::class => BuildSystem\Jenkins\MongoDB\StateRepository::class,
             BuildSystem\Jenkins\PackageScanner\PackageScannerInterface::class => BuildSystem\Jenkins\PackageScanner\PackageScanner::class,
+        ],
+
+        'instances' => [
+            BuildSystem\Jenkins\Repository\ConfiguredInstancesRepository::class => [
+                'preferences' => [
+                    Config\PropertyConfigInterface::class => 'RuntimeConfig',
+                ]
+            ]
         ]
     ],
 

@@ -26,6 +26,7 @@ return [
     'dependencies' => [
         'factories' => [
             MongoDB\Driver\DriverInterface::class => ServiceFactory\MongoDriverFactory::class,
+            Archive\ArchiveLoader::class => ServiceFactory\ArchiveLoaderFactory::class,
         ],
     ],
 ];

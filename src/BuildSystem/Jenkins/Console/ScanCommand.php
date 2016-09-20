@@ -52,6 +52,8 @@ class ScanCommand extends Command
     public function __construct(PackageScannerInterface $scanner, InstanceRepositoryInterface $repository)
     {
         parent::__construct('jenkins:scan');
+        $this->scanner = $scanner;
+        $this->repository = $repository;
     }
 
     /**

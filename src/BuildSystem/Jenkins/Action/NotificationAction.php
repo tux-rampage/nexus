@@ -30,6 +30,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 use Zend\Stratigility\MiddlewareInterface;
+use Rampage\Nexus\BuildSystem\Jenkins\ProcessNotificationJob;
+use Rampage\Nexus\Job\QueueInterface;
+use Zend\Diactoros\Response\JsonResponse;
 
 
 /**
@@ -38,23 +41,16 @@ use Zend\Stratigility\MiddlewareInterface;
 class NotificationAction implements MiddlewareInterface
 {
     /**
-     * @var InstanceRepositoryInterface
+     * @var QueueInterface
      */
-    private $repository;
+    private $jobq;
 
     /**
-     * @var PackageScannerInterface
+     * @param QueueInterface $jobq
      */
-    private $scanner;
-
-    /**
-     * @param PackageScannerInterface $scanner
-     * @param InstanceRepositoryInterface $repository
-     */
-    public function __construct(PackageScannerInterface $scanner, InstanceRepositoryInterface $repository)
+    public function __construct(QueueInterface $jobq)
     {
-        $this->scanner = $scanner;
-        $this->repository = $repository;
+        $this->jobq = $jobq;
     }
 
     /**
@@ -65,15 +61,10 @@ class NotificationAction implements MiddlewareInterface
     {
         $id = $request->getAttribute('jenkinsInstanceId');
         $notification = new BuildNotification($request->getParsedBody());
+        $job = new ProcessNotificationJob($notification, $id);
 
-        if ($id) {
-            $instance = $this->repository->find($id);
-            $this->scanner->notify($instance, $notification);
-        } else {
-            $instances = $this->repository->findByBuildNotification($notification);
-            foreach ($instances as $instance) {
-                $this->scanner->notify($instance, $notification);
-            }
-        }
+        $this->jobq->schedule($job);
+
+        return new JsonResponse(['scheduled' => true], 202);
     }
 }

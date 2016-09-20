@@ -41,6 +41,7 @@ use Rampage\Nexus\Entities\ApplicationPackage;
 
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use Rampage\Nexus\FileSystemInterface;
 
 
 /**
@@ -71,15 +72,26 @@ class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
     private $archiveLoader;
 
     /**
+     * @var FileSystemInterface
+     */
+    private $filesystem;
+
+    /**
      * @param StateRepositoryInterface $stateRepository
      * @param ClientInterface $api
      */
-    public function __construct(PackageRepositoryInterface $repository, StateRepositoryInterface $stateRepository, ClientFactoryInterface $clientFactory, ArchiveLoaderInterface $archiveLoader)
+    public function __construct(
+        PackageRepositoryInterface $repository,
+        StateRepositoryInterface $stateRepository,
+        ClientFactoryInterface $clientFactory,
+        ArchiveLoaderInterface $archiveLoader,
+        FileSystemInterface $filesystem)
     {
         $this->repository = $repository;
         $this->stateRepository = $stateRepository;
         $this->clientFactory = $clientFactory;
         $this->archiveLoader = $archiveLoader;
+        $this->filesystem = $filesystem;
         $this->logger = new NoopLogger();
     }
 
@@ -184,20 +196,25 @@ class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
             return new ComposerPackage($composerDesc->getContents());
         }
 
+        if (!$instance->isArtifactScanEnabled()) {
+            return null;
+        }
+
         // Try pulling the archive
-        // TODO: Make this configurable!
         $filename = $this->downloadDirectory . '/' . $this->buildLocalFilename($artifact, $instance);
         $artifact->download($filename);
 
         try {
             $archive = new \PharData($filename);
             $package = $this->archiveLoader->getPackage($archive);
+
+            return $package;
         } catch (\Throwable $e) {
-            // FIXME: Remove file
-            return null;
+            $this->logger->info(' - Unusable archive: ' . $artifact->getRelativePath());
+            $this->filesystem->delete($filename);
         }
 
-        return $package;
+        return null;
     }
 
     /**

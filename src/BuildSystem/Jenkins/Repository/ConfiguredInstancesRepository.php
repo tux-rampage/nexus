@@ -81,6 +81,10 @@ final class ConfiguredInstancesRepository implements InstanceRepositoryInterface
             $config = new InstanceConfig($key, $data['url']);
             $this->instances[$key] = $config;
 
+            if (isset($data['scanArtifactFiles'])) {
+                $config->enableArtifactScan($data['scanArtifactFiles']);
+            }
+
             foreach (['include', 'exclude'] as $type) {
                 $method = $type . 'Project';
 

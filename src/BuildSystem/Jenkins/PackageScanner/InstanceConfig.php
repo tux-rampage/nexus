@@ -35,6 +35,11 @@ class InstanceConfig
     private $jenkinsUrl;
 
     /**
+     * @var bool
+     */
+    private $scanArtifactFiles = false;
+
+    /**
      * @var string[]
      */
     protected $includeProjects = [];
@@ -87,6 +92,26 @@ class InstanceConfig
     public function getExcludeProjects()
     {
         return $this->excludeProjects;
+    }
+
+    /**
+     * @param bool $flag
+     * @return self
+     */
+    public function enableArtifactScan($flag = true)
+    {
+        $this->scanArtifactFiles = (bool)$flag;
+        return $this;
+    }
+
+    /**
+     * Checks if artifacts should be downloaded and scanned
+     *
+     * @return bool
+     */
+    public function isArtifactScanEnabled()
+    {
+        return $this->scanArtifactFiles;
     }
 
     /**
