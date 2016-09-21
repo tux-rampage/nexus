@@ -20,10 +20,29 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-require_once __DIR__ . '/vendor/autoload.php';
+namespace Rampage\Nexus\Middleware;
 
-// Polyfill: Legacy alias for PHP < 7.0
-if (!class_exists('Throwable') && !interface_exists('Throwable')) {
-    @class_alias('Exception', 'Throwable');
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Zend\Stratigility\MiddlewareInterface;
+
+class RewriteMiddleware implements MiddlewareInterface
+{
+    /**
+     * {@inheritDoc}
+     * @see \Zend\Stratigility\MiddlewareInterface::__invoke()
+     */
+    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $out = null)
+    {
+        $uri = $request->getUri();
+        $path = $uri->getPath();
+        $match = [];
+
+        if (preg_match('~^/(rest(\.php)?|api(\.php)|index\.php?)(?P<path>/.*)?$~', $path, $match)) {
+            $uri = $uri->withPath($match['path']);
+            $request = $request->withUri($uri);
+        }
+
+        return $out($request, $response);
+    }
 }
-

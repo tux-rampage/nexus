@@ -112,7 +112,7 @@ final class PackageRepository extends AbstractRepository implements PackageRepos
      */
     public function findByPackageName($packageName)
     {
-        return $this->doFind(ApplicationPackage::class, ['name' => $packageName]);
+        return $this->doFind(['name' => $packageName]);
     }
 
     /**

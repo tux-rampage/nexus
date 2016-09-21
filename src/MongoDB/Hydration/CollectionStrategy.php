@@ -87,7 +87,7 @@ class CollectionStrategy implements StrategyInterface
      * {@inheritDoc}
      * @see \Zend\Hydrator\Strategy\StrategyInterface::hydrate()
      */
-    public function hydrate($value)
+    public function hydrate($value, array &$data = null)
     {
         $collection = new ArrayCollection();
 
@@ -98,11 +98,11 @@ class CollectionStrategy implements StrategyInterface
 
         if ($this->indexed) {
             foreach ($value as $key => $item) {
-                $collection[$key] = $this->itemStrategy->hydrate($item);
+                $collection[$key] = $this->itemStrategy->hydrate($item, $data);
             }
         } else {
             foreach ($value as $item) {
-                $collection[] = $this->itemStrategy->hydrate($item);
+                $collection[] = $this->itemStrategy->hydrate($item, $data);
             }
         }
 

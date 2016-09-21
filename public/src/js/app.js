@@ -1,4 +1,3 @@
-<?php
 /**
  * Copyright (c) 2016 Axel Helmert
  *
@@ -20,10 +19,14 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-require_once __DIR__ . '/vendor/autoload.php';
+'use strict';
 
-// Polyfill: Legacy alias for PHP < 7.0
-if (!class_exists('Throwable') && !interface_exists('Throwable')) {
-    @class_alias('Exception', 'Throwable');
-}
+var angular = require('angular');
+var module = angular.module('uiRampageNexus');
 
+require('./config')(module);
+
+module.exports = {
+    name: 'uiRampageNexus',
+    module: module
+};

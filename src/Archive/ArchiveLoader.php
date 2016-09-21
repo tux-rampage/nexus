@@ -25,9 +25,10 @@ namespace Rampage\Nexus\Archive;
 use Rampage\Nexus\FileSystemInterface;
 use Rampage\Nexus\FileSystem;
 use Rampage\Nexus\Exception\RuntimeException;
+use Rampage\Nexus\Archive\PackageLoader\PackageLoaderInterface;
 
 use PharData;
-use Rampage\Nexus\Archive\PackageLoader\PackageLoaderInterface;
+use SplFileInfo;
 
 
 /**
@@ -110,7 +111,12 @@ class ArchiveLoader implements ArchiveLoaderInterface
     public function ensureLocalArchiveFile($archive)
     {
         if (is_file($archive)) {
-            return $archive;
+            return new SplFileInfo($archive);
+        }
+
+        $path = $this->downloadDirectory . '/' . $archive;
+        if (is_file($path)) {
+            return new SplFileInfo($path);
         }
 
         foreach ($this->downloaders as $downloader) {
@@ -121,8 +127,8 @@ class ArchiveLoader implements ArchiveLoaderInterface
             $this->filesystem->ensureDirectory($this->downloadDirectory);
             $file = $this->downloadDirectory . '/' . $downloader->getFilenameFromUrl($archive);
 
-            if ($downloader->download($archive, $file)) {
-                return $file;
+            if (is_file($file) || $downloader->download($archive, $file)) {
+                return new SplFileInfo($file);
             }
         }
 

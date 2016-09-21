@@ -82,7 +82,7 @@ final class PostProcessingEmitter implements EmitterInterface
     {
         foreach ($this->postProcessors as $processor) {
             if (is_string($processor) && $this->container->has($processor)) {
-                $processor = $this->container->get('processor');
+                $processor = $this->container->get($processor);
             }
 
             if (is_callable($processor)) {

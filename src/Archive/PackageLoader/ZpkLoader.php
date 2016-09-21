@@ -50,7 +50,8 @@ class ZpkLoader implements PackageLoaderInterface
             throw new InvalidArgumentException('The Archive does not contain a deployment descriptor');
         }
 
-        return new ZpkPackage($archive->offsetGet(static::DESCRIPTOR_FILE)->getContent());
+        $xml = $archive->offsetGet(static::DESCRIPTOR_FILE)->getContent();
+        return new ZpkPackage(new \SimpleXMLElement($xml));
     }
 
     /**
@@ -75,7 +76,7 @@ class ZpkLoader implements PackageLoaderInterface
     public function load(PharData $archive)
     {
         $package = $this->read($archive);
-        $package->setArchive($archive->getPathname());
+        $package->setArchive($archive->getPath());
 
         return $package;
     }

@@ -73,6 +73,7 @@ return [
 
         'routing' => [
             'middleware' => [
+                'rewrites' => Middleware\RewriteMiddleware::class,
                 'route' => ApplicationFactory::ROUTING_MIDDLEWARE,
                 // Add more middleware here that needs to introspect the routing
                 // results; this might include:

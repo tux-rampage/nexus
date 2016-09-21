@@ -20,7 +20,7 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Middleware;
+namespace Rampage\Nexus\Action;
 
 use Rampage\Nexus\Entities\Api\ArrayExchangeInterface;
 use Rampage\Nexus\Entities\Api\ArrayExportableInterface;
@@ -38,14 +38,15 @@ use Zend\Stdlib\ArraySerializableInterface;
 use Zend\Stratigility\MiddlewareInterface;
 
 use ArrayObject;
-use Traversable;
 
 
 /**
  * Implements a repository based rest API
  */
-class RestApiMiddleware implements MiddlewareInterface
+abstract class AbstractRestApi implements MiddlewareInterface
 {
+    use JsonCollectionTrait;
+
     /**
      * @var RepositoryInterface|PrototypeProviderInterface
      */
@@ -97,43 +98,6 @@ class RestApiMiddleware implements MiddlewareInterface
     {
         $this->identifierAttribute = (string)$name;
         return $this;
-    }
-
-    /**
-     * Converts a collection to an array
-     *
-     * @param array|Traversable|ArrayExportableInterface $collection
-     * @throws InvalidArgumentException
-     * @throws UnexpectedValueException
-     * @return array[]
-     */
-    protected function collectionToArray($collection)
-    {
-        if ($collection instanceof ArrayExportableInterface) {
-            return $collection;
-        }
-
-        if (!is_array($collection) && !($collection instanceof Traversable)) {
-            throw new InvalidArgumentException(sprintf('The provided collection must be an array or implement the Traversable interface, %s given', is_object($collection)? get_class($collection) : gettype($collection)));
-        }
-
-        $result = [];
-
-        foreach ($collection as $item) {
-            if ($item instanceof ArrayExportableInterface) {
-                $item = $item->toArray();
-            } else if ($item instanceof ArraySerializableInterface) {
-                $item = $item->getArrayCopy();
-            }
-
-            if (!is_array($item) && !($item instanceof ArrayObject)) {
-                throw new UnexpectedValueException(sprintf('Expected collection item to be an array or array representative. Got %s', is_object($item)? get_class($item) : gettype($item)));
-            }
-
-            $result[] = $item;
-        }
-
-        return $result;
     }
 
     /**

@@ -116,12 +116,12 @@ class Collection implements CollectionInterface
     public function findOne(array $query, array $fields = null, array $order = null)
     {
         if ($fields) {
-            $cursor = $this->getMongoCollection()->findOne($query, $fields);
+            $item = $this->getMongoCollection()->findOne($query, $fields);
         } else {
-            $cursor = $this->getMongoCollection()->findOne($query);
+            $item = $this->getMongoCollection()->findOne($query);
         }
 
-        return $cursor?: new EmptyCursor();
+        return $item;
     }
 
     /**

@@ -22,7 +22,6 @@
 
 namespace Rampage\Nexus;
 
-use Rampage\Nexus\Middleware\RestApiMiddleware;
 use League\OAuth2\Server\Middleware\AuthorizationServerMiddleware;
 
 
@@ -64,7 +63,29 @@ return [
         'nodes' => [
             'name' => 'nodes',
             'path' => '/nodes[/{id}]',
-            'middleware' => RestApiMiddleware::class . '\Node',
+            'middleware' => Action\NodesAction::class,
         ],
+
+        'applications' => [
+            'name' => 'applications',
+            'path' => '/applications[/{id}]',
+            'middleware' => Action\ApplicationsAction::class,
+            'allow_methods' => [ 'GET' ],
+        ],
+
+        'applications/packages' => [
+            'name' => 'applications/packages',
+            'path' => '/applications/{appId}/packages[/{id}]',
+            'middleware' => Action\ApplicationPackagesAction::class,
+            'allow_methods' => [ 'GET' ],
+        ],
+
+        'applications/icon' => [
+            'name' => 'applications/icon',
+            'path' => '/applications/{id}/icon',
+            'middleware' => Action\ApplicationIconAction::class,
+            'allow_methods' => [ 'GET' ],
+        ],
+
     ],
 ];

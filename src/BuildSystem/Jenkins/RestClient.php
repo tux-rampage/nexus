@@ -144,7 +144,7 @@ class RestClient implements ClientInterface
         $groupPath = $group? '/job/' . $group->getFullName() : '';
         $data = $this->getJson($groupPath . '/job/' . $name);
 
-        return new Job($data, $group);
+        return new Job($data, $group, $this);
     }
 
     /**
@@ -154,7 +154,7 @@ class RestClient implements ClientInterface
     public function getBuild(Job $job, $id)
     {
         $data = $this->getJson('/job/' . $job->getFullName() . '/' . $id);
-        return new Build($job, $data);
+        return new Build($job, $data, $this);
     }
 
     /**

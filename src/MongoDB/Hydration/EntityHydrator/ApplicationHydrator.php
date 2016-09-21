@@ -56,7 +56,7 @@ class ApplicationHydrator extends ReflectionHydrator
         parent::__construct($properties);
 
         $this->addStrategy('id', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING));
-        $this->addStrategy('packages', new ImmutableCollectionStrategy(function($value, &$data = null) {
+        $this->addStrategy('packages', new ImmutableCollectionStrategy(function($value, $data = null) {
             if (!isset($data['_id'])) {
                 return new EmptyCursor();
             }

@@ -71,10 +71,14 @@ class HttpDownloader implements DownloaderInterface
      */
     public function download($url, $targetFile)
     {
-        /* @var $response \Psr\Http\Message\ResponseInterface */
-        $response = $this->client->get($url, [
-            'save_to' => $targetFile
-        ]);
+        try {
+            /* @var $response \Psr\Http\Message\ResponseInterface */
+            $response = $this->client->get($url, [
+                'save_to' => $targetFile
+            ]);
+        } catch (Throwable $e) {
+            return false;
+        }
 
         return ($response->getStatusCode() == 200);
     }

@@ -132,11 +132,13 @@ class Application implements Api\ArrayExchangeInterface
      */
     public function findPackage($packageId)
     {
-        if (!isset($this->packages[$packageId])) {
-            return null;
+        foreach ($this->packages as $package) {
+            if ($package->getId() == $packageId) {
+                return $package;
+            }
         }
 
-        return $this->packages[$packageId];
+        return null;
     }
 
     /**
@@ -169,16 +171,23 @@ class Application implements Api\ArrayExchangeInterface
      *
      * @return array
      */
-    public function toArray()
+    public function toArray($withPackages = true)
     {
         $array = [
             'id' => $this->id,
             'label' => $this->label,
-            'packages' => [],
         ];
 
-        foreach ($this->packages as $package) {
-            $array['packages'][] = $package->toArray();
+        if (!$withPackages) {
+            return $array;
         }
+
+        $array['packages'] = [];
+
+        foreach ($this->packages as $package) {
+            $array['packages'][] = $package->getId();
+        }
+
+        return $array;
     }
 }

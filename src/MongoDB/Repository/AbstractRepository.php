@@ -180,7 +180,7 @@ abstract class AbstractRepository implements RepositoryInterface
     public function findOne($id)
     {
         $mongoId = $this->getIdentifierStrategy()->extract($id);
-        return $this->doFindOne($this->getEntityClass(), ['_id' => $mongoId]);
+        return $this->doFindOne(['_id' => $mongoId]);
     }
 
     /**
@@ -224,7 +224,7 @@ abstract class AbstractRepository implements RepositoryInterface
         } else {
             $previousData = $state->getData();
 
-            if (is_array($previousData)) {
+            if (is_array($previousData) && !empty($previousData)) {
                 $updateId = $state->getId();
                 $updates = new CalculateUpdateStrategy($previousData);
                 $updates->calculate($data);

@@ -96,8 +96,10 @@ class ConsoleLogger implements LoggerInterface
             case LogLevel::DEBUG:
                 $this->output->writeln($message, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_DEBUG);
                 break;
-        }
 
-        $this->output->writeln($message, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_VERY_VERBOSE);
+            default:
+                $this->output->writeln($message, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_VERY_VERBOSE);
+                break;
+        }
     }
 }

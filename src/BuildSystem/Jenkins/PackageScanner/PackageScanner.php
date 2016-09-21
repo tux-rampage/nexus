@@ -166,11 +166,17 @@ class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
      */
     private function buildLocalFilename(Artifact $artifact, InstanceConfig $instance)
     {
+        $jobname = $artifact->getBuild()->getJob()->getFullName();
+
+        if (strpos($jobname, '/') !== false) {
+            $jobname = md5($jobname);
+        }
+
         return sprintf(
-            '%s.%d.%s-$%s',
+            'jenkins/%s.%d.%s@%s',
             $instance->getId(),
             $artifact->getBuild()->getId(),
-            md5($artifact->getBuild()->getJob()->getFullName()),
+            $jobname,
             $artifact->getFileName()
         );
     }
@@ -189,7 +195,7 @@ class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
         $build = $artifact->getBuild();
 
         if (null !== ($zpkDesc = $build->getArtifact($zpk))) {
-            return new ZpkPackage($zpkDesc->getContents());
+            return new ZpkPackage(new \SimpleXMLElement($zpkDesc->getContents()));
         }
 
         if (null !== ($composerDesc = $build->getArtifact($composer))) {
@@ -201,17 +207,24 @@ class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
         }
 
         // Try pulling the archive
-        $filename = $this->downloadDirectory . '/' . $this->buildLocalFilename($artifact, $instance);
-        $artifact->download($filename);
+        $filename = $this->buildLocalFilename($artifact, $instance);
+        $filepath = $this->archiveLoader->getDownloadDirectory() . '/' . $filename;
+
+        $this->logger->info(sprintf('Downloading artifact "%s" to "%s" for package scan ...', $artifact->getRelativePath(), $filename));
+        $this->filesystem->ensureDirectory(dirname($filepath));
 
         try {
-            $archive = new \PharData($filename);
+            $artifact->download($filepath);
+
+            $archive = new \PharData($filepath);
             $package = $this->archiveLoader->getPackage($archive);
+
+            $package->setArchive($filename);
 
             return $package;
         } catch (\Throwable $e) {
             $this->logger->info(' - Unusable archive: ' . $artifact->getRelativePath());
-            $this->filesystem->delete($filename);
+            $this->filesystem->delete($filepath);
         }
 
         return null;
@@ -254,20 +267,23 @@ class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
         foreach ($artifacts as $artifact) {
             $package = $this->getPackage($instance, $artifact);
             if (!$package) {
-                $this->logger->debug(sprintf('Skip artifact "%s" of build %d in job "%s" - no package descriptor', $artifact, $build->getId(), $job->getFullName()));
+                $this->logger->debug(sprintf('Skip artifact "%s" of build %d in job "%s" - no package descriptor', $artifact->getRelativePath(), $build->getId(), $job->getFullName()));
                 continue;
             }
 
             $package->setBuildId($instanceId . '.' . $build->getId());
-            $package->setArchive(sprintf(
-                'jenkins://%s/%s/build/%d/%s',
-                $instanceId,
-                $build->getJob()->getFullName(),
-                $build->getId(),
-                $artifact->getRelativePath()
-            ));
 
-            $this->logger->debug(sprintf('Importing artifact "%s" of build %d in job "%s" to package "%s" ...', $artifact, $build->getId(), $job->getFullName(), $package->getId()));
+            if (!$package->getArchive()) {
+                $package->setArchive(sprintf(
+                    'jenkins://%s/%s@build#%d/%s',
+                    $instanceId,
+                    $build->getJob()->getFullName(),
+                    $build->getId(),
+                    $artifact->getRelativePath()
+                ));
+            }
+
+            $this->logger->info(sprintf('Importing artifact "%s" of build %d in job "%s" to package "%s" ...', $artifact->getRelativePath(), $build->getId(), $job->getFullName(), $package->getId()));
             $this->processPackage($package, $build->isStable());
         }
     }
@@ -334,6 +350,8 @@ class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
 
             $processed = $this->stateRepository->getProcessedBuilds($instance, $job);
 
+            $this->logger->info(sprintf('Scanning job "%s" ...', $job->getFullName()));
+
             foreach ($job->getBuilds() as $buildId) {
                 if (in_array((string)$buildId, $processed)) {
                     $this->logger->debug(sprintf('Skip already processed build %d in job "%s".', $buildId, $job->getFullName()));
@@ -343,7 +361,7 @@ class PackageScanner implements PackageScannerInterface, LoggerAwareInterface
                 try {
                     $build = $job->getBuild($buildId);
 
-                    if (!$build->isPending()) {
+                    if ($build->isPending()) {
                         $this->logger->debug(sprintf('Skip pending build %d in job "%s".', $buildId, $job->getFullName()));
                         continue;
                     }

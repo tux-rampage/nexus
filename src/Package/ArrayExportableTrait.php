@@ -61,8 +61,16 @@ trait ArrayExportableTrait
                 'required' => $parameter->isRequired(),
             ];
 
-            if ($parameter->hasOptions()) {
-                $array['parameters'][$name]['options'] = $parameter->getOptions();
+            foreach ($parameter->getOptions() as $key => $value) {
+                if (!is_scalar($value)) {
+                    continue;
+                }
+
+                $array['parameters'][$name]['options'][$key] = $value;
+            }
+
+            if ($parameter->hasValueOptions()) {
+                $array['parameters'][$name]['valueOptions'] = $parameter->getValueOptions();
             }
         }
 

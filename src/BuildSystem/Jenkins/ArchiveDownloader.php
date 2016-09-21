@@ -24,11 +24,13 @@ namespace Rampage\Nexus\BuildSystem\Jenkins;
 
 use Rampage\Nexus\Archive\DownloaderInterface;
 use Rampage\Nexus\Exception\InvalidArgumentException;
-use Rampage\Nexus\Exception\RuntimeException;
 
+/**
+ * Archive downloader
+ */
 class ArchiveDownloader implements DownloaderInterface
 {
-    const URL_PATTERN = '~^jenkins://(?<id>[a-z0-9]+)/(?<job>.+)/build/(?<build>\d+)/(?<artifact>.+)$~i';
+    const URL_PATTERN = '~^jenkins://(?<id>[a-z0-9]+)/(?<job>.+)@build#(?<build>\d+)/(?<artifact>.+)$~i';
 
     /**
      * @var Repository\InstanceRepositoryInterface
@@ -80,19 +82,24 @@ class ArchiveDownloader implements DownloaderInterface
      */
     public function download($url, $targetFile)
     {
-        $args = $this->parseUrl($url);
-        $instance = $this->instanceRepository->find($args['id']);
+        try {
+            $args = $this->parseUrl($url);
+            $instance = $this->instanceRepository->find($args['id']);
 
-        if (!$instance) {
-            throw new RuntimeException('Could not find jenkins instance ' . $args['id']);
+            if (!$instance) {
+                return false;
+            }
+
+            $client = $this->clientFactory->createJenkinsClient($instance->getJenkinsUrl());
+            $job = $client->getJob($args['job']);
+            $build = $job->getBuild($args['build']);
+            $artifact = $build->getArtifact($args['artifact']);
+            $response = $client->downloadArtifact($artifact, $targetFile);
+
+            return ($response->getStatusCode() == 200);
+        } catch (\Throwable $e) {
+            return false;
         }
-
-        $client = $this->clientFactory->createJenkinsClient($instance->getJenkinsUrl());
-        $job = $client->getJob($args['job']);
-        $build = $job->getBuild($args['build']);
-        $artifact = $build->getArtifact($args['artifact']);
-
-        $client->downloadArtifact($artifact, $targetFile);
     }
 
     /**
@@ -102,12 +109,17 @@ class ArchiveDownloader implements DownloaderInterface
     public function getFilenameFromUrl($url)
     {
         $args = $this->parseUrl($url);
+        $jobname = $args['job'];
+
+        if (strpos($jobname, '/') !== false) {
+            $jobname = md5($jobname);
+        }
 
         return sprintf(
-            '%s.%d.%s-$%s',
+            '%s.%d.%s@%s',
             $args['id'],
             $args['build'],
-            md5($args['job']),
+            $jobname,
             basename($args['artifact'])
         );
     }

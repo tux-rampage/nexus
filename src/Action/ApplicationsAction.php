@@ -20,65 +20,31 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB;
+namespace Rampage\Nexus\Action;
+
+use Rampage\Nexus\Repository\ApplicationRepositoryInterface;
+use Rampage\Nexus\Entities\Application;
 
 /**
- * Wraps the entity state
+ * Implements the packages endpoint
  */
-class EntityState
+class ApplicationsAction extends AbstractRestApi
 {
-    const STATE_NEW = 1;
-    const STATE_PERSISTED = 2;
-    const STATE_REMOVED = 3;
-
     /**
-     * @var int
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Action\AbstractRestApi::__construct()
      */
-    private $state;
-
-    /**
-     * @var array
-     */
-    private $data;
-
-    /**
-     * @var string|int
-     */
-    private $id;
-
-    /**
-     * @param int $state
-     * @param array $data
-     * @param string|int $id
-     */
-    public function __construct($state, array $data = null, $id = null)
+    public function __construct(ApplicationRepositoryInterface $repository)
     {
-        $this->id = $id;
-        $this->state = $state;
-        $this->data = $data;
+        parent::__construct($repository, new Application());
     }
 
     /**
-     * @return int
+     * @param Application $item
+     * @return \Rampage\Nexus\Entities\Api\ArrayExportableInterface
      */
-    public function getState()
+    protected function exportCollectionItemToArray($item)
     {
-        return $this->state;
-    }
-
-    /**
-     * @return array|null
-     */
-    public function getData()
-    {
-        return $this->data;
-    }
-
-    /**
-     * @return Ambigous <string, number>
-     */
-    public function getId()
-    {
-        return $this->id;
+        return $item->toArray(false);
     }
 }

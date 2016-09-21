@@ -43,7 +43,7 @@ class Build
      * @param Job $job
      * @param unknown $data
      */
-    public function __construct(Job $job, $data, ClientInterface $api)
+    public function __construct(Job $job, $data, ClientInterface $api = null)
     {
         $this->job = $job;
         $this->_construct($data, $api);
@@ -172,5 +172,13 @@ class Build
         }
 
         return $this->artifacts;
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray()
+    {
+        return $this->data->getArrayCopy();
     }
 }

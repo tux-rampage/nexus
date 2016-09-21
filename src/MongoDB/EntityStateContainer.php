@@ -46,6 +46,14 @@ class EntityStateContainer
     private $byIdentifier = [];
 
     /**
+     * Construct
+     */
+    public function __construct()
+    {
+        $this->states = new SplObjectStorage();
+    }
+
+    /**
      * @param object $object
      * @param EntityState $state
      */

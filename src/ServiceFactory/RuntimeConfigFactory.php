@@ -23,9 +23,19 @@
 namespace Rampage\Nexus\ServiceFactory;
 
 use Rampage\Nexus\Config\ArrayConfig;
-use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\Factory\FactoryInterface;
 
+use Interop\Container\ContainerInterface;
+
+use Zend\Config\Factory as ZendConfigFactory;
+use Zend\ServiceManager\Factory\FactoryInterface;
+use Zend\Expressive\ConfigManager\ConfigManager;
+use Zend\Expressive\ConfigManager\ZendConfigProvider;
+
+use Phar;
+
+/**
+ * Factory for loading the runtime config
+ */
 class RuntimeConfigFactory implements FactoryInterface
 {
     const KEY = 'runtime_config';
@@ -52,6 +62,14 @@ class RuntimeConfigFactory implements FactoryInterface
             $data = $system[self::KEY];
         }
 
-        return new ArrayConfig($data);
+        ZendConfigFactory::registerReader('conf', 'ini');
+
+        $localPrefix = Phar::running()? '' : __DIR__ . '/../..';
+        $configManager = new ConfigManager([
+            function() use ($data) { return $data; },
+            new ZendConfigProvider($localPrefix . '/etc/php-deployment/*.conf'),
+        ]);
+
+        return new ArrayConfig($configManager->getMergedConfig());
     }
 }

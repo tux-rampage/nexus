@@ -40,6 +40,8 @@ class ZpkPackage implements PackageInterface
 
     const TYPE_ZPK = 'zpk';
 
+    const ZPK_XML_NAMESPACE = 'http://www.zend.com/server/deployment-descriptor/1.0';
+
     const EXTRA_APP_DIR = 'app-dir';
     const EXTRA_SCRIPTS_DIR = 'scripts-dir';
 
@@ -65,6 +67,8 @@ class ZpkPackage implements PackageInterface
     {
         $this->descriptor = $descriptor;
         $this->validate();
+
+        $this->descriptor->registerXPathNamespace('zpk', self::ZPK_XML_NAMESPACE);
     }
 
     /**
@@ -146,10 +150,10 @@ class ZpkPackage implements PackageInterface
      */
     protected function buildParameters()
     {
-        $boolFilter = new BoolFilter();
+        $boolFilter = new BoolFilter(BoolFilter::TYPE_ALL);
         $this->parameters = [];
 
-        foreach ($this->descriptor->xpath('./parameters/parameter') as $parameterXml) {
+        foreach ($this->descriptor->xpath('./zpk:parameters/zpk:parameter') as $parameterXml) {
             $name = (string)$parameterXml['id'];
             $label = (string)$parameterXml['display']? : $name;
             $type = (string)$parameterXml['type'];
@@ -169,13 +173,14 @@ class ZpkPackage implements PackageInterface
                 ->setRequired($required)
                 ->setDefault($default)
                 ->setLabel($label)
-                ->addOption('readonly', $readonly);
+                ->setOption('readonly', $readonly);
 
             switch ($type) {
                 case 'choice':
                     $options = [];
 
-                    foreach ($parameterXml->xpath('./validation/enums/enum') as $enum) {
+                    $parameterXml->registerXPathNamespace('zpk', self::ZPK_XML_NAMESPACE);
+                    foreach ($parameterXml->xpath('./zpk:validation/zpk:enums/zpk:enum') as $enum) {
                         $value = (string)$enum;
                         $options[$value] = $value;
                     }
@@ -214,9 +219,9 @@ class ZpkPackage implements PackageInterface
      */
     public function getVersion()
     {
-        $version = (string)$this->descriptor->version;
+        $version = (string)$this->descriptor->version->release;
 
-        if ($this->buildId) {
+        if (($version !== '') && $this->buildId) {
             $version .= '+' . $this->buildId;
         }
 

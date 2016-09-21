@@ -82,7 +82,7 @@ class Cursor implements CursorInterface
     {
         if ($this->valid() && ($this->current === null)) {
             $hydrate = $this->hydration;
-            $data = parent::current();
+            $data = $this->wrapped->current();
             $this->current = $hydrate($data);
         }
 

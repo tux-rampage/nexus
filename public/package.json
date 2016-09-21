@@ -1,0 +1,35 @@
+{
+  "name": "rampage-nexus-ui",
+  "version": "0.1.0",
+  "author": "Axel Helmert",
+  "description": "",
+  "main": "gulpfile.js",
+  "dependencies": {
+    "angular": "^1.5.7",
+    "angular-animate": "^1.5.7",
+    "angular-aria": "^1.5.7",
+    "angular-material": "^1.0.9",
+    "angular-messages": "^1.5.7",
+    "angular-route": "^1.5.7",
+    "angular-resource": "^1.5.7",
+    "lodash": "^4.10.0",
+  },
+  "devDependencies": {
+    "browserify": "latest",
+    "del": "^2.2.0",
+    "envify": "^3.2.0",
+    "gulp": "^3.9.1",
+    "gulp-sass": "^2.2.0",
+    "gulp-sourcemaps": "^1.6.0",
+    "gulp-uglify": "^1.5.3",
+    "gulp-util": "^3.0.7",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0",
+    "vinyl-transform": "^1.0.0",
+    "watchify": "^3.7.0"
+  },
+  "scripts": {
+    "frontend-watch": "gulp watch",
+    "frontend-dist": "gulp build"
+  }
+}

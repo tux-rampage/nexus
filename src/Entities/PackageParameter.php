@@ -60,7 +60,7 @@ class PackageParameter implements ParameterInterface, Api\ArrayExchangeInterface
     /**
      * @var array
      */
-    protected $valueOptions = [];
+    protected $valueOptions = null;
 
     /**
      * @var bool

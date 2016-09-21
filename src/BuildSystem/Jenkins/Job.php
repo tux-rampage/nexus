@@ -61,7 +61,7 @@ class Job
         }
 
         $this->group = $group;
-        $this->_construct($data);
+        $this->_construct($data, $api);
     }
 
     /**
