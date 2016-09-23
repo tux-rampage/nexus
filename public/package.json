@@ -12,7 +12,7 @@
     "angular-messages": "^1.5.7",
     "angular-route": "^1.5.7",
     "angular-resource": "^1.5.7",
-    "lodash": "^4.10.0",
+    "lodash": "^4.10.0"
   },
   "devDependencies": {
     "browserify": "latest",
@@ -29,7 +29,7 @@
     "watchify": "^3.7.0"
   },
   "scripts": {
-    "frontend-watch": "gulp watch",
-    "frontend-dist": "gulp build"
+    "watch": "gulp watch",
+    "build": "gulp build"
   }
 }

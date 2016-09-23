@@ -21,12 +21,16 @@
 
 'use strict';
 
-module.exports = (function () {
+function NavigationController($state, $log)
+{
+    var states = $state.get();
 
-    var ConfigureTheme = function ($mdThemingProvider) {
-        //$mdThemingProvider.theme('default').primaryPalette('green')
-    };
+    for (var i = 0; i < states.length; i++) {
+        $log.debug(states[i]);
+    }
 
-    ConfigureTheme.$inject = ['$mdThemingProvider'];
-    return ConfigureTheme
-}());
+};
+
+NavigationController.$inject = ['$state', '$log'];
+
+export default NavigationController;

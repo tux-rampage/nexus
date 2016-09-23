@@ -21,12 +21,22 @@
 
 'use strict';
 
-var angular = require('angular');
-var module = angular.module('uiRampageNexus');
+import angular from 'angular';
+import ngAnimate from 'angular-animate';
+import ngAria from 'angular-aria';
+import ngRoute from 'angular-route';
+import ngResource from 'angular-resource';
+import ngMaterial from 'angular-material';
+import 'angular-ui-router/release/angular-ui-router';
+import configure from './config';
+import addComponents from './components';
 
-require('./config')(module);
+var module = angular.module('uiRampageNexus', [ngMaterial, ngRoute, ngResource, ngAria, ngAnimate]);
 
-module.exports = {
+configure(module);
+addComponents(module);
+
+export default {
     name: 'uiRampageNexus',
     module: module
 };

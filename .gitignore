@@ -4,3 +4,5 @@
 /.project
 /dev-include.php
 /etc
+/.ternproject
+/public/node_modules

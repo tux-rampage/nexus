@@ -21,12 +21,11 @@
 
 'use strict';
 
-module.exports = (function () {
+import NavigationController from './controllers/NavigationController';
 
-    var ConfigureTheme = function ($mdThemingProvider) {
-        //$mdThemingProvider.theme('default').primaryPalette('green')
-    };
-
-    ConfigureTheme.$inject = ['$mdThemingProvider'];
-    return ConfigureTheme
-}());
+export default function(ngModule) {
+    ngModule.component('uiNavigation', {
+        templateUrl: 'assets/templates/navigation.html',
+        controller: NavigationController
+    });
+};
