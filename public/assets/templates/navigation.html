@@ -1,0 +1,10 @@
+<nav class="ui-navigation">
+    <ul class="">
+        <li ng-repeat="item in $ctrl.items">
+            <a class="md-button md-ink-ripple" href ui-sref="{{item.name}}" ui-sref-active="active">
+                <md-icon class="material-icons step">{{item.uiNav.icon}}</md-icon>
+                {{item.uiNav.label}}
+            </a>
+        <li>
+    </ul>
+</nav>

@@ -21,7 +21,33 @@
 
 'use strict';
 
-module.exports = function(ngModule) {
-    ngModule.config(require('./ConfigureTheme'))
-        .config(require('./ConfigureStates'));
-};
+function ConfigureState($stateProvider)
+{
+    $stateProvider
+        .state('apps', {
+            templateUrl: 'assets/templates/apps/index.html',
+            controller: [ '$scope', '$state', '$log', function($scope, $state, $log) {
+                $scope.state = $state.current;
+            }],
+            url: '/apps',
+            uiNav: {
+                label: 'Applications',
+                icon: 'apps'
+            }
+        })
+        .state('apps.list', {
+            views: {
+                'main': { component: 'uiAppList' }
+            },
+            url: ''
+        })
+        .state('apps.detail', {
+            views: {
+                'main': { component: 'uiAppDetail' }
+            },
+            url: '/{appId:[a-zA-Z0-9_.-]+}'
+        });
+}
+
+ConfigureState.$inject = [ '$stateProvider' ];
+module.exports = ConfigureState;

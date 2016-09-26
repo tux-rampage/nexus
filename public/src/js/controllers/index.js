@@ -22,6 +22,5 @@
 'use strict';
 
 module.exports = function(ngModule) {
-    ngModule.config(require('./ConfigureTheme'))
-        .config(require('./ConfigureStates'));
+    ngModule.controller('rampage.ui.ApplicationsController', require('./ApplicationsController'));
 };

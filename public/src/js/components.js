@@ -21,11 +21,14 @@
 
 'use strict';
 
-import NavigationController from './controllers/NavigationController';
-
-export default function(ngModule) {
-    ngModule.component('uiNavigation', {
-        templateUrl: 'assets/templates/navigation.html',
-        controller: NavigationController
-    });
+module.exports = function(ngModule) {
+    ngModule
+        .component('uiNavigation', {
+            templateUrl: 'assets/templates/navigation.html',
+            controller: require('./controllers/NavigationController')
+        })
+        .component('uiAppList', {
+            templateUrl: 'assets/templates/apps/list.html',
+            controller: require('./controllers/ApplicationsController')
+        });
 };

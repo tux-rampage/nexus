@@ -21,7 +21,25 @@
 
 'use strict';
 
-module.exports = function(ngModule) {
-    ngModule.config(require('./ConfigureTheme'))
-        .config(require('./ConfigureStates'));
+/**
+ * @param {ApplicationsResource} Applications
+ */
+function ApplicationsController(Applications, $stateParams)
+{
+    if ($stateParams.appId) {
+        this.app = Applications.get({id: $stateParams.appId});
+    } else {
+        this.apps = Applications.query();
+    }
+
+    /**
+     * Returns the application icon url
+     */
+    this.appIcon = function(app)
+    {
+        return Applications.getIconUrl(app);
+    }
 };
+
+ApplicationsController.$inject = [ 'rampage.nexus.rest.Applications', '$stateParams' ];
+module.exports = ApplicationsController;

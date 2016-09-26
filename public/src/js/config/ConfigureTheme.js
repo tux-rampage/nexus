@@ -21,12 +21,11 @@
 
 'use strict';
 
-module.exports = (function () {
+var ConfigureTheme = function ($mdThemingProvider) {
+    $mdThemingProvider.theme('default')
+        .primaryPalette('amber')
+        .accentPalette('orange');
+};
 
-    var ConfigureTheme = function ($mdThemingProvider) {
-        //$mdThemingProvider.theme('default').primaryPalette('green')
-    };
-
-    ConfigureTheme.$inject = ['$mdThemingProvider'];
-    return ConfigureTheme
-}());
+ConfigureTheme.$inject = ['$mdThemingProvider'];
+module.exports = ConfigureTheme;

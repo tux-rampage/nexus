@@ -24,13 +24,18 @@
 function NavigationController($state, $log)
 {
     var states = $state.get();
+    this.items = [];
 
     for (var i = 0; i < states.length; i++) {
-        $log.debug(states[i]);
-    }
+        var state = states[i];
 
+        if (!state.uiNav) {
+            continue;
+        }
+
+        this.items.push(state);
+    }
 };
 
 NavigationController.$inject = ['$state', '$log'];
-
-export default NavigationController;
+module.exports = NavigationController;

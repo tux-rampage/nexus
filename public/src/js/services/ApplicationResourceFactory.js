@@ -21,7 +21,19 @@
 
 'use strict';
 
-module.exports = function(ngModule) {
-    ngModule.config(require('./ConfigureTheme'))
-        .config(require('./ConfigureStates'));
+function ApplicationResourceFactory($resource)
+{
+    var ApplicationsResource = $resource('/rest.php/applications/:id', {id: '@id'}, {
+        query: { method: 'GET', isArray: false }
+    });
+
+    ApplicationsResource.getIconUrl = function(app)
+    {
+        return '/rest.php/applications/' + app.id + '/icon';
+    };
+
+    return ApplicationsResource;
 };
+
+ApplicationResourceFactory.$inject = ['$resource'];
+module.exports = ApplicationResourceFactory;

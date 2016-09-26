@@ -21,7 +21,7 @@
 
 'use strict';
 
-module.exports = function(ngModule) {
-    ngModule.config(require('./ConfigureTheme'))
-        .config(require('./ConfigureStates'));
-};
+module.exports = function(ngModule)
+{
+    ngModule.factory('rampage.nexus.rest.Applications', require('./ApplicationResourceFactory'));
+}
