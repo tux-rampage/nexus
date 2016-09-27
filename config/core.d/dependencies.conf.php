@@ -23,11 +23,15 @@
 namespace Rampage\Nexus;
 
 use Symfony\Component\Console\Application as ConsoleApplication;
-use Zend\Diactoros\Response\EmitterInterface;
+
 use Zend\Crypt\PublicKey\Rsa\PrivateKey;
+use Zend\Diactoros\Response\EmitterInterface;
+
 use Zend\Expressive\Application;
 use Zend\Expressive\Container\ApplicationFactory;
 use Zend\Expressive\Helper;
+use Zend\Expressive\Template\TemplateRendererInterface;
+use Zend\Expressive\ZendView\ZendViewRendererFactory;
 
 
 return [
@@ -49,6 +53,7 @@ return [
             EmitterInterface::class => ServiceFactory\ResponseEmitterFactory::class,
             ConsoleApplication::class => ServiceFactory\ConsoleApplicationFactory::class,
             PrivateKey::class => ServiceFactory\PrivateKeyFactory::class,
+            TemplateRendererInterface::class => ZendViewRendererFactory::class,
             'RuntimeConfig' => ServiceFactory\RuntimeConfigFactory::class,
         ],
     ],

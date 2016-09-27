@@ -29,63 +29,23 @@ use League\OAuth2\Server\Middleware\AuthorizationServerMiddleware;
  * Defines the routing config
  */
 return [
-    'routes' => [
-        'nodeApi' => [
-            'name' => 'nodeApi',
-            'path' => '/deploy-node',
-            'allowed_methods' => ['GET', 'POST'],
-            'middleware' => [
-                Action\NodeApi\NodeContextMiddleware::class,
-                Action\NodeApi\NodeAction::class,
-            ]
-        ],
+//     'node_routes' => [
+//         'nodeApi' => [
+//             'name' => 'nodeApi',
+//             'path' => '/deploy-node',
+//             'allowed_methods' => ['GET', 'POST'],
+//             'middleware' => [
+//                 Action\NodeApi\NodeAction::class,
+//             ]
+//         ],
 
-        'nodeApi/package' => [
-            'name' => 'nodeApi/package',
-            'path' => '/deploy-node/package',
-            'allowed_methods' => ['GET'],
-            'middleware' => [
-                Action\NodeApi\NodeContextMiddleware::class,
-                Action\NodeApi\PackageAction::class,
-            ]
-        ],
-
-
-        'auth' => [
-            'name' => 'auth',
-            'path' => '/authorize',
-            'allow_methods' => ['GET', 'POST'],
-            'middleware' => [
-                AuthorizationServerMiddleware::class,
-            ]
-        ],
-
-        'nodes' => [
-            'name' => 'nodes',
-            'path' => '/nodes[/{id}]',
-            'middleware' => Action\NodesAction::class,
-        ],
-
-        'applications' => [
-            'name' => 'applications',
-            'path' => '/applications[/{id}]',
-            'middleware' => Action\ApplicationsAction::class,
-            'allow_methods' => [ 'GET' ],
-        ],
-
-        'applications/packages' => [
-            'name' => 'applications/packages',
-            'path' => '/applications/{appId}/packages[/{id}]',
-            'middleware' => Action\ApplicationPackagesAction::class,
-            'allow_methods' => [ 'GET' ],
-        ],
-
-        'applications/icon' => [
-            'name' => 'applications/icon',
-            'path' => '/applications/{id}/icon',
-            'middleware' => Action\ApplicationIconAction::class,
-            'allow_methods' => [ 'GET' ],
-        ],
-
-    ],
+//         'nodeApi/package' => [
+//             'name' => 'nodeApi/package',
+//             'path' => '/deploy-node/package',
+//             'allowed_methods' => ['GET'],
+//             'middleware' => [
+//                 Action\NodeApi\PackageAction::class,
+//             ]
+//         ],
+//     ],
 ];

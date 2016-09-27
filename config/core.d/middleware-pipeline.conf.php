@@ -23,14 +23,18 @@
 
 namespace Rampage\Nexus;
 
-use Zend\Expressive\Container\ApplicationFactory;
+use Rampage\Nexus\ServiceFactory\Middleware\RestMiddlewareFactory;
+
+// use Zend\Expressive\Container\ApplicationFactory;
 use Zend\Expressive\Helper;
+
 
 return [
     'dependencies' => [
         'factories' => [
             Helper\ServerUrlMiddleware::class => Helper\ServerUrlMiddlewareFactory::class,
             Helper\UrlHelperMiddleware::class => Helper\UrlHelperMiddlewareFactory::class,
+            RestMiddlewareFactory::REST_MIDDLEWARE => RestMiddlewareFactory::class,
         ],
     ],
     // This can be used to seed pre- and/or post-routing middleware
@@ -71,24 +75,40 @@ return [
             'priority' => 10000,
         ],
 
-        'routing' => [
+        'rest' => [
+            'path' => '/rest',
+            'priority' => 100,
             'middleware' => [
-                'rewrites' => Middleware\RewriteMiddleware::class,
-                'route' => ApplicationFactory::ROUTING_MIDDLEWARE,
-                // Add more middleware here that needs to introspect the routing
-                // results; this might include:
-                // - route-based authentication
-                // - route-based validation
-                // - etc.
-                'beforeDispatch' => [
-                    'middleware' => [
-                        Helper\UrlHelperMiddleware::class,
-                    ]
-                ],
-                'dispatch' => ApplicationFactory::DISPATCH_MIDDLEWARE,
-            ],
-            'priority' => 1,
+                RestMiddlewareFactory::REST_MIDDLEWARE,
+                Action\NotFoundAction::class,
+            ]
         ],
+
+        'ui' => [
+            'middleware' => [
+                Action\UiAction::class
+            ],
+            'priority' => 10
+        ],
+
+//         'routing' => [
+//             'middleware' => [
+//                 'rewrites' => Middleware\RewriteMiddleware::class,
+//                 'route' => ApplicationFactory::ROUTING_MIDDLEWARE,
+//                 // Add more middleware here that needs to introspect the routing
+//                 // results; this might include:
+//                 // - route-based authentication
+//                 // - route-based validation
+//                 // - etc.
+//                 'beforeDispatch' => [
+//                     'middleware' => [
+//                         Helper\UrlHelperMiddleware::class,
+//                     ]
+//                 ],
+//                 'dispatch' => ApplicationFactory::DISPATCH_MIDDLEWARE,
+//             ],
+//             'priority' => 1,
+//         ],
 
         'error' => [
             'middleware' => [

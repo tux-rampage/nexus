@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Rampage Nexus Deployment</title>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <base href="/" />
+
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link rel="stylesheet" href="/css/styles.css">
+
+        <script type="text/javascript" src="/js/app.js"></script>
+    </head>
+
+    <body ng-cloak ng-app="uiRampageNexus" layout="row">
+        <md-sidenav md-is-locked-open="$mdMedia('gt-sm')" class="md-whiteframe-4dp" id="ui-nav">
+            <header class="app-logo">
+                <img alt="" src="/assets/images/logo.gif" />
+            </header>
+            <ui-navigation></ui-navigation>
+        </md-sidenav>
+
+        <div flex layout="column">
+            <md-toolbar layout=row" class="md-whiteframe-4dp md-toolbar-tools">
+                <h1>Deployment</h1>
+            </md-toolbar>
+
+            <md-content ui-view flex>
+            </md-content>
+        </div>
+    </body>
+</html>

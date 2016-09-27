@@ -22,12 +22,15 @@
 
 namespace Rampage\Nexus;
 
-use Zend\Expressive\Router;
-
 return [
-    'dependencies' => [
-        'invokables' => [
-            Router\RouterInterface::class => Router\FastRouteRouter::class,
-        ],
-    ],
+    'templates' => [
+        'paths' => [
+            'error' => [
+                __DIR__ . '/../../resources/templates/error'
+            ],
+            'ui' => [
+                __DIR__ . '/../../resources/templates/ui'
+            ],
+        ]
+    ]
 ];
