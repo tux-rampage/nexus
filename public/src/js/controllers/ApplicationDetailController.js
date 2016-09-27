@@ -21,8 +21,12 @@
 
 'use strict';
 
-module.exports = function(ngModule) {
-    ngModule.config(require('./ConfigureTheme'))
-        .config(require('./ConfigureStates'))
-        .config(require('./ConfigureRouting'));
+function ApplicationDetailController(api, $stateParams)
+{
+    this.app = api.applications.get({id: $stateParams.appId});
+    this.progress = this.app;
+    this.appIcon = api.applications.getIconUrl;
 };
+
+ApplicationDetailController.$inject = [ 'rampage.nexus.RestApi', '$stateParams' ];
+module.exports = ApplicationDetailController;

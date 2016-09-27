@@ -1,1 +1,24 @@
-<p>Details ...</p>
+<md-progress-linear md-mode="indeterminate" ng-hide="$ctrl.progress.$resolved"></md-progress-linear>
+<md-content layout-padding ng-show="$ctrl.app.$resolved">
+    <md-card>
+        <md-card-header>
+            <md-card-avatar><img ng-src="{{$ctrl.appIcon($ctrl.app)}}" /></md-card-avatar>
+            <md-card-header-text>
+                <span class="md-title">{{$ctrl.app.label}}</span>
+                <span class="md-subhead">{{$ctrl.app.id}}</span>
+            </md-card-header-text>
+        </md-card-header>
+
+        <md-card-content>
+            <ng-form layout="column">
+                <md-input-container flex>
+                    <label>Application Name</label>
+                    <input ng-model="$ctrl.app.label" ng-required="true" />
+                </md-input-container>
+                <footer layout="row" layout-align="end center" layout-wrap>
+                    <md-button class="md-raised md-primary" aria-label="Save">Save Changes</md-button>
+                </footer>
+            </ng-form>
+        </md-card-content>
+    </md-card>
+</md-content>

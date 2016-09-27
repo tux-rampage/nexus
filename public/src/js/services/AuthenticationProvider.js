@@ -21,8 +21,20 @@
 
 'use strict';
 
-module.exports = function(ngModule) {
-    ngModule.config(require('./ConfigureTheme'))
-        .config(require('./ConfigureStates'))
-        .config(require('./ConfigureRouting'));
-};
+function AuthenticationProvider(C)
+{
+    var authUrl = C.AUTH.URL;
+
+    this.setUrl = function(url) {
+        authUrl = url;
+        return this;
+    };
+
+    this.$get = function() {
+        // FIXME: Implement auth provider
+        return {};
+    };
+}
+
+AuthenticationProvider.$inject = ['CONSTANTS'];
+module.exports = AuthenticationProvider;

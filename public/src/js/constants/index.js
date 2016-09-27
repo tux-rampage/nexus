@@ -21,6 +21,7 @@
 
 'use strict';
 
-module.exports = function(ngModule) {
-    ngModule.controller('rampage.ui.ApplicationsController', require('./ApplicationsController'));
+module.exports = function(ngModule)
+{
+    ngModule.constant('CONSTANTS', require('./Constants'));
 };

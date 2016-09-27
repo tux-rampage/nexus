@@ -21,8 +21,35 @@
 
 'use strict';
 
-module.exports = function(ngModule) {
-    ngModule.config(require('./ConfigureTheme'))
-        .config(require('./ConfigureStates'))
-        .config(require('./ConfigureRouting'));
-};
+function RestApiProvider(C)
+{
+    var apiUrl = C.API.URL;
+
+    function RestApiFactory($resource)
+    {
+        var api = {
+            applications: $resource(apiUrl + '/applications/:id', {id: '@id'}, {
+                query: { method: 'GET', isArray: false }
+            })
+        };
+
+        api.applications.getIconUrl = function(app)
+        {
+            return apiUrl + '/applications/' + app.id + '/icon';
+        };
+
+        return api;
+    };
+
+    RestApiFactory.$inject = ['$resource'];
+
+    this.$get = RestApiFactory;
+    this.setApiUrl = function(url) {
+        apiUrl = url;
+        return this;
+    }
+}
+
+RestApiProvider.$inject = ['CONSTANTS'];
+
+module.exports = RestApiProvider;

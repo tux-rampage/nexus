@@ -21,19 +21,13 @@
 
 'use strict';
 
-function ApplicationResourceFactory($resource)
-{
-    var ApplicationsResource = $resource('/rest.php/applications/:id', {id: '@id'}, {
-        query: { method: 'GET', isArray: false }
-    });
-
-    ApplicationsResource.getIconUrl = function(app)
-    {
-        return '/rest.php/applications/' + app.id + '/icon';
-    };
-
-    return ApplicationsResource;
+var CONSTANTS = {
+    API: {
+        URL: '/rest'
+    },
+    AUTH: {
+        URL: '/auth'
+    }
 };
 
-ApplicationResourceFactory.$inject = ['$resource'];
-module.exports = ApplicationResourceFactory;
+module.exports = CONSTANTS;

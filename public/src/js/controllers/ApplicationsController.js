@@ -24,22 +24,18 @@
 /**
  * @param {ApplicationsResource} Applications
  */
-function ApplicationsController(Applications, $stateParams)
+function ApplicationsController(api, $state)
 {
-    if ($stateParams.appId) {
-        this.app = Applications.get({id: $stateParams.appId});
-    } else {
-        this.apps = Applications.query();
-    }
+    this.apps = api.applications.query();
+    this.appIcon = api.applications.getIconUrl;
 
-    /**
-     * Returns the application icon url
-     */
-    this.appIcon = function(app)
+    this.showDetails = function(app)
     {
-        return Applications.getIconUrl(app);
-    }
+        $state.go('^.detail', {
+            appId: app.id
+        });
+    };
 };
 
-ApplicationsController.$inject = [ 'rampage.nexus.rest.Applications', '$stateParams' ];
+ApplicationsController.$inject = [ 'rampage.nexus.RestApi', '$state' ];
 module.exports = ApplicationsController;

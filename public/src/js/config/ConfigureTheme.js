@@ -23,8 +23,8 @@
 
 var ConfigureTheme = function ($mdThemingProvider) {
     $mdThemingProvider.theme('default')
-        .primaryPalette('amber')
-        .accentPalette('orange');
+        .primaryPalette('blue')
+        .accentPalette('light-blue');
 };
 
 ConfigureTheme.$inject = ['$mdThemingProvider'];

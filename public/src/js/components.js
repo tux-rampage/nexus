@@ -30,5 +30,9 @@ module.exports = function(ngModule) {
         .component('uiAppList', {
             templateUrl: 'assets/templates/apps/list.html',
             controller: require('./controllers/ApplicationsController')
+        })
+        .component('uiAppDetail', {
+            templateUrl: 'assets/templates/apps/detail.html',
+            controller: require('./controllers/ApplicationDetailController')
         });
 };

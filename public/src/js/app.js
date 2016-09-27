@@ -26,19 +26,21 @@ var ngAnimate = require('angular-animate');
 var ngAria = require('angular-aria');
 var ngResource = require('angular-resource');
 var ngMaterial = require('angular-material');
+
+var addConstants = require('./constants');
 var configure = require('./config');
 var addComponents = require('./components');
-var addControllers = require('./controllers');
 var addServices = require('./services');
 
 require('angular-ui-router/release/angular-ui-router');
 
 var module = angular.module('uiRampageNexus', [ngMaterial, 'ui.router', ngResource, ngAria, ngAnimate]);
 
-configure(module);
-addControllers(module);
+addConstants(module);
 addComponents(module);
 addServices(module);
+
+configure(module);
 
 module.exports = {
     name: 'uiRampageNexus',

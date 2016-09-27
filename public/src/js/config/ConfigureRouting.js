@@ -21,8 +21,10 @@
 
 'use strict';
 
-module.exports = function(ngModule) {
-    ngModule.config(require('./ConfigureTheme'))
-        .config(require('./ConfigureStates'))
-        .config(require('./ConfigureRouting'));
-};
+function ConfigureRouting($locationProvider)
+{
+    $locationProvider.html5Mode(true);
+}
+
+ConfigureRouting.$inject = ['$locationProvider'];
+module.exports = ConfigureRouting;

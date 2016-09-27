@@ -2,7 +2,7 @@
 <md-progress-linear md-mode="indeterminate" ng-hide="$ctrl.apps.$resolved"></md-progress-linear>
 <md-content layout-padding ng-show="$ctrl.apps.$resolved">
     <md-list flex ng-if="$ctrl.apps.items.length">
-        <md-list-item class="md-3-line" ng-repeat="app in $ctrl.apps.items" ng-click="null">
+        <md-list-item class="md-3-line" ng-repeat="app in $ctrl.apps.items" ng-click="$ctrl.showDetails(app)">
             <img ng-src="{{$ctrl.appIcon(app)}}" class="md-avatar" alt="{{app.label}}" />
             <div class="md-list-item-text" layout="column">
                 <h3>{{ app.label }}</h3>

@@ -25,25 +25,27 @@ function ConfigureState($stateProvider)
 {
     $stateProvider
         .state('apps', {
+            'abstract': true,
             templateUrl: 'assets/templates/apps/index.html',
             controller: [ '$scope', '$state', '$log', function($scope, $state, $log) {
                 $scope.state = $state.current;
             }],
             url: '/apps',
-            uiNav: {
-                label: 'Applications',
-                icon: 'apps'
-            }
         })
         .state('apps.list', {
             views: {
                 'main': { component: 'uiAppList' }
             },
-            url: ''
+            url: '',
+            uiNav: {
+                label: 'Applications',
+                icon: 'apps'
+            }
         })
         .state('apps.detail', {
             views: {
-                'main': { component: 'uiAppDetail' }
+                'main': { component: 'uiAppDetail' },
+                'toolbar': { templateUrl: 'assets/templates/apps/toolbar/detail.html' }
             },
             url: '/{appId:[a-zA-Z0-9_.-]+}'
         });
