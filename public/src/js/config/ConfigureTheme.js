@@ -23,8 +23,9 @@
 
 var ConfigureTheme = function ($mdThemingProvider) {
     $mdThemingProvider.theme('default')
-        .primaryPalette('blue')
-        .accentPalette('light-blue');
+        .primaryPalette('purple')
+        .accentPalette('deep-purple')
+        .dark();
 };
 
 ConfigureTheme.$inject = ['$mdThemingProvider'];

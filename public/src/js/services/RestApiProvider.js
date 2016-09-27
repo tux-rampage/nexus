@@ -38,6 +38,10 @@ function RestApiProvider(C)
             return apiUrl + '/applications/' + app.id + '/icon';
         };
 
+        api.applications.packages = $resource(apiUrl + '/applications/:appId/packages/:id', {appId: '@name', id: '@id'}, {
+            query: { method: 'GET', isArray: false }
+        });
+
         return api;
     };
 

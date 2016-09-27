@@ -23,26 +23,29 @@
 namespace Rampage\Nexus;
 
 /**
- * Defines the routing config
+ * Features provider
  */
-return [
-//     'node_routes' => [
-//         'nodeApi' => [
-//             'name' => 'nodeApi',
-//             'path' => '/deploy-node',
-//             'allowed_methods' => ['GET', 'POST'],
-//             'middleware' => [
-//                 Action\NodeApi\NodeAction::class,
-//             ]
-//         ],
+class FeatureProvider
+{
+    /**
+     * @var string[]
+     */
+    private $data = [];
 
-//         'nodeApi/package' => [
-//             'name' => 'nodeApi/package',
-//             'path' => '/deploy-node/package',
-//             'allowed_methods' => ['GET'],
-//             'middleware' => [
-//                 Action\NodeApi\PackageAction::class,
-//             ]
-//         ],
-//     ],
-];
+    /**
+     * @param string $feature
+     * @return bool
+     */
+    public function has($feature)
+    {
+        return in_array($feature, $this->data);
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray()
+    {
+        return $this->data;
+    }
+}

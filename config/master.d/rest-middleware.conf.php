@@ -22,6 +22,7 @@
 
 namespace Rampage\Nexus;
 
+use League\OAuth2\Server\Middleware\ResourceServerMiddleware;
 use Zend\Expressive\Container\ApplicationFactory;
 use Zend\Expressive\Helper\UrlHelperMiddleware;
 
@@ -35,6 +36,7 @@ return [
             // middleware, and error middleware.
             'always' => [
                 'middleware' => [
+                    ResourceServerMiddleware::class,
                 ],
                 'priority' => 10000,
             ],

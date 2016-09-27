@@ -20,22 +20,24 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\ServiceFactory;
+namespace Rampage\Nexus\OAuth2\ServiceFactory;
+
+use Rampage\Nexus\ServiceFactory\RuntimeConfigTrait;
 
 use Interop\Container\ContainerInterface;
+use League\OAuth2\Server\ResourceServer;
 
-use League\OAuth2\Server\AuthorizationServer;
-
+use Zend\ServiceManager\Factory\FactoryInterface;
 use Zend\Crypt\PublicKey\Rsa\PrivateKey;
 use Zend\Di\DependencyInjectionInterface;
-use Zend\ServiceManager\Factory\FactoryInterface;
-
 
 /**
- * Factory for the authorization service
+ * Factory for the resource server middleware
  */
-class AuthorizationServerFactory implements FactoryInterface
+class ResourceServerFactory implements FactoryInterface
 {
+    use RuntimeConfigTrait;
+
     /**
      * {@inheritDoc}
      * @see \Zend\ServiceManager\Factory\FactoryInterface::__invoke()
@@ -43,13 +45,16 @@ class AuthorizationServerFactory implements FactoryInterface
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
         /* @var $di DependencyInjectionInterface */
-        /* @var $pk PrivateKey */
         $di = $container->get(DependencyInjectionInterface::class);
-        $pk = $container->get(PrivateKey::class);
+        $config = $this->getRuntimeConfig($container);
+        $publicKey = $config->get('oauth2.publicKey', $config->get('rsa.keys.public'));
 
-        return $di->newInstance(AuthorizationServer::class, [
-            'privateKey' => $pk->toString(),
-            'publicKey' => $pk->getPublicKey()->toString()
-        ]);
+        if (!$publicKey && $container->has(PrivateKey::class)) {
+            /* @var $privateKey PrivateKey */
+            $privateKey = $container->get(PrivateKey::class);
+            $publicKey = $privateKey->getPublicKey()->toString();
+        }
+
+        return $di->newInstance(ResourceServer::class, ['publicKey' => $publicKey]);
     }
 }

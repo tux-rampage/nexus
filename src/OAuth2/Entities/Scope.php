@@ -20,29 +20,41 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus;
+namespace Rampage\Nexus\OAuth2\Entities;
 
-/**
- * Defines the routing config
- */
-return [
-//     'node_routes' => [
-//         'nodeApi' => [
-//             'name' => 'nodeApi',
-//             'path' => '/deploy-node',
-//             'allowed_methods' => ['GET', 'POST'],
-//             'middleware' => [
-//                 Action\NodeApi\NodeAction::class,
-//             ]
-//         ],
+use League\OAuth2\Server\Entities\ScopeEntityInterface;
 
-//         'nodeApi/package' => [
-//             'name' => 'nodeApi/package',
-//             'path' => '/deploy-node/package',
-//             'allowed_methods' => ['GET'],
-//             'middleware' => [
-//                 Action\NodeApi\PackageAction::class,
-//             ]
-//         ],
-//     ],
-];
+class Scope implements ScopeEntityInterface
+{
+    /**
+     * @var string
+     */
+    private $id;
+
+    /**
+     * @param string $id
+     */
+    public function __construct($id)
+    {
+        $this->id = $id;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \League\OAuth2\Server\Entities\ScopeEntityInterface::getIdentifier()
+     */
+    public function getIdentifier()
+    {
+        return $this->id;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see JsonSerializable::jsonSerialize()
+     */
+    public function jsonSerialize()
+    {
+        return $this->id;
+
+    }
+}

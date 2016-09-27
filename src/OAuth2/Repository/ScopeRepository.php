@@ -19,3 +19,47 @@
  * @copyright Copyright (c) 2016 Axel Helmert
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
+
+namespace Rampage\Nexus\OAuth2\Repository;
+
+use Rampage\Nexus\OAuth2\Entities\Scope;
+use League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
+use League\OAuth2\Server\Entities\ClientEntityInterface;
+
+
+/**
+ * Implements the scope repository
+ */
+class ScopeRepository implements ScopeRepositoryInterface
+{
+    /**
+     * Available scopes
+     *
+     * @var array
+     */
+    private $scopes = [];
+
+    /**
+     * {@inheritDoc}
+     * @see \League\OAuth2\Server\Repositories\ScopeRepositoryInterface::finalizeScopes()
+     */
+    public function finalizeScopes(array $scopes, $grantType, ClientEntityInterface $clientEntity, $userIdentifier = null)
+    {
+        return $scopes;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \League\OAuth2\Server\Repositories\ScopeRepositoryInterface::getScopeEntityByIdentifier()
+     */
+    public function getScopeEntityByIdentifier($identifier)
+    {
+        if (!in_array($identifier, $this->scopes)) {
+            return null;
+        }
+
+        return new Scope($identifier);
+    }
+
+
+}
