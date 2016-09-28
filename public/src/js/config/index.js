@@ -24,5 +24,6 @@
 module.exports = function(ngModule) {
     ngModule.config(require('./ConfigureTheme'))
         .config(require('./ConfigureStates'))
-        .config(require('./ConfigureRouting'));
+        .config(require('./ConfigureRouting'))
+        .config(require('./ConfigureOAuth'));
 };

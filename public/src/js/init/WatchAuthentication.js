@@ -21,22 +21,25 @@
 
 'use strict';
 
-module.exports = function(ngModule) {
-    ngModule
-        .component('uiNavigation', {
-            templateUrl: 'assets/templates/navigation.html',
-            controller: require('./controllers/NavigationController')
-        })
-        .component('uiLogin', {
-            templateUrl: 'assets/templates/login.html',
-            controller: require('./controllers/AuthController')
-        })
-        .component('uiAppList', {
-            templateUrl: 'assets/templates/apps/list.html',
-            controller: require('./controllers/ApplicationsController')
-        })
-        .component('uiAppDetail', {
-            templateUrl: 'assets/templates/apps/detail.html',
-            controller: require('./controllers/ApplicationDetailController')
+/**
+ * @param {angular.Scope} $rootScope
+ * @param {Authentication} auth
+ */
+function WatchAuthentication($rootScope, $state, auth)
+{
+    $rootScope.$watch(function() { return auth.isAuthenticated; }, function() {
+        if (auth.isAuthenticated) {
+            $state.go('login');
+        } else if ($state.includes('login')) {
+            $state.go('index');
+        }
+
+        var event = auth.isAuthenticated? 'rnxui:authenticated' : 'rnxui:unauthenticated';
+        $rootScope.$broadcast(event, {
+            auth: auth
         });
-};
+    });
+}
+
+WatchAuthentication.$inject = ['$rootScope', '$state', 'rampage.nexus.Authentication'];
+module.exports = WatchAuthentication;

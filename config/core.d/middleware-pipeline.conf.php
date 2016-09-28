@@ -24,7 +24,6 @@
 namespace Rampage\Nexus;
 
 use Rampage\Nexus\ServiceFactory\Middleware\RestMiddlewareFactory;
-use League\OAuth2\Server\Middleware\AuthorizationServerMiddleware;
 use Zend\Expressive\Helper;
 
 
@@ -72,14 +71,6 @@ return [
                 Middleware\HeadRequestMiddleware::class,
             ],
             'priority' => 10000,
-        ],
-
-        'oauth2' => [
-            'path' => '/access_token',
-            'priority' => 200,
-            'middleware' => [
-                AuthorizationServerMiddleware::class,
-            ]
         ],
 
         'rest' => [

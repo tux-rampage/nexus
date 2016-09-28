@@ -21,22 +21,7 @@
 
 'use strict';
 
-module.exports = function(ngModule) {
-    ngModule
-        .component('uiNavigation', {
-            templateUrl: 'assets/templates/navigation.html',
-            controller: require('./controllers/NavigationController')
-        })
-        .component('uiLogin', {
-            templateUrl: 'assets/templates/login.html',
-            controller: require('./controllers/AuthController')
-        })
-        .component('uiAppList', {
-            templateUrl: 'assets/templates/apps/list.html',
-            controller: require('./controllers/ApplicationsController')
-        })
-        .component('uiAppDetail', {
-            templateUrl: 'assets/templates/apps/detail.html',
-            controller: require('./controllers/ApplicationDetailController')
-        });
+module.exports = function(ngModule)
+{
+    ngModule.controller('nexus.ui.AuthController', require('./AuthController'));
 };

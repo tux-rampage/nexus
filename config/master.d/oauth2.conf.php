@@ -23,9 +23,11 @@
 namespace Rampage\Nexus\OAuth2;
 
 use Rampage\Nexus\Config\PropertyConfigInterface;
+
 use League\OAuth2\Server\ResourceServer;
 use League\OAuth2\Server\AuthorizationServer;
 use League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface;
+use League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
 use League\OAuth2\Server\Repositories\ClientRepositoryInterface;
 use League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
 
@@ -38,7 +40,8 @@ return [
     ],
     'di' => [
         'preferences' => [
-            AccessTokenRepositoryInterface::class => MongoDB\Repository\RefreshTokenRepository::class,
+            AccessTokenRepositoryInterface::class => MongoDB\Repository\AccessTokenRepository::class,
+            RefreshTokenRepositoryInterface::class => MongoDB\Repository\RefreshTokenRepository::class,
             ClientRepositoryInterface::class => Repository\UIClientRepository::class,
             ScopeRepositoryInterface::class => Repository\ScopeRepository::class,
         ],
@@ -49,5 +52,13 @@ return [
                 ]
             ]
         ]
+    ],
+
+    'middleware_pipeline' => [
+        'oauth2' => [
+            'path' => '/oauth2/token',
+            'priority' => 200,
+            'middleware' => [ Action\TokenAction::class ]
+        ],
     ]
 ];

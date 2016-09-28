@@ -1,0 +1,16 @@
+<md-content layout="row" layout-padding layout-align="center center">
+    <md-progress-circular ng-show="$ctrl.busy" md-diameter="96"></md-progress-circular>
+    <ng-form name="loginForm" layout="column" ng-submit="$ctrl.login()" ng-hide="$ctrl.busy" flex-gt-md="70" flex="100" >
+        <md-input-container flex>
+            <label>Username</label>
+            <input name="username" ng-model="$ctrl.credentials.username" ng-required="true" />
+        </md-input-container>
+        <md-input-container flex>
+            <label>Password</label>
+            <input name="password" ng-model="$ctrl.credentials.password" ng-required="true" />
+        </md-input-container>
+        <footer lyout="row">
+            <md-button class="md-raised" ng-disabled="loginForm.$invalid" type="submit">Login</md-button>
+        </footer>
+    </ng-form>
+</md-content>

@@ -21,20 +21,6 @@
 
 'use strict';
 
-function AuthenticationProvider(C)
-{
-    var authUrl = C.AUTH.URL;
-
-    this.setUrl = function(url) {
-        authUrl = url;
-        return this;
-    };
-
-    this.$get = function() {
-        // FIXME: Implement auth provider
-        return {};
-    };
+module.exports = function(ngModule) {
+    ngModule.run(require('./WatchAuthentication'));
 }
-
-AuthenticationProvider.$inject = ['CONSTANTS'];
-module.exports = AuthenticationProvider;

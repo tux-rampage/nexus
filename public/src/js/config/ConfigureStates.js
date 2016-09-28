@@ -24,6 +24,14 @@
 function ConfigureState($stateProvider)
 {
     $stateProvider
+        .state('index', {
+            templateUrl: 'assets/templates/index.html',
+            url: ''
+        })
+        .state('login', {
+            component: 'uiLogin',
+            url: '/login'
+        })
         .state('apps', {
             'abstract': true,
             templateUrl: 'assets/templates/apps/index.html',

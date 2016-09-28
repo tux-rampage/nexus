@@ -72,12 +72,12 @@ final class UIClientRepository implements ClientRepositoryInterface
             return null;
         }
 
-        if ($mustValidateSecret) {
-            $secret = $this->ensureUiSecret($this->config->get('ui.secret'));
-            if ($secret != $clientSecret) {
-                return null;
-            }
-        }
+//         if ($mustValidateSecret) {
+//             $secret = $this->ensureUiSecret($this->config->get('ui.secret'));
+//             if ($secret != $clientSecret) {
+//                 return null;
+//             }
+//         }
 
         return new UIClient();
     }

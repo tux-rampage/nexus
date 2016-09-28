@@ -26,7 +26,8 @@ var CONSTANTS = {
         URL: '/rest'
     },
     AUTH: {
-        URL: '/auth'
+        URL: '/oauth2',
+        CLIENT_ID: 'nexus-ui'
     }
 };
 

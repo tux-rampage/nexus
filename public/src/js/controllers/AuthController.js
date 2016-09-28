@@ -21,22 +21,23 @@
 
 'use strict';
 
-module.exports = function(ngModule) {
-    ngModule
-        .component('uiNavigation', {
-            templateUrl: 'assets/templates/navigation.html',
-            controller: require('./controllers/NavigationController')
-        })
-        .component('uiLogin', {
-            templateUrl: 'assets/templates/login.html',
-            controller: require('./controllers/AuthController')
-        })
-        .component('uiAppList', {
-            templateUrl: 'assets/templates/apps/list.html',
-            controller: require('./controllers/ApplicationsController')
-        })
-        .component('uiAppDetail', {
-            templateUrl: 'assets/templates/apps/detail.html',
-            controller: require('./controllers/ApplicationDetailController')
+/**
+ * @param {Authentication} auth
+ */
+function AuthController(auth)
+{
+    this.busy = false;
+    this.auth = auth;
+    this.credentials = {};
+
+    this.login = function() {
+        this.busy = true;
+
+        auth.authenticate(this.credentials).$promise['finally'](function() {
+            this.busy = false;
         });
-};
+    };
+}
+
+AuthController.$inject = ['$state', '$log', 'rampage.nexus.Authentication'];
+module.exports = AuthController;

@@ -24,6 +24,6 @@
 module.exports = function(ngModule)
 {
     ngModule
-        .provider('rampage.nexus.Authentication', require('./AuthenticationProvider'))
+        .factory('rampage.nexus.Authentication', require('./AuthenticationFactory'))
         .provider('rampage.nexus.RestApi', require('./RestApiProvider'));
 }
