@@ -21,7 +21,7 @@
 
 'use strict';
 
-function ConfigureOAuth(OAuthProvider, C)
+function ConfigureOAuth(OAuthProvider, OAuthTokenProvider, C)
 {
     OAuthProvider.configure({
         baseUrl: C.AUTH.URL,
@@ -30,7 +30,13 @@ function ConfigureOAuth(OAuthProvider, C)
         grantPath: '/token',
         revokePath: '/revoke'
     });
+
+    OAuthTokenProvider.configure({
+        options: {
+            secure: false
+        }
+    });
 }
 
-ConfigureOAuth.$inject = [ 'OAuthProvider', 'CONSTANTS' ];
+ConfigureOAuth.$inject = [ 'OAuthProvider', 'OAuthTokenProvider', 'CONSTANTS' ];
 module.exports = ConfigureOAuth;

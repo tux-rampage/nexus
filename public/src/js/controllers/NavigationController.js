@@ -39,6 +39,10 @@ function NavigationController($state, $log)
 
         this.items.push(state);
     }
+
+    this.close = function() {
+        $mdSideNav('ui-nav').close();
+    };
 };
 
 NavigationController.$inject = ['$state', '$log'];

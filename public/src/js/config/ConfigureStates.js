@@ -26,7 +26,11 @@ function ConfigureState($stateProvider)
     $stateProvider
         .state('index', {
             templateUrl: 'assets/templates/index.html',
-            url: ''
+            url: '',
+            uiNav: {
+                label: 'Dashboard',
+                icon: 'dashboard'
+            }
         })
         .state('login', {
             component: 'uiLogin',
