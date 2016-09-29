@@ -29,6 +29,8 @@ use SplObjectStorage;
 
 class Group implements ArrayExchangeInterface
 {
+    use VariablesTrait;
+
     /**
      * @var string
      */
@@ -53,11 +55,6 @@ class Group implements ArrayExchangeInterface
      * @var ArrayCollection|Group[]
      */
     protected $children;
-
-    /**
-     * @var array
-     */
-    protected $variables = [];
 
     /**
      * @param string $id
@@ -96,24 +93,6 @@ class Group implements ArrayExchangeInterface
     }
 
     /**
-     * @return multitype:
-     */
-    public function getVariables()
-    {
-        return $this->variables;
-    }
-
-    /**
-     * @param array $variables
-     * @return self
-     */
-    public function setVariables(array $variables)
-    {
-        $this->variables = $variables;
-        return $this;
-    }
-
-    /**
      * @return multitype:\Rampage\Nexus\Ansible\Entities\Group
      */
     public function getChildren()
@@ -139,14 +118,6 @@ class Group implements ArrayExchangeInterface
     {
         unset($this->children[$group->getId()]);
         return $this;
-    }
-
-    /**
-     * @return boolean
-     */
-    public function hasVariables()
-    {
-        return !empty($this->variables);
     }
 
     /**
@@ -222,6 +193,10 @@ class Group implements ArrayExchangeInterface
             'label' => $this->label,
             'children' => []
         ];
+
+        if ($this->hasVariables()) {
+            $data['variables'] = $this->getVariables();
+        }
 
         foreach ($this->children as $child) {
             $data['children'][] = $child->getId();

@@ -22,11 +22,18 @@
 
 namespace Rampage\Nexus\OAuth2\Entities;
 
-use League\OAuth2\Server\Entities\UserEntityInterface;
-use League\OAuth2\Server\Entities\Traits\EntityTrait;
 use Rampage\Nexus\Entities\Api\ArrayExchangeInterface;
-use Zend\Crypt\Password\PasswordInterface;
 
+use League\OAuth2\Server\Entities\UserEntityInterface;
+use Psr\Http\Message\StreamInterface;
+
+use Zend\Crypt\Password\PasswordInterface;
+use Zend\Crypt\Password\Bcrypt as BcryptPasswordStrategy;
+use Zend\Stdlib\Parameters;
+
+/**
+ * Implements the user entity
+ */
 class User implements UserEntityInterface, ArrayExchangeInterface
 {
     /**
@@ -45,12 +52,43 @@ class User implements UserEntityInterface, ArrayExchangeInterface
     private $passwordStrategy;
 
     /**
+     * The display name
+     *
+     * @var string
+     */
+    private $name;
+
+    /**
+     * The user's avatar
+     *
+     * @var StreamInterface
+     */
+    private $avatar;
+
+    /**
+     * @var string
+     */
+    private $email;
+
+    /**
      * @param string $id
      */
-    public function __construct(PasswordInterface $passwordStrategy, $id)
+    public function __construct($id, PasswordInterface $passwordStrategy = null)
     {
         $this->id = $id;
+        $this->passwordStrategy = $passwordStrategy? : new BcryptPasswordStrategy();
+    }
+
+    /**
+     * Inject the password startegy to use
+     *
+     * @param PasswordInterface $passwordStrategy
+     * @return \Rampage\Nexus\OAuth2\Entities\User
+     */
+    public function setPasswordStrategy(PasswordInterface $passwordStrategy)
+    {
         $this->passwordStrategy = $passwordStrategy;
+        return $this;
     }
 
     /**
@@ -64,6 +102,16 @@ class User implements UserEntityInterface, ArrayExchangeInterface
 
     /**
      * @param string $password
+     * @return self
+     */
+    public function setPassword($password)
+    {
+        $this->password = $this->passwordStrategy->create($password);
+        return $this;
+    }
+
+    /**
+     * @param string $password
      * @return boolean
      */
     public function verifyPassword($password)
@@ -72,13 +120,71 @@ class User implements UserEntityInterface, ArrayExchangeInterface
     }
 
     /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return \Psr\Http\Message\StreamInterface
+     */
+    public function getAvatar()
+    {
+        return $this->avatar;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEmail()
+    {
+        return $this->email;
+    }
+
+    /**
+     * @param string $name
+     * @return self
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @param \Psr\Http\Message\StreamInterface $image
+     * @return self
+     */
+    public function setAvatar($image)
+    {
+        $this->avatar = $image;
+        return $this;
+    }
+
+    /**
+     * @param string $email
+     * @return self
+     */
+    public function setEmail($email)
+    {
+        $this->email = $email;
+        return $this;
+    }
+
+    /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\Entities\Api\ArrayExchangeInterface::exchangeArray()
      */
     public function exchangeArray(array $array)
     {
-        // TODO Auto-generated method stub
+        $data = new Parameters($array);
 
+        $this->setName($data->get('name', $this->name))
+            ->setEmail($data->get('email', $this->email));
+
+        return $this;
     }
 
     /**
@@ -87,8 +193,12 @@ class User implements UserEntityInterface, ArrayExchangeInterface
      */
     public function toArray()
     {
-        // TODO Auto-generated method stub
-
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'hasAvatar' => ($this->avatar !== null)
+        ];
     }
 
 

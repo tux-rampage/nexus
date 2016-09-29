@@ -25,9 +25,15 @@ namespace Rampage\Nexus\Ansible\Entities;
 use Rampage\Nexus\Entities\AbstractNode;
 use Rampage\Nexus\Deployment\NodeInterface;
 use Rampage\Nexus\Exception\LogicException;
+use Rampage\Nexus\Entities\Api\ArrayExchangeInterface;
+use Zend\Stdlib\Parameters;
+use Rampage\Nexus\Entities\ArrayCollection;
+use Rampage\Nexus\Exception\InvalidArgumentException;
 
-class Host
+class Host implements ArrayExchangeInterface
 {
+    use VariablesTrait;
+
     /**
      * @var string
      */
@@ -39,20 +45,18 @@ class Host
     protected $node;
 
     /**
-     * @var array
+     * @var Group[]|ArrayCollection
      */
-    protected $variables = [];
-
-    /**
-     * @var Group[]
-     */
-    protected $groups = [];
+    protected $groups;
 
     /**
      * @var string
      */
     private $defaultNodeType = null;
 
+    /**
+     * @var bool
+     */
     private $isNodeByGroup = null;
 
     /**
@@ -62,6 +66,7 @@ class Host
     {
         $this->name = $name;
         $this->node = null;
+        $this->groups = new ArrayCollection();
     }
 
     /**
@@ -121,26 +126,89 @@ class Host
     }
 
     /**
-     * @return boolean
-     */
-    public function hasVariables()
-    {
-        return !empty($this->variables);
-    }
-
-    /**
-     * @return multitype:
-     */
-    public function getVariables()
-    {
-        return $this->variables;
-    }
-
-    /**
      * @return multitype:\Rampage\Nexus\Ansible\Entities\Group
      */
     public function getGroups()
     {
         return $this->groups;
+    }
+
+    /**
+     * Check for group
+     *
+     * @param Group $group
+     * @return bool
+     */
+    public function hasGroup(Group $group)
+    {
+        $predicate = function(Group $item) use ($group) {
+            return ($item->getId() == $group->getId());
+        };
+
+        return ($this->groups->find($predicate) !== null);
+    }
+
+    /**
+     * Add a group
+     *
+     * @param Group $group
+     * @return \Rampage\Nexus\Ansible\Entities\Host
+     */
+    public function addGroup(Group $group)
+    {
+        if (!$this->hasGroup($group)) {
+            $this->groups[] = $group;
+        }
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Entities\Api\ArrayExchangeInterface::exchangeArray()
+     */
+    public function exchangeArray(array $array)
+    {
+        $data = new Parameters($array);
+        $vars = $data->get('variables');
+        $groups = $data->get('groups');
+
+        $this->name = $data->get('name', $this->name);
+
+        if (is_array($vars)) {
+            $this->setVariables($vars);
+        }
+
+        if (is_array($groups)) {
+            $this->groups->exchangeArray([]);
+
+            foreach ($groups as $group) {
+                if (!$group instanceof Group) {
+                    throw new InvalidArgumentException('Groups must only contain group instances, recieved %s', (is_object($group)? get_class($group) : gettype($group)));
+                }
+
+                $this->addGroup($group);
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Entities\Api\ArrayExportableInterface::toArray()
+     */
+    public function toArray()
+    {
+        $array = [
+            'name' => $this->name,
+            'groups' => [],
+            'variables' => $this->variables,
+            'nodeId' => $this->getNode()->getId()
+        ];
+
+        foreach ($this->groups as $group) {
+            $array['groups'][] = $group->getId();
+        }
+
+        return $array;
     }
 }

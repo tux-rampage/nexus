@@ -22,6 +22,9 @@
 
 namespace Rampage\Nexus;
 
+use Zend\Crypt\Password\PasswordInterface;
+use Zend\Crypt\Password\Bcrypt as BcryptPasswordStrategy;
+
 return [
     'di' => [
         'preferences' => [
@@ -39,6 +42,8 @@ return [
             Api\SignRequestInterface::class => Api\PublicKeySignature::class,
 
             Deployment\NodeProviderInterface::class => Deployment\NodeProvider::class,
+
+            PasswordInterface::class => BcryptPasswordStrategy::class,
         ],
 
         'instances' => [
