@@ -55,7 +55,7 @@ class UserRepository extends AbstractRepository implements UserRepositoryInterfa
     {
         parent::__construct($driver, new UserHydrator($driver), self::COLLECTION);
         $this->passwordStrategy = $passwordStrategy;
-
+        $this->idStrategy = $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING);
     }
 
     /**

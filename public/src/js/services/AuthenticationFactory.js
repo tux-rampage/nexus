@@ -34,20 +34,17 @@ function Authentication(OAuth, OAuthToken)
     this.authenticate = function(credentials)
     {
         var _self = this;
-        var result = Object.create(this);
 
         this.$promise = OAuth.getAccessToken(credentials);
-
         this.$promise.then(function(response) {
-            result.token = response.data;
             _self.isAuthenticated = OAuth.isAuthenticated();
         });
 
-        this.$promise['finally'](function(rejection) {
+        this.$promise['finally'](function() {
             _self.$resolved = true;
         });
 
-        return result;
+        return this;
     };
 };
 

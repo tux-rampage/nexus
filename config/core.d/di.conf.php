@@ -44,6 +44,7 @@ return [
             Deployment\NodeProviderInterface::class => Deployment\NodeProvider::class,
 
             PasswordInterface::class => BcryptPasswordStrategy::class,
+            Config\PropertyConfigInterface::class => 'RuntimeConfig',
         ],
 
         'instances' => [

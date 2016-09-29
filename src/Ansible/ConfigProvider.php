@@ -62,6 +62,23 @@ class ConfigProvider
             ],
             'commands' => [
                 'ansible:inventory' => Command\InventoryCommand::class,
+            ],
+            'rest' => [
+                'routes' => [
+                    'ansible/hosts' => [
+                        'name' => 'ansible/hosts',
+                        'path' => '/ansible/hosts[/{id}]',
+                        'middleware' => Action\HostAction::class,
+                        'allow_methods' => [ 'GET', 'PUT', 'POST', 'DELETE' ],
+                    ],
+
+                    'ansible/groups' => [
+                        'name' => 'ansible/groups',
+                        'path' => '/ansible/groups[/{id}]',
+                        'middleware' => Action\GroupAction::class,
+                        'allow_methods' => [ 'GET', 'PUT', 'POST', 'DELETE' ],
+                    ]
+                ]
             ]
         ];
     }

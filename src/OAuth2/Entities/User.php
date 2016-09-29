@@ -76,6 +76,7 @@ class User implements UserEntityInterface, ArrayExchangeInterface
     public function __construct($id, PasswordInterface $passwordStrategy = null)
     {
         $this->id = $id;
+        $this->name = $id;
         $this->passwordStrategy = $passwordStrategy? : new BcryptPasswordStrategy();
     }
 

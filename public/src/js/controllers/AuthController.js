@@ -24,20 +24,28 @@
 /**
  * @param {Authentication} auth
  */
-function AuthController(auth)
+function AuthController(auth, $log)
 {
+    var _self = this;
+
+    this.failed = false;
     this.busy = false;
     this.auth = auth;
     this.credentials = {};
 
     this.login = function() {
         this.busy = true;
+        this.failed = false;
 
         auth.authenticate(this.credentials).$promise['finally'](function() {
-            this.busy = false;
+            _self.busy = false;
+
+            if (!auth.isAuthenticated) {
+                _self.failed = true;
+            }
         });
     };
 }
 
-AuthController.$inject = ['$state', '$log', 'rampage.nexus.Authentication'];
+AuthController.$inject = ['rampage.nexus.Authentication', '$log'];
 module.exports = AuthController;

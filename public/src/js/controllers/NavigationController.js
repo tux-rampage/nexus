@@ -29,7 +29,6 @@ function NavigationController($state, $log)
 {
     var states = $state.get();
     this.items = [];
-    this.auth = auth;
 
     for (var i = 0; i < states.length; i++) {
         var state = states[i];

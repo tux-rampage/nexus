@@ -29,6 +29,7 @@ use League\OAuth2\Server\AuthorizationServer;
 use Zend\Crypt\PublicKey\Rsa\PrivateKey;
 use Zend\Di\DependencyInjectionInterface;
 use Zend\ServiceManager\Factory\FactoryInterface;
+use League\OAuth2\Server\Grant\PasswordGrant;
 
 
 /**
@@ -42,14 +43,20 @@ class AuthorizationServerFactory implements FactoryInterface
      */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        /* @var $di DependencyInjectionInterface */
-        /* @var $pk PrivateKey */
+        /** @var DependencyInjectionInterface $di */
+        /** @var PrivateKey $pk */
         $di = $container->get(DependencyInjectionInterface::class);
         $pk = $container->get(PrivateKey::class);
 
-        return $di->newInstance(AuthorizationServer::class, [
+        /** @var AuthorizationServer $server */
+        $grant = $di->newInstance(PasswordGrant::class);
+        $server = $di->newInstance(AuthorizationServer::class, [
             'privateKey' => $pk->toString(),
             'publicKey' => $pk->getPublicKey()->toString()
         ]);
+
+        $server->enableGrantType($grant, new \DateInterval('PT4H'));
+
+        return $server;
     }
 }

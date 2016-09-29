@@ -23,10 +23,15 @@
 namespace Rampage\Nexus;
 
 use GuzzleHttp\ClientInterface as HttpClientInterface;
+use Zend\Crypt\Password\PasswordInterface;
+use Zend\Crypt\Password\Bcrypt as BcryptPasswordStrategy;
 
 
 return [
     'di' => [
+        'preferences' => [
+            PasswordInterface::class => BcryptPasswordStrategy::class,
+        ],
         'instances' => [
             Entities\Node\RampageNode::class => [
                 'preferences' => [

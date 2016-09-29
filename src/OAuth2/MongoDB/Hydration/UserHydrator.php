@@ -38,7 +38,6 @@ final class UserHydrator extends ReflectionHydrator
             'email'
         ]);
 
-        $this->addStrategy('id', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_ID))
-            ->addStrategy('*', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING));
+        $this->addStrategy('*', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING));
     }
 }

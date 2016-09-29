@@ -1,3 +1,4 @@
+<?php
 /**
  * Copyright (c) 2016 Axel Helmert
  *
@@ -19,13 +20,11 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-'use strict';
+namespace Rampage\Nexus;
 
-var ConfigureTheme = function ($mdThemingProvider) {
-    $mdThemingProvider.theme('default')
-        .primaryPalette('purple')
-        .accentPalette('deep-purple');
-};
-
-ConfigureTheme.$inject = ['$mdThemingProvider'];
-module.exports = ConfigureTheme;
+return [
+    'commands' => [
+        Command\CreateUserCommand::COMMAND => Command\CreateUserCommand::class,
+        Command\GenerateKeyCommand::COMMAND => Command\GenerateKeyCommand::class,
+    ]
+];

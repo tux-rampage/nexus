@@ -53,5 +53,8 @@
             "role" : "lead"
         }
     ],
+    "scripts": {
+        "serve": "php -S 0.0.0.0:2080 -t public/"
+    },
     "homepage" : "https://github.com/tux-rampage/rampage-nexus"
 }

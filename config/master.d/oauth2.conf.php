@@ -30,6 +30,7 @@ use League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface;
 use League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
 use League\OAuth2\Server\Repositories\ClientRepositoryInterface;
 use League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
+use League\OAuth2\Server\Repositories\UserRepositoryInterface as OAuthUserRepoInterface;
 
 return [
     'dependencies' => [
@@ -44,6 +45,8 @@ return [
             RefreshTokenRepositoryInterface::class => MongoDB\Repository\RefreshTokenRepository::class,
             ClientRepositoryInterface::class => Repository\UIClientRepository::class,
             ScopeRepositoryInterface::class => Repository\ScopeRepository::class,
+            Repository\UserRepositoryInterface::class => MongoDB\Repository\UserRepository::class,
+            OAuthUserRepoInterface::class => MongoDB\Repository\UserRepository::class
         ],
         'instances' => [
             Repository\UIClientRepository::class => [
