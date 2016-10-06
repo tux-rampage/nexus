@@ -21,8 +21,15 @@
 
 'use strict';
 
-module.exports = function(ngModule)
+function RootController($rootScope, $mdSidenav)
 {
-    ngModule.controller('nexus.ui.AuthController', require('./AuthController'))
-        .controller('nexus.ui.RootController', require('./RootController'));
-};
+    $rootScope.ui = this;
+
+    this.toggleNavigation = function()
+    {
+        $mdSidenav('ui-nav').toggle();
+    };
+}
+
+RootController.$inject = ['$rootScope', '$mdSidenav'];
+module.exports = RootController;
