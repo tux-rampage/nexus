@@ -25,6 +25,7 @@ namespace Rampage\Nexus\OAuth2\Repository;
 use Rampage\Nexus\OAuth2\Entities\UIClient;
 use Rampage\Nexus\Config\PropertyConfigInterface;
 use Rampage\Nexus\Exception\RuntimeException;
+
 use League\OAuth2\Server\Repositories\ClientRepositoryInterface;
 
 
@@ -34,6 +35,7 @@ use League\OAuth2\Server\Repositories\ClientRepositoryInterface;
 final class UIClientRepository implements ClientRepositoryInterface
 {
     const GRANT_TYPE_PASSWORD = 'password';
+    const GRANT_TYPE_REVOKE = 'revoke';
 
     /**
      * @var PropertyConfigInterface
@@ -68,16 +70,16 @@ final class UIClientRepository implements ClientRepositoryInterface
      */
     public function getClientEntity($clientIdentifier, $grantType, $clientSecret = null, $mustValidateSecret = true)
     {
-        if (($clientIdentifier != UIClient::ID) || ($grantType != self::GRANT_TYPE_PASSWORD)) {
+        if (($clientIdentifier != UIClient::ID) || !in_array($grantType, [self::GRANT_TYPE_PASSWORD, self::GRANT_TYPE_REVOKE])) {
             return null;
         }
 
-//         if ($mustValidateSecret) {
-//             $secret = $this->ensureUiSecret($this->config->get('ui.secret'));
-//             if ($secret != $clientSecret) {
-//                 return null;
-//             }
-//         }
+        if ($mustValidateSecret) {
+            $secret = $this->ensureUiSecret($this->config->get('ui.secret'));
+            if ($secret != $clientSecret) {
+                return null;
+            }
+        }
 
         return new UIClient();
     }

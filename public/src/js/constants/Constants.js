@@ -27,7 +27,8 @@ var CONSTANTS = {
     },
     AUTH: {
         URL: '/oauth2',
-        CLIENT_ID: 'nexus-ui'
+        CLIENT_ID: 'nexus-ui',
+        SECRET_COOKIE: 'rnxUiClientSecret'
     }
 };
 

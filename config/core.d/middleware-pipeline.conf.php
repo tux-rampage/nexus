@@ -73,22 +73,6 @@ return [
             'priority' => 10000,
         ],
 
-        'rest' => [
-            'path' => '/rest',
-            'priority' => 100,
-            'middleware' => [
-                RestMiddlewareFactory::REST_MIDDLEWARE,
-                Action\NotFoundAction::class,
-            ]
-        ],
-
-        'ui' => [
-            'middleware' => [
-                Action\UiAction::class
-            ],
-            'priority' => 10
-        ],
-
 //         'routing' => [
 //             'middleware' => [
 //                 'rewrites' => Middleware\RewriteMiddleware::class,

@@ -58,10 +58,16 @@ return [
     ],
 
     'middleware_pipeline' => [
-        'oauth2' => [
+        'oauth2.token' => [
             'path' => '/oauth2/token',
             'priority' => 200,
             'middleware' => [ Action\TokenAction::class ]
+        ],
+
+        'oauth2.revoke' => [
+            'path' => '/oauth2/revoke',
+            'priority' => 200,
+            'middleware' => [ Action\RevokeAction::class ]
         ],
     ]
 ];

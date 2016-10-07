@@ -40,7 +40,7 @@ function AuthController(auth, $log)
         auth.authenticate(this.credentials).$promise['finally'](function() {
             _self.busy = false;
 
-            if (!auth.isAuthenticated) {
+            if (!auth.isAuthenticated()) {
                 _self.failed = true;
             }
         });

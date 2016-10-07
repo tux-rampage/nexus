@@ -21,25 +21,50 @@
 
 'use strict';
 
+var JwtDecode = require('jwt-decode');
+
 function Authentication(OAuth, OAuthToken)
 {
+    var _self = this;
+
     this.$resolved = false;
     this.$promise = null;
 
-    this.isAuthenticated = OAuth.isAuthenticated();
+    function debug()
+    {
+        var accessToken = OAuthToken.getAccessToken();
+
+        if (!accessToken) {
+            return true;
+        }
+
+        var token = JwtDecode(accessToken);
+
+        console.debug({exp: token.exp});
+        return false;
+    }
+
+    this.isAuthenticated = function()
+    {
+        return OAuth.isAuthenticated();
+    };
+
+    this.clear = function()
+    {
+        this.$resolved = false;
+        this.$promise = OAuth.revokeToken();
+
+        this.$promise['finally'](function() {
+            _self.$resolved = true;
+        });
+    },
 
     /**
      * Authenticate by the given credentials
      */
     this.authenticate = function(credentials)
     {
-        var _self = this;
-
         this.$promise = OAuth.getAccessToken(credentials);
-        this.$promise.then(function(response) {
-            _self.isAuthenticated = OAuth.isAuthenticated();
-        });
-
         this.$promise['finally'](function() {
             _self.$resolved = true;
         });

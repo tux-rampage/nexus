@@ -33,19 +33,12 @@ return [
     'rest' => [
         // This can be used to seed pre- and/or post-routing middleware
         'middleware_pipeline' => [
-            // middleware, and error middleware.
-            'always' => [
-                'middleware' => [
-                    ResourceServerMiddleware::class,
-                ],
-                'priority' => 10000,
-            ],
-
             'routing' => [
                 'middleware' => [
                     'route' => ApplicationFactory::ROUTING_MIDDLEWARE,
                     'beforeDispatch' => [
                         'middleware' => [
+                            OAuth2\Middleware\ResourceServerMiddleware::class,
                             UrlHelperMiddleware::class,
                         ]
                     ],
@@ -83,7 +76,7 @@ return [
             ],
 
             'applications/icon' => [
-                'name' => 'applications/icon',
+                'name' => 'noauth:applications/icon',
                 'path' => '/applications/{id}/icon',
                 'middleware' => Action\ApplicationIconAction::class,
                 'allow_methods' => [ 'GET' ],

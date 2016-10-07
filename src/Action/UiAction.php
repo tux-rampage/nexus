@@ -22,8 +22,13 @@
 
 namespace Rampage\Nexus\Action;
 
+use Rampage\Nexus\Config\PropertyConfigInterface;
+use Rampage\Nexus\Exception\RuntimeException;
+
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+
+use GuzzleHttp\Cookie\SetCookie;
 
 use Zend\Stratigility\MiddlewareInterface;
 use Zend\Diactoros\Response\HtmlResponse;
@@ -41,11 +46,17 @@ class UiAction implements MiddlewareInterface
     private $renderer;
 
     /**
+     * @var PropertyConfigInterface
+     */
+    private $config;
+
+    /**
      * @param TemplateRendererInterface $renderer
      */
-    public function __construct(TemplateRendererInterface $renderer)
+    public function __construct(TemplateRendererInterface $renderer, PropertyConfigInterface $config)
     {
         $this->renderer = $renderer;
+        $this->config = $config;
     }
 
     /**
@@ -54,6 +65,20 @@ class UiAction implements MiddlewareInterface
      */
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $out = null)
     {
-        return new HtmlResponse($this->renderer->render('ui::index'));
+        $secret = $this->config->get('ui.secret');
+
+        if (!$secret) {
+            throw new RuntimeException('Missing UI client scret. Please specify ui.secret in your runtime configuration');
+        }
+
+        $cookie = new SetCookie();
+        $cookie->setName('rnxUiClientSecret');
+        $cookie->setValue($secret);
+        $cookie->setPath('/');
+        $cookie->setHttpOnly(false);
+        $cookie->setDiscard(true);
+
+        $response = new HtmlResponse($this->renderer->render('ui::index'));
+        return $response->withAddedHeader('Set-Cookie', $cookie->__toString());
     }
 }

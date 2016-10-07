@@ -20,28 +20,29 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Middleware;
 
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
-use Zend\Stratigility\MiddlewareInterface;
+namespace Rampage\Nexus;
 
-/**
- * Middleware for authentication
- */
-class AuthenticationMiddleware implements MiddlewareInterface
-{
-    /**
-     * Execute the authentication middleware
-     *
-     * @param   RequestInterface    $request
-     * @param   ResponseInterface   $response
-     * @param   callable            $next       The next middleware to invoke
-     * @return \Psr\Http\Message\ResponseInterface
-     */
-    public function __invoke(RequestInterface $request, ResponseInterface $response, callable $next = null)
-    {
-        // TODO: Implement authentication
-        return $next? $next($request, $response) : $response;
-    }
-}
+use Rampage\Nexus\ServiceFactory\Middleware\RestMiddlewareFactory;
+
+
+return [
+    // This can be used to seed pre- and/or post-routing middleware
+    'middleware_pipeline' => [
+        'rest' => [
+            'path' => '/rest',
+            'priority' => 100,
+            'middleware' => [
+                RestMiddlewareFactory::REST_MIDDLEWARE,
+                Action\NotFoundAction::class,
+            ]
+        ],
+
+        'ui' => [
+            'middleware' => [
+                Action\UiAction::class
+            ],
+            'priority' => 10
+        ],
+    ],
+];

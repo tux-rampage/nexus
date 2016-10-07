@@ -14,6 +14,7 @@
     "angular-oauth2": "^4.0.0",
     "angular-resource": "^1.5.8",
     "angular-ui-router": "^1.0.0-beta.3",
+    "jwt-decode": "^2.1.0",
     "lodash": "^4.10.0"
   },
   "devDependencies": {

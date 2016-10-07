@@ -21,15 +21,25 @@
 
 'use strict';
 
-function RootController($rootScope, $mdSidenav)
+function RootController($rootScope, $mdSidenav, $state, $mdMedia, auth)
 {
     $rootScope.ui = this;
+    $rootScope.$mdMedia = $mdMedia;
+
+    this.auth = auth;
 
     this.toggleNavigation = function()
     {
         $mdSidenav('ui-nav').toggle();
     };
+
+    this.logout = function()
+    {
+        auth.clear().then(function() {
+            $state.go('login');
+        });
+    };
 }
 
-RootController.$inject = ['$rootScope', '$mdSidenav'];
+RootController.$inject = ['$rootScope', '$mdSidenav', '$state', '$mdMedia', 'rampage.nexus.Authentication'];
 module.exports = RootController;

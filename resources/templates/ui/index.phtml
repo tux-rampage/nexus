@@ -14,7 +14,7 @@
     </head>
 
     <body ng-cloak ng-app="nexus.ui" layout="row" ng-controller="nexus.ui.RootController">
-        <md-sidenav class="md-whiteframe-4dp" md-component-id="ui-nav">
+        <md-sidenav md-is-locked-open="$mdMedia('gt-sm')" class="md-whiteframe-4dp" md-component-id="ui-nav" ng-if="ui.auth.isAuthenticated()">
             <header class="app-logo">
                 <img alt="" src="/assets/images/logo.gif" />
             </header>
@@ -23,8 +23,11 @@
 
         <div flex layout="column">
             <md-toolbar layout=row" class="md-whiteframe-4dp md-toolbar-tools">
-                <md-buton class="toggle-menu" ng-click="ui.toggleNavigation()"><md-icon class="material-icons step">menu</md-icon></md-buton>
-                <h1>Deployment</h1>
+                <md-buton ng-if="ui.auth.isAuthenticated()" ng-hide="$mdMedia('gt-sm')" class="toggle-menu" ng-click="ui.toggleNavigation()"><md-icon class="material-icons step">menu</md-icon></md-buton>
+                <h1 flex>Deployment</h1>
+                <div layout-align="end center" ng-if="ui.auth.isAuthenticated()">
+                    <md-button ng-click="ui.logout()">Logout</md-button>
+                </div>
             </md-toolbar>
 
             <md-content ui-view flex>

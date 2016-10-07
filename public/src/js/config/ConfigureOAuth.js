@@ -21,12 +21,44 @@
 
 'use strict';
 
+/**
+ * @param {String} cname
+ * @returns {String}
+ */
+function getCookie(cname)
+{
+    if (!cname.match(/^[a-z0-9_-]+$/i)) {
+        console.warn('Unsupported cookie name: "' + cname + '"');
+        return null;
+    }
+
+    var cookies = document.cookie.split(';');
+    var namePattern = new RegExp('^\\s*' + cname + '\\s*=\\s*(.+)\\s*$');
+
+    for (var i = 0; i < cookies.length; i++) {
+        var c = cookies[i];
+        var match = namePattern.exec(c);
+
+        if (match) {
+            return match[1];
+        }
+    }
+
+    return null;
+}
+
 function ConfigureOAuth(OAuthProvider, OAuthTokenProvider, C)
 {
+    var secret = getCookie(C.AUTH.SECRET_COOKIE);
+
+    if (!secret) {
+        console.warn('No oauth client secret available!');
+    }
+
     OAuthProvider.configure({
         baseUrl: C.AUTH.URL,
         clientId: C.AUTH.CLIENT_ID,
-        clientSecret: C.AUTH.CLIENT_ID, // TODO
+        clientSecret: secret,
         grantPath: '/token',
         revokePath: '/revoke'
     });

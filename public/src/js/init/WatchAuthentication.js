@@ -28,21 +28,21 @@
 function WatchAuthentication($rootScope, $state, $transitions, auth, $log)
 {
     $transitions.onStart({ to: function(state) { return (state.name != 'login'); }}, function(transition) {
-        if (!auth.isAuthenticated) {
+        if (!auth.isAuthenticated()) {
             return transition.router.stateService.target('login');
         }
     })
 
     $state.go('index');
 
-    $rootScope.$watch(function() { return auth.isAuthenticated; }, function() {
-        if (!auth.isAuthenticated) {
+    $rootScope.$watch(function() { return auth.isAuthenticated(); }, function() {
+        if (!auth.isAuthenticated()) {
             $state.go('login');
         } else if ($state.includes('login')) {
             $state.go('index');
         }
 
-        var event = auth.isAuthenticated? 'rnxui:authenticated' : 'rnxui:unauthenticated';
+        var event = auth.isAuthenticated()? 'rnxui:authenticated' : 'rnxui:unauthenticated';
         $rootScope.$broadcast(event, {
             auth: auth
         });
