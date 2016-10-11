@@ -22,10 +22,34 @@
 'use strict';
 
 var angular = require('angular');
-var core = require('nexus.ui.core');
-var module = angular.module('nexus.ui', [ core.moduleName ]);
+var ngAnimate = require('angular-animate');
+var ngAria = require('angular-aria');
+var ngResource = require('angular-resource');
+var ngMaterial = require('angular-material');
+var ngCookies = require('angular-cookies');
+
+var addConstants = require('./constants');
+var addControllers = require('./controllers');
+var addComponents = require('./components');
+var addServices = require('./services');
+
+var configure = require('./config');
+var initialize = require('./init');
+
+require('angular-ui-router/release/angular-ui-router');
+require('angular-oauth2/dist/angular-oauth2');
+
+var module = angular.module('nexus.ui.core', [ngMaterial, 'ui.router', 'angular-oauth2', ngResource, ngAria, ngAnimate]);
+
+addConstants(module);
+addComponents(module);
+addServices(module);
+addControllers(module);
+
+configure(module);
+initialize(module);
 
 module.exports = {
-    moduleName: 'nexus.ui',
+    moduleName: 'nexus.ui.core',
     module: module
 };
