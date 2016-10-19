@@ -21,8 +21,8 @@
 
 'use strict';
 
-var angular = require('angular');
-var core = require('nexus.ui.core');
-var module = angular.module('nexus.ui', [ core ]);
+var Loader = require('./Loader');
+var amd = new Loader();
 
-module.exports = 'nexus.ui';
+module.exports = amd;
+global.amd = amd;

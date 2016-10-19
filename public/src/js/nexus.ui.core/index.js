@@ -49,7 +49,4 @@ addControllers(module);
 configure(module);
 initialize(module);
 
-module.exports = {
-    moduleName: 'nexus.ui.core',
-    module: module
-};
+module.exports = 'nexus.ui.core';
