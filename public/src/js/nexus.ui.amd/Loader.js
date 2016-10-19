@@ -35,6 +35,7 @@ function Loader()
     var deferred = {};
     var baseUrl = '';
     var shims = {}
+    var defined = {};
 
     var loaded = {
         amd: this
@@ -48,47 +49,107 @@ function Loader()
      */
     function createShimFactory(name)
     {
-        var exports = shims[name].exports;
-        var shim = Object.create(shims[name]);
-        shim.exports = (exports)? global[exports] : undefined;
-
-        var factory = shim[name].factory || function() {
-            return this.exports;
-        };
+        var config = shims[name];
+        var exports = config.exports;
+        var shim = Object.create(config);
 
         return function() {
-            factory.apply(shim, arguments);
+            shim.exports = (exports)? global[exports] : undefined;
+            var factory = config.factory || function() {
+                return this.exports;
+            };
+
+            return factory.apply(shim, arguments);
         };
     }
 
     /**
      * Load a script URL
+     *
+     * @param {String} name
+     * @return {Promise}
      */
-    function loadScript(name, deferred)
+    function loadScript(name)
     {
         var url = baseUrl + name;
         var head = document.getElementsByTagName("head")[0] || document.documentElement;
-        var script = document.createElement("script");
+
+        if (shims[name]) {
+            var shim = shims[name];
+            url = shim.url || url;
+        }
 
         // Handle Script loading
         var done = false;
 
-        // Attach handlers for all browsers
-        script.onload = script.onreadystatechange = function() {
-            if (done || (this.readyState && (this.readyState !== "loaded") && (this.readyState !== "complete"))) {
-                return;
-            }
+        return new Promise(function(resolve, reject) {
+            var script = document.createElement("script");
 
-            done = true;
+            script.type = 'text/javascript';
 
-            // Handle memory leak in IE
-            script.onload = script.onreadystatechange = null;
-            if (head && script.parentNode ) {
-                head.removeChild(script);
-            }
-        };
+            // Attach handlers for all browsers
+            script.onload = script.onreadystatechange = function() {
+                if (done || (this.readyState && (this.readyState !== "loaded") && (this.readyState !== "complete"))) {
+                    return;
+                }
 
-        script.src = url;
+                done = true;
+                resolve(script);
+
+                // Handle memory leak in IE
+                script.onload = script.onreadystatechange = null;
+                if (head && script.parentNode ) {
+                    head.removeChild(script);
+                }
+            };
+
+            script.onerror = function(e) {
+                reject(new URIError('Failed to load script: ' + e.target.src));
+            };
+
+            //head.appendChild(script);
+            script.src = url;
+        });
+    }
+
+    /**
+     * Promise for loading the shim
+     */
+    function loadShim(name)
+    {
+        var deps = shims[name].deps;
+
+        function _resolveShim(resolvedDeps) {
+            return loadScript(name).then(function() {
+                var factory = createShimFactory(name);
+                var value = factory.apply(_self, resolvedDeps);
+                _self.set(name, value);
+
+                return value;
+            });
+        }
+
+        if (deps && deps.length) {
+            return loadAll(deps).then(function(resolvedDeps) {
+                return _resolveShim(resolvedDeps);
+            });
+        }
+
+        return _resolveShim([]);
+    }
+
+    /**
+     * Resolve the module and its dependencies
+     */
+    function resolve(factory, deps)
+    {
+        if (!deps) {
+            return factory();
+        }
+
+        return loadAll(deps).then(function(resolvedDeps) {
+            return factory.apply(window, resolvedDeps);
+        });
     }
 
     /**
@@ -107,24 +168,22 @@ function Loader()
             return deferred[name].promise;
         }
 
-        var def = {
-            resolved: false
-        };
-
-        def.promise = new Promise(function(resolve, reject) {
-            def.resolve = resolve;
-            def.reject = reject;
-        });
-
-        deferred[name] = def;
+        var defer = {};
+        deferred[name] = defer;
 
         if (shims[name]) {
-            // FIXME: handle shims
+            defer.promise = loadShim(name);
         } else {
-            loadScript(name, def);
+            defer.promise = loadScript(name).then(function() {
+                if (!defined[name]) {
+                    return Promise.reject(new Error('Failed to load "' + name + '": Missing define() for module'));
+                }
+
+                return resolve(defined[name].factory, defined[name].deps);
+            });
         }
 
-        return def.promise;
+        return defer.promise;
     }
 
     /**
@@ -171,26 +230,14 @@ function Loader()
             dependencies = [];
         }
 
-        if (!dependencies.length) {
-            _self.set(name, factory());
-            return;
+        defined[name] = {
+            factory: factory
+        };
+
+        if (dependencies && dependencies.length) {
+            defined[name].deps = dependencies;
         }
-
-        promise = loadAll(dependencies);
-
-        promise.then(function(deps) {
-            _self.set(name, factory.apply(global, deps));
-        });
-
-        promise['catch'](function(rejection) {
-            if (!deferred[name] || deferred[name].resolved) {
-                return;
-            }
-
-            deferred[name].resolved = true;
-            deferred[name].reject(rejection);
-        });
-    }
+    };
 
     /**
      * Require dependencies
@@ -205,9 +252,7 @@ function Loader()
 
         promise.then(function(deps) {
             factory.apply(global, deps);
-        });
-
-        promise['catch'](function(rejection) {
+        }).catch(function(rejection) {
             if (rejection instanceof Error) {
                 throw rejection;
             }

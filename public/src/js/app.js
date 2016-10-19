@@ -24,5 +24,10 @@
 var angular = require('angular');
 var core = require('nexus.ui.core');
 var module = angular.module('nexus.ui', [ core ]);
+var amd = require('nexus.ui.amd');
+
+amd.set('angular', angular);
+
+// TODO: implement module loading
 
 module.exports = 'nexus.ui';
