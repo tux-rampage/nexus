@@ -39,8 +39,8 @@ var TASKS = {
     BUILD: 'build',
     CLEAN: 'clean',
     JS: {
-        WATCH : 'js-watch',
-        BUILD: 'js-build',
+        WATCH: 'js-watch',
+        BUILD: 'js-build'
     },
     CSS : {
         DEBUG: 'scss-debug',
@@ -50,94 +50,140 @@ var TASKS = {
 };
 
 var DIST = {
-    CSS : './css',
-    JS : './js',
-    BUNDLES: {
-        APP: 'app.js'
-    }
+    CSS : __dirname + '/css/',
+    JS : __dirname + '/js/',
 };
 
 var SRC = {
-    SCSS : './src/scss/**/*.scss',
-    JS: './src/js/',
-    BUNDLES: {
-        APP: './src/js/app.js'
+    SCSS : __dirname + '/src/scss/**/*.scss',
+    JS: __dirname + '/src/js/',
+};
+
+/**
+ * Adds externals to the browserify bundler
+ *
+ * @private
+ * @param {browserify} bundler
+ */
+function _addExternals(bundler)
+{
+    if (this.expose) {
+        this.expose.forEach(function(expose) {
+            bundler.require(expose, {expose: expose});
+        });
+    }
+
+    if (this.externals) {
+        this.externals.forEach(function(external) {
+            bundler.external(external);
+        });
     }
 };
+
+var bundles = {
+    app: {
+        src: 'app.js',
+        bundle: 'app.js',
+        expose: [ 'angular' ],
+        add: _addExternals
+    },
+    ansible: {
+        src: 'nexus.ui.ansible/module.js',
+        bundle: 'nexus.ui.ansible.js',
+        externals: [ 'angular' ],
+        add: _addExternals
+    }
+}
 
 /**
  * Creates a watchify JS build task
  *
- * @param taskName
- * @param srcFile
- * @param targetFile
- * @param targetDirectory
+ * @param {string} taskName
+ * @param {Object} bundleInfo
  */
-function createWatchifyTask(taskName, srcFile, targetFile, targetDirectory)
+function createWatchifyTask(taskName, bundleInfo)
 {
     // add custom browserify options here
     var customOpts = {
-        entries: [srcFile],
+        entries: [ SRC.JS + bundleInfo.src ],
         paths: ['./node_modules', SRC.JS],
         debug: true
     };
 
     var opts = assign({}, watchify.args, customOpts);
-    var b = watchify(browserify(opts));
+    var bundler = watchify(browserify(opts));
+
+    bundleInfo.add(bundler);
 
     function jsWatchBundle()
     {
-        return b.bundle()
+        return bundler
+            //.transform('babelify', {presets: ['es2015']})
+            .bundle()
             // log errors if they happen
             .on('error', gutil.log.bind(gutil, 'Browserify Error'))
-            .pipe(source(targetFile))
+            .pipe(source(bundleInfo.bundle))
             // optional, remove if you don't need to buffer file contents
             .pipe(buffer())
             // optional, remove if you dont want sourcemaps
             .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
             // Add transformation tasks to the pipeline here.
             .pipe(sourcemaps.write()) // writes .map file
-            .pipe(gulp.dest(targetDirectory));
+            .pipe(gulp.dest(DIST.JS));
     }
 
     // add transformations here
     //  i.e. b.transform(coffeeify);
     gulp.task(taskName, jsWatchBundle); // so you can run `gulp js` to build the file
-    b.on('update', jsWatchBundle); // on any dep update, runs the bundler
-    b.on('log', gutil.log); // output build logs to terminal
+    bundler.on('update', jsWatchBundle); // on any dep update, runs the bundler
+    bundler.on('log', gutil.log); // output build logs to terminal
 }
 
 /**
  * Creates a browserify build task
  *
  * @param taskName
- * @param srcEntries
- * @param bundleFile
- * @param targetDirectory
+ * @param {Object} bundleInfo
  */
-function gulpBrowserifyBuild(taskName, srcEntries, bundleFile, targetDirectory)
+function createBrowserifyTask(taskName, bundleInfo)
 {
     gulp.task(taskName, function () {
         // set up the browserify instance on a task basis
         var b = browserify({
-            entries: srcEntries,
+            entries: SRC.JS + bundleInfo.src,
             paths: ['./node_modules', SRC.JS],
-            debug: true
+            debug: false
         });
 
-        return b.bundle()
-            .pipe(source(bundleFile))
+        bundleInfo.add(b);
+
+        return b
+            //.transform('babelify', {presets: ['es2015']})
+            .bundle()
+            .pipe(source(DIST.JS + bundleInfo.bundle))
             .pipe(buffer())
             .pipe(uglify({compress: { drop_console: true }}))
             .on('error', gutil.log)
-            .pipe(gulp.dest(targetDirectory));
+            .pipe(gulp.dest(DIST.JS));
     });
 }
 
-// Create the JS build and wtach tasks:
-createWatchifyTask(TASKS.JS.WATCH, SRC.BUNDLES.APP, DIST.BUNDLES.APP, DIST.JS)
-gulpBrowserifyBuild(TASKS.JS.BUILD, SRC.BUNDLES.APP, DIST.BUNDLES.APP, DIST.JS);
+var jsWatchDeps = [];
+var jsBuildDeps = [];
 
+Object.getOwnPropertyNames(bundles).forEach(function(name) {
+    var bundle = bundles[name];
+    var taskName = 'js-' + name;
+
+    createWatchifyTask(taskName + '-watch', bundle);
+    createBrowserifyTask(taskName + '-build', bundle);
+
+    jsWatchDeps.push(taskName + '-watch');
+    jsBuildDeps.push(taskName + '-build');
+});
+
+gulp.task(TASKS.JS.BUILD, jsBuildDeps);
+gulp.task(TASKS.JS.WATCH, jsWatchDeps);
 
 // ================ CSS TASKS =================
 

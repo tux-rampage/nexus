@@ -1,4 +1,3 @@
-<?php
 /**
  * Copyright (c) 2016 Axel Helmert
  *
@@ -20,14 +19,13 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus;
+'use strict';
 
-return [
-    'dependencies' => [
-        'factories' => [
-            MongoDB\Driver\DriverInterface::class => ServiceFactory\MongoDriverFactory::class,
-            Archive\ArchiveLoader::class => ServiceFactory\ArchiveLoaderFactory::class,
-            FeatureProvider::class => ServiceFactory\FeatureProviderFactory::class,
-        ],
-    ],
-];
+function LoaderError(message)
+{
+    Error.apply(this, message);
+    this.name = 'LoaderError';
+}
+
+LoaderError.prototype = new Error();
+module.exports = LoaderError;

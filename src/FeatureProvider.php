@@ -33,6 +33,21 @@ class FeatureProvider
     private $data = [];
 
     /**
+     * @param String $feature
+     * @return \Rampage\Nexus\FeatureProvider
+     */
+    public function add($feature)
+    {
+        $feature = (string)$feature;
+
+        if (!$this->has($feature)) {
+            $this->data[] = $feature;
+        }
+
+        return $this;
+    }
+
+    /**
      * @param string $feature
      * @return bool
      */

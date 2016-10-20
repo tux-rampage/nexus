@@ -36,6 +36,11 @@ class ConfigProvider
     public function getConfig()
     {
         return [
+            'ui' => [
+                'modules' => [
+                    'ansible' => 'nexus.ui.ansible'
+                ]
+            ],
             'di' => [
                 'preferences' => [
                     Repository\GroupRepositoryInterface::class => MongoDB\GroupRepository::class,

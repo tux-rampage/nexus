@@ -21,10 +21,19 @@
 
 'use strict';
 
-var Promise = require('promise-polyfill');
-var setAsap = require('setasap');
+var LoaderError = require('./LoaderError');
 
-Promise._immediateFn = setAsap;
+/**
+ * Promise API: Prefer a native implementation if available - fallback to Polyfill if not
+ */
+if (!Promise) {
+    var Promise = global.Promise || require('promise-polyfill');
+
+    if (!global.Promise) {
+        console.debug('No builtin Promise API: Fallback to polyfill');
+        Promise._immediateFn = require('setasap');
+    }
+}
 
 /**
  * AMD Loader
@@ -33,35 +42,12 @@ function Loader()
 {
     var _self = this;
     var deferred = {};
-    var baseUrl = '';
-    var shims = {}
+    var baseUrl = 'js/';
     var defined = {};
 
     var loaded = {
         amd: this
     };
-
-    /**
-     * Create a shim factory
-     *
-     * @param {String} name
-     * @return {Function}
-     */
-    function createShimFactory(name)
-    {
-        var config = shims[name];
-        var exports = config.exports;
-        var shim = Object.create(config);
-
-        return function() {
-            shim.exports = (exports)? global[exports] : undefined;
-            var factory = config.factory || function() {
-                return this.exports;
-            };
-
-            return factory.apply(shim, arguments);
-        };
-    }
 
     /**
      * Load a script URL
@@ -71,13 +57,8 @@ function Loader()
      */
     function loadScript(name)
     {
-        var url = baseUrl + name;
+        var url = baseUrl + name + '.js';
         var head = document.getElementsByTagName("head")[0] || document.documentElement;
-
-        if (shims[name]) {
-            var shim = shims[name];
-            url = shim.url || url;
-        }
 
         // Handle Script loading
         var done = false;
@@ -86,13 +67,17 @@ function Loader()
             var script = document.createElement("script");
 
             script.type = 'text/javascript';
+            script.async = true;
 
-            // Attach handlers for all browsers
-            script.onload = script.onreadystatechange = function() {
+            /**
+             * Handle on load event
+             */
+            function onScriptLoad(event) {
                 if (done || (this.readyState && (this.readyState !== "loaded") && (this.readyState !== "complete"))) {
                     return;
                 }
 
+                console.debug('Script "' + name + '" loaded');
                 done = true;
                 resolve(script);
 
@@ -103,52 +88,33 @@ function Loader()
                 }
             };
 
-            script.onerror = function(e) {
+            /**
+             * Handle loading script errors
+             */
+            function onError(e) {
                 reject(new URIError('Failed to load script: ' + e.target.src));
             };
 
-            //head.appendChild(script);
+            script.addEventListener('load', onScriptLoad);
+            script.addEventListener('error', onError);
+
             script.src = url;
+            head.appendChild(script);
         });
-    }
-
-    /**
-     * Promise for loading the shim
-     */
-    function loadShim(name)
-    {
-        var deps = shims[name].deps;
-
-        function _resolveShim(resolvedDeps) {
-            return loadScript(name).then(function() {
-                var factory = createShimFactory(name);
-                var value = factory.apply(_self, resolvedDeps);
-                _self.set(name, value);
-
-                return value;
-            });
-        }
-
-        if (deps && deps.length) {
-            return loadAll(deps).then(function(resolvedDeps) {
-                return _resolveShim(resolvedDeps);
-            });
-        }
-
-        return _resolveShim([]);
     }
 
     /**
      * Resolve the module and its dependencies
      */
-    function resolve(factory, deps)
+    function resolveModule(factory, deps)
     {
         if (!deps) {
             return factory();
         }
 
         return loadAll(deps).then(function(resolvedDeps) {
-            return factory.apply(window, resolvedDeps);
+            loaded[name] = factory.apply(global, resolvedDeps);
+            return loaded[name];
         });
     }
 
@@ -161,7 +127,7 @@ function Loader()
     function load(name)
     {
         if (loaded[name]) {
-            return loaded[name];
+            return Promise.resolve(loaded[name]);
         }
 
         if (deferred[name]) {
@@ -171,17 +137,13 @@ function Loader()
         var defer = {};
         deferred[name] = defer;
 
-        if (shims[name]) {
-            defer.promise = loadShim(name);
-        } else {
-            defer.promise = loadScript(name).then(function() {
-                if (!defined[name]) {
-                    return Promise.reject(new Error('Failed to load "' + name + '": Missing define() for module'));
-                }
+        defer.promise = loadScript(name).then(function() {
+            if (!defined[name]) {
+                return Promise.reject(new Error('Failed to load "' + name + '": Missing define() for module'));
+            }
 
-                return resolve(defined[name].factory, defined[name].deps);
-            });
-        }
+            return resolveModule(defined[name].factory, defined[name].deps);
+        });
 
         return defer.promise;
     }
@@ -205,6 +167,19 @@ function Loader()
     }
 
     /**
+     * @param {String} url
+     */
+    this.setBaseUrl = function(url)
+    {
+        if (!url.match(/\/$/)) {
+            url += '/';
+        }
+
+        baseUrl = url;
+        return this;
+    }
+
+    /**
      * Set a resolved dependency
      *
      * @param {String} name
@@ -213,11 +188,6 @@ function Loader()
     this.set = function(name, module)
     {
         loaded[name] = module;
-
-        if (deferred[name] && !deferred[name].resolved) {
-            deferred[name].resolved = true;
-            deferred[name].resolve(module);
-        }
     };
 
     /**
@@ -248,30 +218,37 @@ function Loader()
             return factory();
         }
 
-        promise = loadAll(dependencies);
+        var promise = loadAll(dependencies);
 
         promise.then(function(deps) {
             factory.apply(global, deps);
-        }).catch(function(rejection) {
-            if (rejection instanceof Error) {
-                throw rejection;
-            }
-
-            throw new Error(rejection);
+        })['catch'](function(rejection) {
+            throw new LoaderError(rejection);
         });
     };
 
     /**
-     * Create a shim
-     *
-     * @param {String} name
-     * @param {Object} config
+     * Reads all dependencies from the document
      */
-    this.shim = function(name, config)
+    this.getUiDepsFromDocument = function()
     {
-        shims[name] = config;
-        return this;
-    }
+        var root = document.getElementById('nexus.ui');
+        var attr = root? root.getAttribute('data-modules') : null;
+        var deps = [];
+
+        try {
+            deps = attr? JSON.parse(attr) : [];
+        } catch (e) {
+            console.error(e);
+        }
+
+        if (!deps instanceof Array) {
+            console.warn('nexus.ui.amd.Loader::getUiDepsFromDocument(): Bad dependencies type');
+            deps = [];
+        }
+
+        return deps;
+    };
 }
 
 module.exports = Loader;

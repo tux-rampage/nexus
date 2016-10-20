@@ -33,6 +33,7 @@ use GuzzleHttp\Cookie\SetCookie;
 use Zend\Stratigility\MiddlewareInterface;
 use Zend\Diactoros\Response\HtmlResponse;
 use Zend\Expressive\Template\TemplateRendererInterface;
+use Rampage\Nexus\FeatureProvider;
 
 
 /**
@@ -51,12 +52,18 @@ class UiAction implements MiddlewareInterface
     private $config;
 
     /**
+     * @var FeatureProvider
+     */
+    private $features;
+
+    /**
      * @param TemplateRendererInterface $renderer
      */
-    public function __construct(TemplateRendererInterface $renderer, PropertyConfigInterface $config)
+    public function __construct(TemplateRendererInterface $renderer, PropertyConfigInterface $config, FeatureProvider $features)
     {
         $this->renderer = $renderer;
         $this->config = $config;
+        $this->features = $features;
     }
 
     /**
@@ -78,7 +85,10 @@ class UiAction implements MiddlewareInterface
         $cookie->setHttpOnly(false);
         $cookie->setDiscard(true);
 
-        $response = new HtmlResponse($this->renderer->render('ui::index'));
+        $response = new HtmlResponse($this->renderer->render('ui::index', [
+            'features' => $this->features->toArray()
+        ]));
+
         return $response->withAddedHeader('Set-Cookie', $cookie->__toString());
     }
 }

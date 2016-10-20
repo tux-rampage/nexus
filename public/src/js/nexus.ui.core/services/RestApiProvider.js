@@ -25,17 +25,26 @@ function RestApiProvider(C)
 {
     var apiUrl = C.API.URL;
 
+    /**
+     * Build the api URL
+     */
+    function buildUrl(path)
+    {
+        return apiUrl + path;
+    }
+
     function RestApiFactory($resource)
     {
         var api = {
-            applications: $resource(apiUrl + '/applications/:id', {id: '@id'}, {
+            buildUrl: buildUrl,
+            applications: $resource(buildUrl('/applications/:id'), {id: '@id'}, {
                 query: { method: 'GET', isArray: false }
             })
         };
 
         api.applications.getIconUrl = function(app)
         {
-            return apiUrl + '/applications/' + app.id + '/icon';
+            return buildUrl('/applications/' + app.id + '/icon');
         };
 
         api.applications.packages = $resource(apiUrl + '/applications/:appId/packages/:id', {appId: '@name', id: '@id'}, {
@@ -48,6 +57,7 @@ function RestApiProvider(C)
     RestApiFactory.$inject = ['$resource'];
 
     this.$get = RestApiFactory;
+    this.buildUrl = buildUrl;
     this.setApiUrl = function(url) {
         apiUrl = url;
         return this;

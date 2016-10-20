@@ -20,14 +20,30 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus;
+namespace Rampage\Nexus\ServiceFactory;
 
-return [
-    'dependencies' => [
-        'factories' => [
-            MongoDB\Driver\DriverInterface::class => ServiceFactory\MongoDriverFactory::class,
-            Archive\ArchiveLoader::class => ServiceFactory\ArchiveLoaderFactory::class,
-            FeatureProvider::class => ServiceFactory\FeatureProviderFactory::class,
-        ],
-    ],
-];
+use Rampage\Nexus\FeatureProvider;
+use Interop\Container\ContainerInterface;
+use Zend\ServiceManager\Factory\FactoryInterface;
+
+
+class FeatureProviderFactory implements FactoryInterface
+{
+    /**
+     * {@inheritDoc}
+     * @see \Zend\ServiceManager\Factory\FactoryInterface::__invoke()
+     */
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    {
+        $config = $container->has('config')? $container->get('config') : [];
+        $features = new FeatureProvider();
+
+        if (isset($config['ui']['modules']) && is_array($config['ui']['modules'])) {
+            foreach ($config['ui']['modules'] as $module) {
+                $features->add($module);
+            }
+        }
+
+        return $features;
+    }
+}

@@ -1,4 +1,3 @@
-<?php
 /**
  * Copyright (c) 2016 Axel Helmert
  *
@@ -20,14 +19,22 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus;
+'use strict';
 
-return [
-    'dependencies' => [
-        'factories' => [
-            MongoDB\Driver\DriverInterface::class => ServiceFactory\MongoDriverFactory::class,
-            Archive\ArchiveLoader::class => ServiceFactory\ArchiveLoaderFactory::class,
-            FeatureProvider::class => ServiceFactory\FeatureProviderFactory::class,
-        ],
-    ],
-];
+/**
+ * Auguments the rest api
+ */
+function RestApiDecorator($delegate, $resource)
+{
+    $delegate.ansible = {
+        hosts: $resource($delegate.buildUrl('/ansible/hosts/:id'), {id: '@id'}, {
+            query: { method: 'GET', isArray: false }
+        }),
+        groups: $resource($delegate.buildUrl('/ansible/groups/:id'), {id: '@id'}, {
+            query: { method: 'GET', isArray: false }
+        })
+    }
+}
+
+RestApiDecorator.$inject = [ '$delegate', '$resource' ];
+module.exports = RestApiDecorator;

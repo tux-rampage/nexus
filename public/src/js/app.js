@@ -21,13 +21,26 @@
 
 'use strict';
 
+var ui = require('nexus.ui.core');
 var angular = require('angular');
-var core = require('nexus.ui.core');
-var module = angular.module('nexus.ui', [ core ]);
 var amd = require('nexus.ui.amd');
 
 amd.set('angular', angular);
 
-// TODO: implement module loading
+document.addEventListener("DOMContentLoaded", function(event) {
+    var deps = amd.getUiDepsFromDocument();
 
-module.exports = 'nexus.ui';
+    amd.require(deps, function() {
+        var deps = Array.prototype.slice.call(arguments);
+
+        deps.unshift(ui);
+        console.debug(deps);
+
+        var element = document.getElementById('nexus.ui');
+        if (!element) {
+            throw new Error('Bootstrapping failed: Missing root element');
+        }
+
+        angular.bootstrap(document, deps);
+    })
+});

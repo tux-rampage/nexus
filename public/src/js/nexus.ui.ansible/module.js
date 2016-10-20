@@ -1,4 +1,3 @@
-<?php
 /**
  * Copyright (c) 2016 Axel Helmert
  *
@@ -20,14 +19,13 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus;
+'use strict';
 
-return [
-    'dependencies' => [
-        'factories' => [
-            MongoDB\Driver\DriverInterface::class => ServiceFactory\MongoDriverFactory::class,
-            Archive\ArchiveLoader::class => ServiceFactory\ArchiveLoaderFactory::class,
-            FeatureProvider::class => ServiceFactory\FeatureProviderFactory::class,
-        ],
-    ],
-];
+amd.define('nexus.ui.ansible', ['angular'], function(angular) {
+    var module = angular.module('nexus.ui.ansible', ['nexus.ui.core']);
+    var addServices = require('./services');
+
+    addServices(module);
+
+    return 'nexus.ui.ansible';
+});
