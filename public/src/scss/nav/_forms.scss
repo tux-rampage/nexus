@@ -1,0 +1,35 @@
+.custom-chips .md-chips md-chip .md-chip-remove-container {
+    right: 4px;
+    top: 4px;
+    height: 24px;
+
+    button.chip-remove {
+        position: relative;
+        height: 24px;
+        width: 24px;
+        line-height: 30px;
+        text-align: center;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 50%;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        margin: 0;
+        transition: background 0.15s linear;
+        display: block;
+
+        &:hover {
+            background: rgba(255, 0, 0, 0.3);
+            transition: background 0.15s linear;
+        }
+
+        md-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate3d(-50%, -50%, 0) scale(0.7);
+            color: white;
+            fill: white;
+        }
+    }
+}

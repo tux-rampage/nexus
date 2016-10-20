@@ -28,7 +28,21 @@
 function NavigationController($state, $log)
 {
     var states = $state.get();
+    var subItems = {};
+
     this.items = [];
+
+    /**
+     * Push a child item
+     */
+    function pushChild(state)
+    {
+        if (!subItems[state.uiNav.parent]) {
+            subItems[state.uiNav.parent] = [];
+        }
+
+        subItems[state.uiNav.parent].push(state);
+    }
 
     for (var i = 0; i < states.length; i++) {
         var state = states[i];
@@ -37,7 +51,21 @@ function NavigationController($state, $log)
             continue;
         }
 
+        if (state.uiNav.parent) {
+            pushChild(state);
+            continue;
+        }
+
         this.items.push(state);
+    }
+
+    this.getChildren = function(state)
+    {
+        if (!subItems[state.name]) {
+            return [];
+        }
+
+        return subItems[state.name];
     }
 
     this.close = function() {

@@ -1,0 +1,30 @@
+<md-progress-linear md-mode="indeterminate" ng-hide="true || $ctrl.progress.$resolved"></md-progress-linear>
+<md-content layout-padding ng-show="true || $ctrl.host.$resolved">
+    <md-card>
+        <md-card-header>
+            <md-card-header-text>
+                <span class="md-title">Create Host</span>
+                <span class="md-subhead">{{$ctrl.host.name}}</span>
+            </md-card-header-text>
+        </md-card-header>
+
+        <md-card-content>
+            <ng-form layout="column" name="hostForm">
+                <md-input-container flex>
+                    <label>Hostname</label>
+                    <input ng-model="$ctrl.host.name" name="hostname" ng-required="true" />
+                </md-input-container>
+
+                <md-input-container flex>
+                    <label>Groups</label>
+                    <md-chips ng-model="$ctrl.host.groups" name="groups">
+                    </md-chips>
+                </md-input-container>
+
+                <footer layout="row" layout-align="end center" layout-wrap>
+                    <md-button class="md-raised md-primary" aria-label="Save">Save</md-button>
+                </footer>
+            </ng-form>
+        </md-card-content>
+    </md-card>
+</md-content>

@@ -21,15 +21,14 @@
 
 'use strict';
 
-amd.define('nexus.ui.ansible', ['angular'], function(angular) {
-    var module = angular.module('nexus.ui.ansible', ['nexus.ui.core']);
-    var addServices = require('./services');
-    var addComponents = require('./components');
-    var configure = require('./config');
+function HostListController(api, $state)
+{
+    this.hosts = api.ansible.hosts.query();
+    this.add = function()
+    {
+        $state.go('^.add');
+    };
+}
 
-    addServices(module);
-    addComponents(module);
-    configure(module);
-
-    return 'nexus.ui.ansible';
-});
+HostListController.$inject = ['rampage.nexus.RestApi', '$state'];
+module.exports = HostListController;

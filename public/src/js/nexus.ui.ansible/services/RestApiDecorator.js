@@ -34,6 +34,8 @@ function RestApiDecorator($delegate, $resource)
             query: { method: 'GET', isArray: false }
         })
     }
+
+    return $delegate;
 }
 
 RestApiDecorator.$inject = [ '$delegate', '$resource' ];

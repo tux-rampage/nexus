@@ -21,11 +21,7 @@
 
 'use strict';
 
-function HostsController(api)
+module.exports = function(ngModule)
 {
-    // TODO: Implement loading
-    this.hosts = api.ansible.hosts.query();
-}
-
-HostsController.$inject = ['rampage.nexus.RestApi'];
-module.exports = HostsController;
+    ngModule.config(require('./ConfigureStates'));
+};

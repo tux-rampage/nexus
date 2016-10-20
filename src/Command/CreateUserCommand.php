@@ -29,6 +29,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Rampage\Nexus\OAuth2\Repository\UserRepositoryInterface;
 use Rampage\Nexus\OAuth2\Entities\User;
 use Zend\Crypt\Password\PasswordInterface;
+use Symfony\Component\Console\Input\InputOption;
 
 class CreateUserCommand extends Command
 {
@@ -36,6 +37,11 @@ class CreateUserCommand extends Command
      * Command name
      */
     const COMMAND = 'master:createuser';
+
+    /**
+     * Password option name
+     */
+    const OPTION_PASSWORD = 'password';
 
     /**
      * @var string
@@ -96,6 +102,7 @@ class CreateUserCommand extends Command
     protected function configure()
     {
         $this->addArgument('username', InputArgument::REQUIRED, 'The username to add/modify')
+            ->addOption(self::OPTION_PASSWORD, 'p', InputOption::VALUE_REQUIRED, 'Set a password instead of generating one')
             ->setDescription('Creates or resets a user with a random password')
             ->setHelp("If the user already exists, its password will be reset to a random one\nThe new password will be printed on screen.");
     }
@@ -107,8 +114,14 @@ class CreateUserCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $username = $input->getArgument('username');
+        $password = $input->getOption(self::OPTION_PASSWORD);
         $user = $this->repository->findOne($username);
-        $password = $this->randomString(8);
+        $generated = false;
+
+        if ($password == '') {
+            $generated = true;
+            $password = $this->randomString(8);
+        }
 
         if (!$user) {
             $user = new User($username, $this->passwordStrategy);
@@ -117,7 +130,12 @@ class CreateUserCommand extends Command
         $user->setPassword($password);
         $this->repository->save($user);
 
-        $output->writeln('<info>New Password for "' . $user->getName() . '": </info>' . $password);
+        if ($generated) {
+            $output->writeln('<info>New Password for "' . $user->getName() . '": </info>' . $password);
+        } else {
+            $output->writeln('<info>Password for "' . $user->getName() . '" updated</info>');
+        }
+
         return 0;
     }
 }

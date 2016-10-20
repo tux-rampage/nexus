@@ -57,6 +57,8 @@ function Authentication(OAuth, OAuthToken)
         this.$promise['finally'](function() {
             _self.$resolved = true;
         });
+
+        return this.$promise;
     },
 
     /**

@@ -25,6 +25,10 @@ module.exports = function(ngModule) {
     ngModule
         .component('ansibleHostList', {
             templateUrl: 'assets/ansible/templates/hosts/list.html',
-            controller: require('./controllers/HostsController')
+            controller: require('./controllers/HostListController')
+        })
+        .component('ansibleHost', {
+            templateUrl: 'assets/ansible/templates/hosts/detail.html',
+            controller: require('./controllers/HostController')
         });
 };

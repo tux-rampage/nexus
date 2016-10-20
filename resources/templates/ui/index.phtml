@@ -26,7 +26,9 @@
                 <md-buton ng-if="ui.auth.isAuthenticated()" ng-hide="$mdMedia('gt-sm')" class="toggle-menu" ng-click="ui.toggleNavigation()"><md-icon class="material-icons step">menu</md-icon></md-buton>
                 <h1 flex>Deployment</h1>
                 <div layout-align="end center" ng-if="ui.auth.isAuthenticated()">
-                    <md-button ng-click="ui.logout()">Logout</md-button>
+                    <md-button ng-click="ui.logout()" title="Logout">
+                        <md-icon class="material-icons step">exit_to_app</md-icon>
+                    </md-button>
                 </div>
             </md-toolbar>
 

@@ -1,0 +1,21 @@
+<md-progress-linear md-mode="indeterminate" ng-hide="$ctrl.hosts.$resolved"></md-progress-linear>
+<md-content layout-padding ng-show="$ctrl.hosts.$resolved">
+    <md-list flex ng-if="$ctrl.hosts.items.length">
+        <md-list-item class="md-3-line" ng-repeat="host in $ctrl.hosts.items" ng-click="$ctrl.showDetails(host)">
+            <div class="md-list-item-text" layout="column">
+                <h3>{{ host.name }}</h3>
+                <div>
+                    <md-chips ng-model="host.groups" readonly="true"></md-chips>
+                </div>
+            </div>
+        </md-list-item>
+    </md-list>
+
+    <section flex ng-if="!$ctrl.apps.items.length">
+        <p>There are currently no hosts available.</p>
+    </section>
+</md-content>
+
+<md-button class="md-primary md-fab md-fab-bottom-right" ng-click="$ctrl.add()">
+    <md-icon class="material-icons step">add</md-icon>
+</md-button>

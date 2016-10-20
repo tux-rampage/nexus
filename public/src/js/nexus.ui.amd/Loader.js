@@ -36,7 +36,10 @@ if (!Promise) {
 }
 
 /**
- * AMD Loader
+ * A very simple AMD Loader
+ *
+ * This is not intended to implement a std amd loader. Its sole purpose is
+ * to enable async angular module loading, to keep the whole application modular
  */
 function Loader()
 {
