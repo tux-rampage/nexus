@@ -84,13 +84,13 @@ var bundles = {
     app: {
         src: 'app.js',
         bundle: 'app.js',
-        expose: [ 'angular' ],
+        expose: [ 'angular', 'nexus.ui.core/constants/Constants' ],
         add: _addExternals
     },
     ansible: {
         src: 'nexus.ui.ansible/module.js',
         bundle: 'nexus.ui.ansible.js',
-        externals: [ 'angular' ],
+        externals: [ 'angular', 'nexus.ui.core/constants/Constants' ],
         add: _addExternals
     }
 }

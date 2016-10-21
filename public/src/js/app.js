@@ -30,17 +30,32 @@ amd.set('angular', angular);
 document.addEventListener("DOMContentLoaded", function(event) {
     var deps = amd.getUiDepsFromDocument();
 
-    amd.require(deps, function() {
-        var deps = Array.prototype.slice.call(arguments);
+    function _extractDeps(args)
+    {
+        var array = [];
 
-        deps.unshift(ui);
-        console.debug(deps);
+        for (var i = 0; i < args.length; i++) {
+            if (!angular.isString(args[i])) {
+                continue;
+            }
+
+            array.push(args[i]);
+        }
+
+        return array;
+    }
+
+    amd.require(deps, function() {
+        var modules = _extractDeps(arguments);
+
+        console.debug({resolvedDeps: arguments, d: modules});
+        modules.unshift(ui);
 
         var element = document.getElementById('nexus.ui');
         if (!element) {
             throw new Error('Bootstrapping failed: Missing root element');
         }
 
-        angular.bootstrap(document, deps);
+        angular.bootstrap(document, modules);
     })
 });

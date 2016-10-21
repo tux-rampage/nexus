@@ -21,46 +21,83 @@
 
 'use strict';
 
+var angular = require('angular');
+
 function ConfigureStates($stateProvider)
 {
+    function createCrudState(url, caption, icon) {
+        return {
+            'abstract': true,
+            component: 'crudContainer',
+            url: url,
+            resolve: {
+                caption: function() { return caption; },
+                icon: function() { return icon; }
+            }
+        };
+    };
+
+    /**
+     * Creates a list state config
+     */
+    function createListState(component, label, icon)
+    {
+        var config = {
+            views: {
+                'main': { component: component }
+            },
+            url: '',
+            uiNav: {
+                label: label,
+                icon: icon,
+                parent: 'ansible'
+            }
+        };
+
+        console.debug(config);
+
+        return config;
+    };
+
+    /**
+     * Creates a form state config
+     *
+     * @param {String} component
+     * @param {String} url
+     * @param {String|Object} toolbar A string with the template relative to "assets/ansible/tem
+     * @returns {Object}
+     */
+    function createFormState(component, url, toolbar)
+    {
+        var config = {
+            views: {
+                'main': { component: component }
+            },
+            url: url
+        }
+
+        if (toolbar) {
+            config.views.toolbar = (angular.isString(toolbar))? { templateUrl: 'assets/ansible/templates/' + toolbar } : toolbar;
+        }
+
+        return config;
+    };
+
     $stateProvider
         .state('ansible', {
             'abstract': true,
-            templateUrl: 'assets/ansible/templates/index.html',
+            template: '<ui-view></ui-view>',
             uiNav: {
                 label: 'Ansible Inventory',
             }
         })
-        .state('ansible.hosts', {
-            'abstract': true,
-            templateUrl: 'assets/ansible/templates/hosts.html',
-            url: '/ansible/hosts'
-        })
-        .state('ansible.hosts.list', {
-            views: {
-                'main': { component: 'ansibleHostList' }
-            },
-            url: '',
-            uiNav: {
-                label: 'Hosts',
-                icon: 'storage',
-                parent: 'ansible'
-            }
-        })
-        .state('ansible.hosts.add', {
-            views: {
-                'main': { component: 'ansibleHost' }
-                //'toolbar': { templateUrl: 'assets/ansible/templates/hosts/toolbar/detail.html' }
-            },
-            url: '/add'
-        })
-        .state('ansible.hosts.detail', {
-            views: {
-                'main': { component: 'ansibleHost' },
-                'toolbar': { templateUrl: 'assets/ansible/templates/hosts/toolbar/detail.html' }
-            },
-            url: '/h/{hostName:[a-zA-Z0-9_.-]+}'
-        });
+        .state('ansible.hosts', createCrudState('/ansible/hosts', 'Ansible Inventory // Hosts', 'storage'))
+        .state('ansible.hosts.list', createListState('ansibleHostList', 'Hosts', 'storage'))
+        .state('ansible.hosts.add', createFormState('ansibleHost', '/add'))
+        .state('ansible.hosts.detail', createFormState('ansibleHost', '/h/{hostName:[a-zA-Z0-9_.-]+}', 'hosts/toolbar/detail.html'))
+
+        .state('ansible.groups', createCrudState('/ansible/groups', 'Ansible Inventory // Groups', 'style'))
+        .state('ansible.groups.list', createListState('ansibleGroupList', 'Groups', 'style'));
 }
 
 ConfigureStates.$inject = [ '$stateProvider' ];

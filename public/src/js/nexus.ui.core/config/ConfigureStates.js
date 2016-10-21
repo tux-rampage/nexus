@@ -38,10 +38,10 @@ function ConfigureState($stateProvider)
         })
         .state('apps', {
             'abstract': true,
-            templateUrl: 'assets/templates/apps/index.html',
-            controller: [ '$scope', '$state', '$log', function($scope, $state, $log) {
-                $scope.state = $state.current;
-            }],
+            component: 'crudContainer',
+            resolve: {
+                caption: function() { return 'Applications'; }
+            },
             url: '/apps',
         })
         .state('apps.list', {

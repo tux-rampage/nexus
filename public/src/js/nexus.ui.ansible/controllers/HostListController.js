@@ -23,7 +23,9 @@
 
 function HostListController(api, $state)
 {
-    this.hosts = api.ansible.hosts.query();
+    this.noItemsText = 'There are currently no hosts available.';
+    this.itemTemplate = 'assets/ansible/templates/hosts/list-item.html';
+    this.collection = api.ansible.hosts.query();
     this.add = function()
     {
         $state.go('^.add');

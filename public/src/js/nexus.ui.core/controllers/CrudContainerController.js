@@ -21,23 +21,9 @@
 
 'use strict';
 
-/**
- * @param {ApplicationsResource} Applications
- */
-function ApplicationsController(api, $state)
+function CrudContainerController()
 {
-    this.itemTemplate = 'assets/templates/apps/list-item.html';
-    this.noTiemsText = 'There are currently no applications available.';
-    this.collection = api.applications.query();
-    this.appIcon = api.applications.getIconUrl;
+}
 
-    this.showDetails = function(app)
-    {
-        $state.go('^.detail', {
-            appId: app.id
-        });
-    };
-};
-
-ApplicationsController.$inject = [ 'rampage.nexus.RestApi', '$state' ];
-module.exports = ApplicationsController;
+CrudContainerController.$inject = [];
+module.exports = CrudContainerController;

@@ -21,8 +21,18 @@
 
 'use strict';
 
+var C = require('./constants/Constants');
+
 module.exports = function(ngModule) {
     ngModule
+        .component('crudContainer', {
+            templateUrl: 'assets/templates/crud/index.html',
+            controller: require('./controllers/CrudContainerController'),
+            bindings: {
+                caption: '<',
+                icon: '<'
+            }
+        })
         .component('uiNavigation', {
             templateUrl: 'assets/templates/navigation.html',
             controller: require('./controllers/NavigationController')
@@ -32,7 +42,7 @@ module.exports = function(ngModule) {
             controller: require('./controllers/AuthController')
         })
         .component('uiAppList', {
-            templateUrl: 'assets/templates/apps/list.html',
+            templateUrl: C.TEMPLATES.COLLECTION,
             controller: require('./controllers/ApplicationsController')
         })
         .component('uiAppDetail', {

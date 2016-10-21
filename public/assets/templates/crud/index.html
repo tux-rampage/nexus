@@ -1,7 +1,7 @@
 <md-toolbar layout="row" class="md-hue-2">
     <div class="md-toolbar-tools">
-        <md-icon class="material-icons step">storage</md-icon>&nbsp;
-        <h2 flex>Ansible Inventory // Hosts</h2>
+        <md-icon ng-if="$ctrl.icon" class="material-icons step">{{ $ctrl.icon }}</md-icon>&nbsp;
+        <h2 flex>{{ $ctrl.caption }}</h2>
         <div ui-view="toolbar" layout-align="end center"></div>
     </div>
 </md-toolbar>

@@ -21,12 +21,20 @@
 
 'use strict';
 
+var C = require('nexus.ui.core/constants/Constants');
+
 module.exports = function(ngModule) {
     ngModule
         .component('ansibleHostList', {
-            templateUrl: 'assets/ansible/templates/hosts/list.html',
+            templateUrl: C.TEMPLATES.COLLECTION,
             controller: require('./controllers/HostListController')
         })
+
+        .component('ansibleGroupList', {
+            templateUrl: C.TEMPLATES.COLLECTION,
+            controller: require('./controllers/GroupListController')
+        })
+
         .component('ansibleHost', {
             templateUrl: 'assets/ansible/templates/hosts/detail.html',
             controller: require('./controllers/HostController')

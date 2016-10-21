@@ -21,23 +21,16 @@
 
 'use strict';
 
-/**
- * @param {ApplicationsResource} Applications
- */
-function ApplicationsController(api, $state)
+function GroupListController(api, $state)
 {
-    this.itemTemplate = 'assets/templates/apps/list-item.html';
-    this.noTiemsText = 'There are currently no applications available.';
-    this.collection = api.applications.query();
-    this.appIcon = api.applications.getIconUrl;
-
-    this.showDetails = function(app)
+    this.noItemsText = 'There are currently no groups available.';
+    this.itemTemplate = 'assets/ansible/templates/groups/list-item.html';
+    this.collection = api.ansible.groups.query();
+    this.add = function()
     {
-        $state.go('^.detail', {
-            appId: app.id
-        });
+        $state.go('^.add');
     };
-};
+}
 
-ApplicationsController.$inject = [ 'rampage.nexus.RestApi', '$state' ];
-module.exports = ApplicationsController;
+GroupListController.$inject = ['rampage.nexus.RestApi', '$state'];
+module.exports = GroupListController;
