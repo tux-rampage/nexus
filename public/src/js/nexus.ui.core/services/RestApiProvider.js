@@ -37,19 +37,15 @@ function RestApiProvider(C)
     {
         var api = {
             buildUrl: buildUrl,
-            applications: $resource(buildUrl('/applications/:id'), {id: '@id'}, {
-                query: { method: 'GET', isArray: false }
-            })
+            applications: $resource(buildUrl('/applications/:id'), {id: '@id'})
         };
 
+        api.applications.packages = $resource(apiUrl + '/applications/:appId/packages/:id', {appId: '@name', id: '@id'});
         api.applications.getIconUrl = function(app)
         {
             return buildUrl('/applications/' + app.id + '/icon');
         };
 
-        api.applications.packages = $resource(apiUrl + '/applications/:appId/packages/:id', {appId: '@name', id: '@id'}, {
-            query: { method: 'GET', isArray: false }
-        });
 
         return api;
     };

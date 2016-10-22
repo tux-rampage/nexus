@@ -57,7 +57,7 @@ function ConfigureState($stateProvider)
         .state('apps.detail', {
             views: {
                 'main': { component: 'uiAppDetail' },
-                'toolbar': { templateUrl: 'assets/templates/apps/toolbar/detail.html' }
+                'toolbar': { templateUrl: 'assets/templates/crud/toolbar/detail.html' }
             },
             url: '/{appId:[a-zA-Z0-9_.-]+}'
         });

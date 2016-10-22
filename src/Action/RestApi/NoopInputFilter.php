@@ -1,3 +1,4 @@
+<?php
 /**
  * Copyright (c) 2016 Axel Helmert
  *
@@ -19,20 +20,43 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-'use strict';
+namespace Rampage\Nexus\Action\RestApi;
 
 /**
- * Auguments the rest api
+ * An input filter that does nothing
  */
-function RestApiDecorator($delegate, $resource)
+final class NoopInputFilter
 {
-    $delegate.ansible = {
-        hosts: $resource($delegate.buildUrl('/ansible/hosts/:id'), {id: '@id'}),
-        groups: $resource($delegate.buildUrl('/ansible/groups/:id'), {id: '@id'})
+    /**
+     * @var array
+     */
+    private $data;
+
+    /**
+     * {@inheritDoc}
+     * @see \Zend\InputFilter\InputFilterInterface::getValues()
+     */
+    public function getValues()
+    {
+        return $this->data;
     }
 
-    return $delegate;
-}
+    /**
+     * {@inheritDoc}
+     * @see \Zend\InputFilter\InputFilterInterface::isValid()
+     */
+    public function isValid()
+    {
+        return true;
+    }
 
-RestApiDecorator.$inject = [ '$delegate', '$resource' ];
-module.exports = RestApiDecorator;
+    /**
+     * {@inheritDoc}
+     * @see \Zend\InputFilter\InputFilterInterface::setData()
+     */
+    public function setData($data)
+    {
+        $this->data = $data;
+        return $this;
+    }
+}

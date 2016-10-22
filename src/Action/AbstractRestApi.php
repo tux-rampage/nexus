@@ -38,6 +38,9 @@ use Zend\Stdlib\ArraySerializableInterface;
 use Zend\Stratigility\MiddlewareInterface;
 
 use ArrayObject;
+use Rampage\Nexus\Exception\Http\BadRequestException;
+use Zend\InputFilter\InputFilterInterface;
+use function GuzzleHttp\json_encode;
 
 
 /**
@@ -108,6 +111,19 @@ abstract class AbstractRestApi implements MiddlewareInterface
      */
     public function create(array $data)
     {
+        if (!method_exists($this->repository, 'save')) {
+            return $this->response->withStatus(BadRequestException::NOT_ALLOWED);
+        }
+
+        $filter = $this->getCreateInputFilter();
+
+        if (!$filter->setData($data)->isValid()) {
+            return new JsonResponse([
+                'invalid' => true,
+                'messages' => $filter->getMessages()
+            ], BadRequestException::UNPROCESSABLE);
+        }
+
         if ($this->repository instanceof PrototypeProviderInterface) {
             $object = $this->repository->getPrototypeByData($data);
         } else {
@@ -130,12 +146,27 @@ abstract class AbstractRestApi implements MiddlewareInterface
      */
     public function update($id, array $data)
     {
+        if (!method_exists($this->repository, 'save')) {
+            return $this->response->withStatus(BadRequestException::NOT_ALLOWED);
+        }
+
         $object = $this->get($id);
 
-        if ($object) {
-            $object->exchangeArray($data);
-            $this->repository->save($object);
+        if (!$object) {
+            return null;
         }
+
+        $filter = $this->getUpdateInputFilter();
+
+        if (!$filter->setData($data)->isValid()) {
+            return new JsonResponse([
+                'invalid' => true,
+                'messages' => $filter->getMessages()
+            ], BadRequestException::UNPROCESSABLE);
+        }
+
+        $object->exchangeArray($filter->getValues());
+        $this->repository->save($object);
 
         return $object;
     }
@@ -175,6 +206,10 @@ abstract class AbstractRestApi implements MiddlewareInterface
      */
     public function delete($id)
     {
+        if (!method_exists($this->repository, 'remove')) {
+            throw new BadRequestException(BadRequestException::NOT_ALLOWED);
+        }
+
         $object = $this->get($id);
 
         if (!$object) {
@@ -190,7 +225,7 @@ abstract class AbstractRestApi implements MiddlewareInterface
      */
     public function deleteList()
     {
-        return $this->response->withStatus(405);
+        throw new BadRequestException(BadRequestException::NOT_ALLOWED);
     }
 
     /**
@@ -210,6 +245,23 @@ abstract class AbstractRestApi implements MiddlewareInterface
 
         return $body;
     }
+
+    /**
+     * @return InputFilterInterface
+     */
+    private function getCreateInputFilter()
+    {
+        return new RestApi\NoopInputFilter();
+    }
+
+    /**
+     * @return InputFilterInterface
+     */
+    private function getUpdateInputFilter()
+    {
+        return new RestApi\NoopInputFilter();
+    }
+
 
     /**
      * {@inheritDoc}

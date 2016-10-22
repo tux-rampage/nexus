@@ -71,7 +71,8 @@ function ConfigureStates($stateProvider)
     {
         var config = {
             views: {
-                'main': { component: component }
+                main: { component: component },
+                toolbar: { templateUrl: 'assets/templates/crud/toolbar/detail.html' }
             },
             url: url
         }
@@ -94,10 +95,11 @@ function ConfigureStates($stateProvider)
         .state('ansible.hosts', createCrudState('/ansible/hosts', 'Ansible Inventory // Hosts', 'storage'))
         .state('ansible.hosts.list', createListState('ansibleHostList', 'Hosts', 'storage'))
         .state('ansible.hosts.add', createFormState('ansibleHost', '/add'))
-        .state('ansible.hosts.detail', createFormState('ansibleHost', '/h/{hostName:[a-zA-Z0-9_.-]+}', 'hosts/toolbar/detail.html'))
+        .state('ansible.hosts.detail', createFormState('ansibleHost', '/h/{hostName:[a-zA-Z0-9_.-]+}'))
 
         .state('ansible.groups', createCrudState('/ansible/groups', 'Ansible Inventory // Groups', 'style'))
-        .state('ansible.groups.list', createListState('ansibleGroupList', 'Groups', 'style'));
+        .state('ansible.groups.list', createListState('ansibleGroupList', 'Groups', 'style'))
+        .state('ansible.groups.add', createFormState('ansibleGroup', '/add'));
 }
 
 ConfigureStates.$inject = [ '$stateProvider' ];

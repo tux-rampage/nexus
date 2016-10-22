@@ -27,9 +27,9 @@
 function ApplicationsController(api, $state)
 {
     this.itemTemplate = 'assets/templates/apps/list-item.html';
-    this.noTiemsText = 'There are currently no applications available.';
+    this.noItemsText = 'There are currently no applications available.';
     this.collection = api.applications.query();
-    this.appIcon = api.applications.getIconUrl;
+    this.getListIcon = api.applications.getIconUrl;
 
     this.showDetails = function(app)
     {

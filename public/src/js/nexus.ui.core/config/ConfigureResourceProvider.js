@@ -21,18 +21,21 @@
 
 'use strict';
 
+var angular = require('angular');
+
 /**
- * Auguments the rest api
+ * Configures the resource provider
+ *
+ * @param {angular.$resource} $resource
  */
-function RestApiDecorator($delegate, $resource)
+function ConfigureResourceProvider($resourceProvider)
 {
-    $delegate.ansible = {
-        hosts: $resource($delegate.buildUrl('/ansible/hosts/:id'), {id: '@id'}),
-        groups: $resource($delegate.buildUrl('/ansible/groups/:id'), {id: '@id'})
-    }
+    angular.extend($resourceProvider.defaults.actions, {
+        query: { method: 'GET', isArray: false },
+        create: { method: 'POST' },
+        save: { method: 'PUT' }
+    });
+};
 
-    return $delegate;
-}
-
-RestApiDecorator.$inject = [ '$delegate', '$resource' ];
-module.exports = RestApiDecorator;
+ConfigureResourceProvider.$inject = [ '$resourceProvider' ];
+module.exports = ConfigureResourceProvider;

@@ -29,14 +29,17 @@ module.exports = function(ngModule) {
             templateUrl: C.TEMPLATES.COLLECTION,
             controller: require('./controllers/HostListController')
         })
+        .component('ansibleHost', {
+            templateUrl: 'assets/ansible/templates/hosts/detail.html',
+            controller: require('./controllers/HostController')
+        })
 
         .component('ansibleGroupList', {
             templateUrl: C.TEMPLATES.COLLECTION,
             controller: require('./controllers/GroupListController')
         })
-
-        .component('ansibleHost', {
-            templateUrl: 'assets/ansible/templates/hosts/detail.html',
-            controller: require('./controllers/HostController')
+        .component('ansibleGroup', {
+            templateUrl: 'assets/ansible/templates/groups/detail.html',
+            controller: require('./controllers/GroupController')
         });
 };

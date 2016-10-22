@@ -2,7 +2,8 @@
 <md-content layout-padding ng-show="$ctrl.collection.$resolved">
     <md-list flex ng-if="$ctrl.collection.items.length">
         <md-list-item class="md-3-line" ng-repeat="item in $ctrl.collection.items" ng-click="$ctrl.showDetails(item)">
-            <ng-include src="$ctrl.itemTemplate"></ng-include>
+            <img ng-if="$ctrl.getListIcon" ng-src="{{$ctrl.getListIcon(item)}}" class="md-avatar" />
+            <div class="md-list-item-text" layout="column" ng-include="$ctrl.itemTemplate"></div>
         </md-list-item>
     </md-list>
 
