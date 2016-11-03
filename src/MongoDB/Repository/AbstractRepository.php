@@ -208,6 +208,7 @@ abstract class AbstractRepository implements RepositoryInterface
         $isAttached = $this->entityStates->isAttached($object);
         $data = $this->hydrator->extract($object);
         $id = $this->extractIdentifier($data, $object);
+        $idStrategy = $this->getIdentifierStrategy();
 
         if ($isAttached) {
             $state = $this->entityStates->getState($object);
@@ -219,22 +220,26 @@ abstract class AbstractRepository implements RepositoryInterface
         $this->prePersist($object, $data);
 
         if (!$id) {
-            $id = $this->collection->insert($data);
-            $this->hydrator->hydrate(['_id' => $id], $object);
+            $newId = $this->collection->insert($data);
+            $id = $idStrategy->hydrate($newId);
+
+            $this->hydrator->hydrate(['_id' => $newId], $object);
         } else {
             $previousData = $state->getData();
+            $stateId = $idStrategy->extract($state->getId());
 
             if (is_array($previousData) && !empty($previousData)) {
-                $updateId = $state->getId();
+                $newId = $idStrategy->extract($id);
+                $updateId = $stateId;
                 $updates = new CalculateUpdateStrategy($previousData);
                 $updates->calculate($data);
 
                 foreach ($updates->getOrderedInstructions() as $update) {
                     $this->collection->update(['_id' => $updateId], $update);
-                    $updateId = $id; // The first update may have changed the identifier
+                    $updateId = $newId; // The first update may have changed the identifier
                 }
             } else {
-                $this->collection->update(['_id' => $state->getId()], [ '$set' => $data ], false, ($state->getState() != EntityState::STATE_PERSISTED));
+                $this->collection->update(['_id' => $stateId], [ '$set' => $data ], false, ($state->getState() != EntityState::STATE_PERSISTED));
             }
         }
 

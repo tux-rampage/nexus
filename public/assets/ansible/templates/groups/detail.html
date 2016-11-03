@@ -1,5 +1,13 @@
-<md-progress-linear md-mode="indeterminate" ng-hide="true || $ctrl.progress.$resolved"></md-progress-linear>
+<md-progress-linear md-mode="indeterminate" ng-hide="$ctrl.progress.$resolved"></md-progress-linear>
 <md-content layout-padding ng-show="true || $ctrl.group.$resolved">
+    <div class="message message-error" ng-if="$ctrl.progress.error">
+        Error while saving ansible group {{ $ctrl.group.label || $strl.group.name }}
+    </div>
+
+    <div class="message message-success" ng-if="$ctrl.progress.success">
+        Successfully saved ansible group {{ $ctrl.group.label || $strl.group.name }}
+    </div>
+
     <md-card>
         <md-card-header>
             <md-card-header-text>
@@ -9,10 +17,10 @@
         </md-card-header>
 
         <md-card-content>
-            <ng-form layout="column" name="groupForm">
+            <ng-form name="groupForm" layout="column" name="groupForm">
                 <md-input-container flex>
-                    <label>Identifier</label>
-                    <input ng-model="$ctrl.group.id" name="groupid" ng-required="true" />
+                    <label>Name</label>
+                    <input ng-model="$ctrl.group.name" name="name" ng-required="true" />
                 </md-input-container>
 
                 <md-input-container flex>
@@ -28,7 +36,7 @@
                 </md-input-container>
 
                 <footer layout="row" layout-align="end center" layout-wrap>
-                    <md-button class="md-raised md-primary" aria-label="Save">Save</md-button>
+                    <md-button class="md-raised md-primary" aria-label="Save" ng-disabled="groupForm.$invalid" ng-click="$ctrl.save()">Save</md-button>
                 </footer>
             </ng-form>
         </md-card-content>

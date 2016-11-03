@@ -71,7 +71,7 @@ class HostRepository extends AbstractRepository implements HostRepositoryInterfa
     {
         parent::__construct($driver, new Hydration\HostHydrator($driver, $groupRepository, $nodeRepository, $targetRepository), 'ansible_hosts');
 
-        $this->idStrategy = $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING);
+        $this->idStrategy = $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_ID);
         $this->nodeHydrator = new NodeHydrator($driver, $targetRepository);
         $this->nodeRepository = $nodeRepository;
     }

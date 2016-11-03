@@ -50,6 +50,7 @@ class HostHydrator extends ReflectionHydrator
             'groups'
         ]);
 
+        $this->addStrategy('id', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_ID));
         $this->addStrategy('*', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING));
         $this->addStrategy('variables', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_HASH));
         $this->addStrategy('groups', new CollectionStrategy(new ReferenceStrategy($groupRepository), false, Group::class));

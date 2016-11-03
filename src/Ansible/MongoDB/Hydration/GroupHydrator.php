@@ -42,16 +42,16 @@ class GroupHydrator extends ReflectionHydrator
     public function __construct(DriverInterface $driver, ReferenceProviderInterface $groupRepository)
     {
         parent::__construct([
+            'name',
             'label',
             'children',
             'variables',
             'deploymentType'
         ]);
 
+        $this->addStrategy('id', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_ID));
         $this->addStrategy('*', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING));
         $this->addStrategy('variables', $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_HASH));
         $this->addStrategy('children', new CollectionStrategy(new ReferenceStrategy($groupRepository), false, Group::class));
     }
-
-
 }

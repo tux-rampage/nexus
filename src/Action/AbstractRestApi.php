@@ -25,9 +25,10 @@ namespace Rampage\Nexus\Action;
 use Rampage\Nexus\Entities\Api\ArrayExchangeInterface;
 use Rampage\Nexus\Entities\Api\ArrayExportableInterface;
 use Rampage\Nexus\Exception\UnexpectedValueException;
-use Rampage\Nexus\Exception\InvalidArgumentException;
+use Rampage\Nexus\Exception\LogicException;
 use Rampage\Nexus\Repository\PrototypeProviderInterface;
 use Rampage\Nexus\Repository\RepositoryInterface;
+use Rampage\Nexus\Exception\Http\BadRequestException;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -36,11 +37,9 @@ use Zend\Diactoros\Response\JsonResponse;
 use Zend\Diactoros\Response\TextResponse;
 use Zend\Stdlib\ArraySerializableInterface;
 use Zend\Stratigility\MiddlewareInterface;
+use Zend\InputFilter\InputFilterInterface;
 
 use ArrayObject;
-use Rampage\Nexus\Exception\Http\BadRequestException;
-use Zend\InputFilter\InputFilterInterface;
-use function GuzzleHttp\json_encode;
 
 
 /**
@@ -85,10 +84,41 @@ abstract class AbstractRestApi implements MiddlewareInterface
     {
         $this->repository = $repository;
         $this->prototype = $prototype;
+    }
 
-        if (!$prototype && !($repository instanceof PrototypeProviderInterface)) {
-            throw new InvalidArgumentException(sprintf('The repository must implement %s or $prototype must not be null', PrototypeProviderInterface::class));
+    /**
+     * Creates an entity from the given post data
+     *
+     * @param array $data
+     * @return object
+     */
+    protected function createEntity(array $data)
+    {
+        /** @var ArrayExchangeInterface $object */
+        if ($this->repository instanceof PrototypeProviderInterface) {
+            $object = $this->repository->getPrototypeByData($data);
+        } else {
+            if (!$this->prototype) {
+                throw new LogicException('Cannot create a new entity without a prototype');
+            }
+
+            $object = clone $this->prototype;
         }
+
+        $object->exchangeArray($data);
+        return $object;
+    }
+
+    /**
+     * Update the given entity with the data
+     *
+     * @param array $data
+     * @param object|ArrayExchangeInterface $entity
+     */
+    protected function updateEntity(array $data, $entity)
+    {
+        $entity->exchangeArray($data);
+        return $entity;
     }
 
     /**
@@ -124,13 +154,7 @@ abstract class AbstractRestApi implements MiddlewareInterface
             ], BadRequestException::UNPROCESSABLE);
         }
 
-        if ($this->repository instanceof PrototypeProviderInterface) {
-            $object = $this->repository->getPrototypeByData($data);
-        } else {
-            $object = clone $this->prototype;
-        }
-
-        $object->exchangeArray($data);
+        $object = $this->createEntity($filter->getValues());
         $this->repository->save($object);
 
         return $object;
@@ -165,7 +189,7 @@ abstract class AbstractRestApi implements MiddlewareInterface
             ], BadRequestException::UNPROCESSABLE);
         }
 
-        $object->exchangeArray($filter->getValues());
+        $this->updateEntity($filter->getValues(), $object);
         $this->repository->save($object);
 
         return $object;
@@ -261,7 +285,6 @@ abstract class AbstractRestApi implements MiddlewareInterface
     {
         return new RestApi\NoopInputFilter();
     }
-
 
     /**
      * {@inheritDoc}

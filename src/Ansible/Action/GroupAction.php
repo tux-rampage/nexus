@@ -25,6 +25,7 @@ namespace Rampage\Nexus\Ansible\Action;
 use Rampage\Nexus\Ansible\Entities\Group;
 use Rampage\Nexus\Ansible\Repository\GroupRepositoryInterface;
 use Rampage\Nexus\Action\AbstractRestApi;
+use Rampage\Nexus\Exception\Http\BadRequestException;
 
 /**
  * Implements the group rest api
@@ -38,5 +39,21 @@ class GroupAction extends AbstractRestApi
     public function __construct(GroupRepositoryInterface $repository)
     {
         parent::__construct($repository, new Group(null));
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Action\AbstractRestApi::createEntity()
+     */
+    protected function createEntity(array $data)
+    {
+        if (!isset($data['name'])) {
+            throw new BadRequestException('Missing group name', BadRequestException::UNPROCESSABLE);
+        }
+
+        $group = new Group($data['name']);
+        $group->exchangeArray($data);
+
+        return $group;
     }
 }

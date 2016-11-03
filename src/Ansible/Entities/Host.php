@@ -35,6 +35,13 @@ class Host implements ArrayExchangeInterface
     use VariablesTrait;
 
     /**
+     * The internal entity id
+     *
+     * @var string
+     */
+    private $id = null;
+
+    /**
      * @var string
      */
     protected $name;
@@ -67,6 +74,14 @@ class Host implements ArrayExchangeInterface
         $this->name = $name;
         $this->node = null;
         $this->groups = new ArrayCollection();
+    }
+
+    /**
+     * @return string
+     */
+    public function getId()
+    {
+        return $this->id;
     }
 
     /**
@@ -199,6 +214,7 @@ class Host implements ArrayExchangeInterface
     public function toArray()
     {
         $array = [
+            'id' => $this->id,
             'name' => $this->name,
             'groups' => [],
             'variables' => $this->variables,

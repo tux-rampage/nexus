@@ -32,8 +32,11 @@ class IdStrategy implements StrategyInterface
      */
     public function extract($value)
     {
-        return new \MongoId($value);
+        if ($value === null) {
+            return null;
+        }
 
+        return new \MongoId($value);
     }
 
     /**
@@ -42,6 +45,10 @@ class IdStrategy implements StrategyInterface
      */
     public function hydrate($value)
     {
+        if ($value === null) {
+            return null;
+        }
+
         return (string)$value;
     }
 }

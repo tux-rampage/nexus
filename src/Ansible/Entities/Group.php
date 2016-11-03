@@ -24,9 +24,14 @@ namespace Rampage\Nexus\Ansible\Entities;
 
 use Rampage\Nexus\Entities\Api\ArrayExchangeInterface;
 use Rampage\Nexus\Entities\ArrayCollection;
+use Rampage\Nexus\Exception\InvalidArgumentException;
+
 use SplObjectStorage;
 
 
+/**
+ * The group entity
+ */
 class Group implements ArrayExchangeInterface
 {
     use VariablesTrait;
@@ -35,6 +40,11 @@ class Group implements ArrayExchangeInterface
      * @var string
      */
     protected $id;
+
+    /**
+     * @var string
+     */
+    protected $name;
 
     /**
      * @var string
@@ -59,10 +69,10 @@ class Group implements ArrayExchangeInterface
     /**
      * @param string $id
      */
-    public function __construct($id)
+    public function __construct($name)
     {
-        $this->id = $id;
-        $this->label = $id;
+        $this->name = $name;
+        $this->label = $name;
         $this->children = new ArrayCollection();
     }
 
@@ -72,6 +82,28 @@ class Group implements ArrayExchangeInterface
     public function getId()
     {
         return $this->id;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param string $name
+     * @return self
+     */
+    public function setName($name)
+    {
+        if (empty($name)) {
+            throw new InvalidArgumentException('The group name must not be empty');
+        }
+
+        $this->name = (string)$name;
+        return $this;
     }
 
     /**
@@ -175,6 +207,10 @@ class Group implements ArrayExchangeInterface
      */
     public function exchangeArray(array $array)
     {
+        if (isset($array['name'])) {
+            $this->setName((string)$array['name']);
+        }
+
         if (isset($array['label'])) {
             $this->label = (string)$array['label'];
         }
@@ -190,6 +226,7 @@ class Group implements ArrayExchangeInterface
     {
         $data = [
             'id' => $this->id,
+            'name' => $this->name,
             'label' => $this->label,
             'children' => []
         ];
@@ -199,7 +236,10 @@ class Group implements ArrayExchangeInterface
         }
 
         foreach ($this->children as $child) {
-            $data['children'][] = $child->getId();
+            $data['children'][] = [
+                'id' => $child->getId(),
+                'name' => $child->getName()
+            ];
         }
 
         return $data;

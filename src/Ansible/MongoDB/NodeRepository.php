@@ -98,7 +98,7 @@ class NodeRepository implements NodeRepositoryInterface
      */
     public function findAll()
     {
-        return $this->hostRepository->findDeployableHosts();
+        return new Hydration\NodeCursor($this->hostRepository->findDeployableHosts());
     }
 
     /**

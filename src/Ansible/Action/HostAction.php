@@ -25,7 +25,11 @@ namespace Rampage\Nexus\Ansible\Action;
 use Rampage\Nexus\Action\AbstractRestApi;
 use Rampage\Nexus\Ansible\Entities\Host;
 use Rampage\Nexus\Ansible\Repository\HostRepositoryInterface;
+use Rampage\Nexus\Exception\Http\BadRequestException;
 
+/**
+ * Implements the Host REST Resource
+ */
 class HostAction extends AbstractRestApi
 {
     /**
@@ -35,5 +39,21 @@ class HostAction extends AbstractRestApi
     public function __construct(HostRepositoryInterface $repository)
     {
         parent::__construct($repository, new Host(null));
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Action\AbstractRestApi::createEntity()
+     */
+    protected function createEntity(array $data)
+    {
+        if (!isset($data['id'])) {
+            throw new BadRequestException('Missing identifier', BadRequestException::UNPROCESSABLE);
+        }
+
+        $group = new Host($data['id']);
+        $group->exchangeArray($data);
+
+        return $group;
     }
 }

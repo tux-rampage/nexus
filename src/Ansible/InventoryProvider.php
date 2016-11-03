@@ -78,7 +78,7 @@ class InventoryProvider implements InventoryProviderInterface
             }
 
             foreach ($group->getChildren() as $child) {
-                $list[$group->getId()]['children'][] = $child->getId();
+                $list[$group->getId()]['children'][] = $child->getName();
             }
         }
 

@@ -47,7 +47,7 @@ class GroupRepository extends AbstractRepository implements GroupRepositoryInter
     public function __construct(DriverInterface $driver)
     {
         parent::__construct($driver, new Hydration\GroupHydrator($driver, $this), 'ansible_groups');
-        $this->idStrategy = $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING);
+        $this->idStrategy = $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_ID);
     }
 
     /**
@@ -56,7 +56,7 @@ class GroupRepository extends AbstractRepository implements GroupRepositoryInter
      */
     public function findByReference($reference)
     {
-        return $this->findOne($reference);
+        return $this->doFindOne(['_id' => $reference]);
     }
 
     /**
@@ -69,7 +69,7 @@ class GroupRepository extends AbstractRepository implements GroupRepositoryInter
             throw new InvalidArgumentException('This repository can only provide references for ' . Group::class);
         }
 
-        return $object->getId();
+        return $this->idStrategy->extract($object->getId());
     }
 
     /**

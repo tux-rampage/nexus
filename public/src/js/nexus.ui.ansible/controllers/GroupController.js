@@ -26,6 +26,7 @@ var angular = require('angular');
 function GroupController(api)
 {
     var _self = this;
+    this.progress = { $resolved: true };
 
     if (!this.group) {
         this.group = {
@@ -39,11 +40,15 @@ function GroupController(api)
 
         this.progress = {
             $resolved: false,
-            success: undefined
+            success: undefined,
+            error: undefined
         };
 
-        if (!this.group.$save) {
-            var result = api.ansible.groups.create({}, this.group);
+        if (!this.group.$save || !this.group.id) {
+            var result = (this.group.id)?
+                            api.ansible.groups.save({}, this.group) :
+                            api.ansible.groups.create({}, this.group);
+
             angular.extend(result, this.group);
             this.group = result;
             promise = result.$promise;
@@ -58,7 +63,7 @@ function GroupController(api)
         promise.then(function(result) {
             _self.progress.success = true;
         })['catch'](function(context) {
-            _self.progress.success = false;
+            _self.progress.error = true;
         });
     }
 }
