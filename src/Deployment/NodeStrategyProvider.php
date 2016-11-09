@@ -22,17 +22,17 @@
 
 namespace Rampage\Nexus\Deployment;
 
+use Rampage\Nexus\Exception\LogicException;
 use Zend\ServiceManager\AbstractPluginManager;
 use Interop\Container\ContainerInterface;
-use Rampage\Nexus\Exception\LogicException;
-use Rampage\Nexus\Entities\Node\RampageNode;
+
 
 /**
  * The default node implementation provider
  *
  * This provider will utilize an ioc container to create the prototypes
  */
-class NodeProvider implements NodeProviderInterface
+class NodeStrategyProvider implements NodeStrategyProviderInterface
 {
     /**
      * @var ContainerInterface
@@ -58,7 +58,7 @@ class NodeProvider implements NodeProviderInterface
     public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
-        $this->addType(RampageNode::TYPE_ID, RampageNode::class);
+        $this->addType(NodeStrategy\Rampage::TYPE_ID, NodeStrategy\Rampage::class);
     }
 
     /**

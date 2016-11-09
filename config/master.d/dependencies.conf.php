@@ -22,12 +22,22 @@
 
 namespace Rampage\Nexus;
 
+
+use Doctrine\MongoDB\Connection as ODMConnection;
+use Doctrine\ODM\MongoDB\Configuration as ODMConfig;
+use Doctrine\ODM\MongoDB\DocumentManager;
+
 return [
     'dependencies' => [
         'factories' => [
-            MongoDB\Driver\DriverInterface::class => ServiceFactory\MongoDriverFactory::class,
+            //MongoDB\Driver\DriverInterface::class => ServiceFactory\MongoDriverFactory::class,
             Archive\ArchiveLoader::class => ServiceFactory\ArchiveLoaderFactory::class,
             FeatureProvider::class => ServiceFactory\FeatureProviderFactory::class,
+
+            // ODM
+            DocumentManager::class => ODM\ServiceFactory\DocumentManagerFactory::class,
+            ODMConnection::class => ODM\ServiceFactory\ConnectionFactory::class,
+            ODMConfig::class => ODM\ServiceFactory\ConfigFactory::class,
         ],
     ],
 ];

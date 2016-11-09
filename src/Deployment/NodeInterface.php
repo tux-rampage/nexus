@@ -23,14 +23,14 @@
 namespace Rampage\Nexus\Deployment;
 
 use Rampage\Nexus\Entities\ApplicationInstance;
-use Rampage\Nexus\Entities\Api\ArrayExportableInterface;
+use Rampage\Nexus\Entities\DeployTarget;
 use Rampage\Nexus\Exception\LogicException;
 
 
 /**
  * Defines the interface for deployment nodes
  */
-interface NodeInterface extends ArrayExportableInterface
+interface NodeInterface
 {
     /**
      * Node is in failure state
@@ -62,39 +62,12 @@ interface NodeInterface extends ArrayExportableInterface
      */
     const STATE_SECURITY_VIOLATED = 'securityViolated';
 
-
     /**
-     * The unique identifier of this deployment node
-     */
-    public function getId();
-
-    /**
-     * The node name
-     *
-     * @return string
-     */
-    public function getName();
-
-    /**
-     * Returns the type identifier
+     * Returns the node's type id
      *
      * @return string
      */
     public function getTypeId();
-
-    /**
-     * Returns the deploy target, this node is attached to
-     *
-     * @return DeployTargetInterface
-     */
-    public function getDeployTarget();
-
-    /**
-     * Checks whether the node is attached to a deploy target or not
-     *
-     * @return bool
-     */
-    public function isAttached();
 
     /**
      * Attaches the node to the given teploy target
@@ -102,7 +75,7 @@ interface NodeInterface extends ArrayExportableInterface
      * @param   DeployTarget    $deployTarget
      * @return  self
      */
-    public function attach(DeployTargetInterface $deployTarget);
+    public function attach(DeployTarget $deployTarget);
 
     /**
      * Removes the node from its deploy target
@@ -110,35 +83,6 @@ interface NodeInterface extends ArrayExportableInterface
      * @return self
      */
     public function detach();
-
-    /**
-     * Returns the nodes state
-     *
-     * @return string
-     */
-    public function getState();
-
-    /**
-     * Returns the node's state of the given application
-     *
-     * @param ApplicationInstance $application
-     * @return string
-     */
-    public function getApplicationState(ApplicationInstance $application);
-
-    /**
-     * Returns the node's server info
-     *
-     * @return array
-     */
-    public function getServerInfo($key = null);
-
-    /**
-     * The public RSA key
-     *
-     * @return string
-     */
-    public function getPublicKey();
 
     /**
      * Trigger a rebuild
@@ -150,18 +94,6 @@ interface NodeInterface extends ArrayExportableInterface
      * @throws  LogicException                      When the node or application cannot be rebuild
      */
     public function rebuild(ApplicationInstance $application = null);
-
-    /**
-     * Check if the node can rebuild
-     *
-     * This will check if a rebuild is possible for the entire node, or for a single application instance
-     * if provided.
-     *
-     * The caller may call refresh beforehand.
-     *
-     * @param   ApplicationInstance $application If provided, only check if rebuilding this application instance is possible
-     */
-    public function canRebuild(ApplicationInstance $application = null);
 
     /**
      * Check if this node accepts the given node as sibling in a cluster

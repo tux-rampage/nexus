@@ -20,44 +20,26 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Ansible\Repository;
+namespace Rampage\Nexus\Repository\Package;
 
-use Rampage\Nexus\Repository\RepositoryInterface;
-use Rampage\Nexus\Ansible\Entities\Host;
-use Rampage\Nexus\Ansible\Entities\Group;
-use Rampage\Nexus\Entities\Node;
-use Rampage\Nexus\Deployment\NodeInterface;
+use Rampage\Nexus\Package\PackageInterface;
 
-interface HostRepositoryInterface extends RepositoryInterface
+/**
+ * Interface for package repo subscribers
+ */
+interface SubscriberInterface
 {
     /**
-     * @param Group $group
-     * @return Host[]
-     */
-    public function findByGroup(Group $group);
-
-    /**
-     * Finds hosts that can act as deploy nodes
+     * Called when a package is removed
      *
-     * @return Host[]
+     * @param PackageInterface $package
      */
-    public function findDeployableHosts();
+    public function onPackageRemove(PackageInterface $package);
 
     /**
-     * Check if the given node is attached to any host
+     * Called when a package ist persisted
      *
-     * @param Node $node
-     * @return bool
+     * @param PackageInterface $package
      */
-    public function isNodeAttached(NodeInterface $node);
-
-    /**
-     * @param Host $host
-     */
-    public function save(Host $host);
-
-    /**
-     * @param Host $host
-     */
-    public function remove(Host $host);
+    public function onPackagePersist(PackageInterface $package);
 }

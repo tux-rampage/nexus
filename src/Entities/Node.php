@@ -23,17 +23,20 @@
 namespace Rampage\Nexus\Entities;
 
 use Rampage\Nexus\Deployment\NodeInterface;
-use Rampage\Nexus\Deployment\DeployTargetInterface;
+use Rampage\Nexus\Deployment\NodeStrategyInterface;
+use Rampage\Nexus\Deployment\NodeStrategyProviderInterface;
 
-use Traversable;
 use Rampage\Nexus\Entities\Api\ArrayExchangeInterface;
+use Rampage\Nexus\Exception\LogicException;
+
 use Zend\Stdlib\Parameters;
+use Traversable;
 
 
 /**
  * Implements the default node entity
  */
-abstract class AbstractNode implements NodeInterface, ArrayExchangeInterface
+class Node implements NodeInterface, ArrayExchangeInterface
 {
     /**
      * The unique node identifier
@@ -50,9 +53,16 @@ abstract class AbstractNode implements NodeInterface, ArrayExchangeInterface
     protected $name = null;
 
     /**
+     * Node type
+     *
+     * @var string
+     */
+    protected $type;
+
+    /**
      * The deploy target, this node is attached to
      *
-     * @var DeployTargetInterface
+     * @var DeployTarget
      */
     protected $deployTarget = null;
 
@@ -97,14 +107,49 @@ abstract class AbstractNode implements NodeInterface, ArrayExchangeInterface
     private $flatServerInfo = null;
 
     /**
-     * Set the application states
+     * @var NodeStrategyProviderInterface
+     */
+    private $strategyProvider = null;
+
+    /**
+     * @var NodeStrategyInterface
+     */
+    private $strategy = null;
+
+    /**
+     * @param string $type
+     * @return string
+     */
+    public function __construct($type)
+    {
+        $type = (string)$type;
+
+        if (!$type) {
+            throw new LogicException('The node type must not be empty');
+        }
+
+        $this->type = $type;
+    }
+
+    /**
+     * Sets the node's general state
+     *
+     * @param string $state
+     * @return self
+     */
+    public function setState($state)
+    {
+        $this->state = $state;
+        return $this;
+    }
+
+    /**
+     * Update application states
      *
      * @param array|\Traversable $states
      */
-    protected function setApplicationStates($states)
+    public function updateApplicationStates($states)
     {
-        $this->applicationStates = [];
-
         if (!is_array($states) && !($states instanceof \Traversable)) {
             return;
         }
@@ -112,6 +157,54 @@ abstract class AbstractNode implements NodeInterface, ArrayExchangeInterface
         foreach ($states as $appId => $state) {
             $this->applicationStates[$appId] = (string)$state;
         }
+    }
+
+    /**
+     * Set the application states
+     *
+     * @param array|\Traversable $states
+     */
+    public function setApplicationStates($states)
+    {
+        $this->applicationStates = [];
+        $this->updateApplicationStates($states);
+    }
+
+    /**
+     * @param NodeStrategyInterface $provider
+     * @return \Rampage\Nexus\Entities\Node
+     */
+    public function setStrategyProvider(NodeStrategyProviderInterface $provider)
+    {
+        $this->strategyProvider = $provider;
+        return $this;
+    }
+
+    /**
+     * Sets the node strategy
+     *
+     * @param NodeStrategyInterface $strategy
+     */
+    protected function setStrategy(NodeStrategyInterface $strategy)
+    {
+        $strategy->setEntity($this);
+        $this->strategy = $strategy;
+    }
+
+    /**
+     * @return \Rampage\Nexus\Deployment\NodeStrategyInterface
+     */
+    protected function getStrategy()
+    {
+        if (!$this->strategy) {
+            if (!$this->strategyProvider || !$this->strategyProvider->has($this->type)) {
+                throw new LogicException('Missing node strategy');
+            }
+
+            $this->setStrategy($this->strategyProvider->get($this->type));
+        }
+
+        return $this->strategy;
     }
 
     /**
@@ -163,7 +256,7 @@ abstract class AbstractNode implements NodeInterface, ArrayExchangeInterface
     /**
      * Returns the deploy target the node is attached to
      *
-     * @return DeployTargetInterface
+     * @return DeployTarget
      */
     public function getDeployTarget()
     {
@@ -171,11 +264,13 @@ abstract class AbstractNode implements NodeInterface, ArrayExchangeInterface
     }
 
     /**
-     * @param DeployTargetInterface $deployTarget
+     * @param DeployTarget $deployTarget
      */
-    public function attach(DeployTargetInterface $deployTarget)
+    public function attach(DeployTarget $deployTarget)
     {
         $this->deployTarget = $deployTarget;
+        $this->getStrategy()->attach($deployTarget);
+
         return $this;
     }
 
@@ -254,7 +349,7 @@ abstract class AbstractNode implements NodeInterface, ArrayExchangeInterface
      */
     public function acceptsClusterSibling(NodeInterface $node)
     {
-        return true;
+        return $this->getStrategy()->acceptsClusterSibling($node);
     }
 
     /**
@@ -263,8 +358,48 @@ abstract class AbstractNode implements NodeInterface, ArrayExchangeInterface
      */
     public function detach()
     {
+        $this->getStrategy()->detach();
         $this->deployTarget = null;
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Deployment\NodeInterface::rebuild()
+     */
+    public function rebuild(ApplicationInstance $application = null)
+    {
+        $this->getStrategy()->rebuild($application);
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Deployment\NodeInterface::refresh()
+     */
+    public function refresh()
+    {
+        $this->getStrategy()->refresh();
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Deployment\NodeInterface::sync()
+     */
+    public function sync()
+    {
+        $this->getStrategy()->sync();
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Deployment\NodeInterface::getTypeId()
+     */
+    public function getTypeId()
+    {
+        return $this->getStrategy()->getTypeId();
     }
 
     /**
@@ -290,18 +425,20 @@ abstract class AbstractNode implements NodeInterface, ArrayExchangeInterface
     }
 
     /**
+     * @return string
+     */
+    public function getUrl()
+    {
+        return $this->url;
+    }
+
+    /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\Deployment\NodeInterface::canSync()
      */
     public function canSync()
     {
-        $invalidStates = [
-            self::STATE_BUILDING,
-            self::STATE_UNREACHABLE,
-            self::STATE_SECURITY_VIOLATED
-        ];
-
-        return !in_array($this->getState(), $invalidStates);
+        return $this->getStrategy()->canSync();
     }
 
     /**

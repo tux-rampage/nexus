@@ -22,15 +22,14 @@
 
 namespace Rampage\Nexus\Entities;
 
-use Rampage\Nexus\Deployment\DeployTargetInterface;
+use Rampage\Nexus\Exception\LogicException;
 use Rampage\Nexus\Deployment\NodeInterface;
 use Zend\Stdlib\Parameters;
-use Rampage\Nexus\Exception\LogicException;
 
 /**
  * Persistable deploy target
  */
-class DeployTarget implements DeployTargetInterface
+class DeployTarget
 {
     /**
      * Target identifier
@@ -134,8 +133,9 @@ class DeployTarget implements DeployTargetInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Deployment\DeployTargetInterface::addVHost()
+     * @param VHost $host
+     * @throws LogicException
+     * @return self
      */
     public function addVHost(VHost $host)
     {
@@ -148,8 +148,8 @@ class DeployTarget implements DeployTargetInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Deployment\DeployTargetInterface::getVHost()
+     * @param string $id
+     * @return \Rampage\Nexus\Entities\VHost|NULL
      */
     public function getVHost($id)
     {
@@ -165,8 +165,7 @@ class DeployTarget implements DeployTargetInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Deployment\DeployTargetInterface::getVHosts()
+     * @return \Rampage\Nexus\Entities\VHost[]
      */
     public function getVHosts()
     {
@@ -174,8 +173,9 @@ class DeployTarget implements DeployTargetInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Deployment\DeployTargetInterface::removeVHost()
+     * @param VHost $host
+     * @throws LogicException
+     * @return \Rampage\Nexus\Entities\DeployTarget
      */
     public function removeVHost(VHost $host)
     {
@@ -188,8 +188,7 @@ class DeployTarget implements DeployTargetInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Deployment\DeployTargetInterface::canManageVHosts()
+     * @return boolean
      */
     public function canManageVHosts()
     {
@@ -198,8 +197,7 @@ class DeployTarget implements DeployTargetInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Deployment\DeployTargetInterface::getNodes()
+     * @return \Rampage\Nexus\Deployment\NodeInterface[]
      */
     public function getNodes()
     {
@@ -234,8 +232,7 @@ class DeployTarget implements DeployTargetInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Deployment\DeployTargetInterface::refreshStatus()
+     * Refresh the status
      */
     public function refreshStatus()
     {
@@ -267,8 +264,7 @@ class DeployTarget implements DeployTargetInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Deployment\DeployTargetInterface::addApplication()
+     * @param ApplicationInstance $application
      */
     public function addApplication(ApplicationInstance $application)
     {
@@ -276,8 +272,8 @@ class DeployTarget implements DeployTargetInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Deployment\DeployTargetInterface::findApplication()
+     * @param unknown $id
+     * @return NULL|\Rampage\Nexus\Entities\ApplicationInstance
      */
     public function findApplication($id)
     {
@@ -289,8 +285,7 @@ class DeployTarget implements DeployTargetInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Deployment\DeployTargetInterface::getApplications()
+     * @return \Rampage\Nexus\Entities\ApplicationInstance[]
      */
     public function getApplications()
     {
@@ -298,8 +293,8 @@ class DeployTarget implements DeployTargetInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Deployment\DeployTargetInterface::removeApplication()
+     * @param ApplicationInstance $instance
+     * @return \Rampage\Nexus\Entities\DeployTarget
      */
     public function removeApplication(ApplicationInstance $instance)
     {
@@ -308,8 +303,7 @@ class DeployTarget implements DeployTargetInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Deployment\DeployTargetInterface::canSync()
+     * @return boolean
      */
     public function canSync()
     {
@@ -323,8 +317,7 @@ class DeployTarget implements DeployTargetInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Deployment\DeployTargetInterface::sync()
+     * @throws LogicException
      */
     public function sync()
     {

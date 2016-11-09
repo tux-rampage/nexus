@@ -22,7 +22,7 @@
 
 namespace Rampage\Nexus\Action\NodeApi;
 
-use Rampage\Nexus\Entities\AbstractNode;
+use Rampage\Nexus\Entities\Node;
 use Rampage\Nexus\Repository\NodeRepositoryInterface;
 
 use Psr\Http\Message\ServerRequestInterface;
@@ -57,7 +57,7 @@ class NodeAction implements MiddlewareInterface
     /**
      * @param array $data
      */
-    protected function updateNodeState(AbstractNode $node, array $data)
+    protected function updateNodeState(Node $node, array $data)
     {
         $params = new Parameters($data);
         $node->updateState($params->get('state', $node->getState()), $params->get('applicationsState'));

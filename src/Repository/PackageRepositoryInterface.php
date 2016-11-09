@@ -59,8 +59,8 @@ interface PackageRepositoryInterface extends RepositoryInterface
     /**
      * Add a subscriber
      *
-     * @param PackageRepositorySubscriberInterface $subscriber
+     * @param Package\SubscriberInterface $subscriber
      * @return self
      */
-    public function addSubscriber(PackageRepositorySubscriberInterface $subscriber);
+    public function addSubscriber(Package\SubscriberInterface $subscriber);
 }

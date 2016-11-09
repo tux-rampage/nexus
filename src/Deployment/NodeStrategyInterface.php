@@ -20,26 +20,20 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Repository;
+namespace Rampage\Nexus\Deployment;
 
-use Rampage\Nexus\Package\PackageInterface;
+use Rampage\Nexus\Entities\Node;
 
 /**
- * Interface for package repo subscribers
+ * Defines the interface for node entity strategies
  */
-interface PackageRepositorySubscriberInterface
+interface NodeStrategyInterface extends NodeInterface
 {
     /**
-     * Called when a package is removed
+     * Sets the entity to operate on
      *
-     * @param PackageInterface $package
+     * @param Node $entity
+     * @return self
      */
-    public function onPackageRemove(PackageInterface $package);
-
-    /**
-     * Called when a package ist persisted
-     *
-     * @param PackageInterface $package
-     */
-    public function onPackagePersist(PackageInterface $package);
+    public function setEntity(Node $entity);
 }

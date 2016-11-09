@@ -22,7 +22,7 @@
 
 namespace Rampage\Nexus\Ansible\Entities;
 
-use Rampage\Nexus\Entities\AbstractNode;
+use Rampage\Nexus\Entities\Node;
 use Rampage\Nexus\Deployment\NodeInterface;
 use Rampage\Nexus\Exception\LogicException;
 use Rampage\Nexus\Entities\Api\ArrayExchangeInterface;

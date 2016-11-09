@@ -20,41 +20,42 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Repository;
+namespace Rampage\Nexus\ODM\Repository;
 
-use Rampage\Nexus\Entities\Node;
+use Rampage\Nexus\Repository\DeployTargetRepositoryInterface;
 use Rampage\Nexus\Entities\DeployTarget;
 
-
 /**
- * Node repository
- *
- * @method \Rampage\Nexus\Entities\AbstractNode findOne($id)
+ * Implements the deploy target repo
  */
-interface NodeRepositoryInterface extends RepositoryInterface, PrototypeProviderInterface
+class DeployTargetRepository extends AbstractRepository implements DeployTargetRepositoryInterface
 {
     /**
-     * Find nodes for a target
-     *
-     * @param DeployTarget $target
-     * @return AbstractNode[]
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\ODM\Repository\AbstractRepository::getEntityClass()
      */
-    public function findByTarget(DeployTarget $target);
+    protected function getEntityClass()
+    {
+        return DeployTarget::class;
+    }
 
     /**
-     * Persist the given object
-     *
-     * @param   object  $node The object to persist
-     * @return  self            Provides a fluent interface
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Repository\DeployTargetRepositoryInterface::remove()
      */
-    public function save(Node $node);
+    public function remove(DeployTarget $target)
+    {
+        $this->removeAndFlush($target);
+        return $this;
+    }
 
     /**
-     * Remove the object from persistence
-     *
-     * @param   object  $node The object to remove
-     * @return  self            Provides a fluent interface
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Repository\DeployTargetRepositoryInterface::save()
      */
-    public function remove(Node $node);
-
+    public function save(DeployTarget $target)
+    {
+        $this->persistAndFlush($target);
+        return $this;
+    }
 }

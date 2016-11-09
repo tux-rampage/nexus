@@ -20,19 +20,27 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Deployment;
+namespace Rampage\Nexus;
 
-use Interop\Container\ContainerInterface;
+use Zend\Diactoros\Stream;
 
 /**
- * Interface for node providers
+ * Creates a stream from a string
  */
-interface NodeProviderInterface extends ContainerInterface
+class StringStream extends Stream
 {
     /**
-     * Retuns all known node types
-     *
-     * @return string[]
+     * {@inheritDoc}
+     * @see \Zend\Diactoros\Stream::__construct()
      */
-    public function getTypes();
+    public function __construct($data)
+    {
+        $stream = fopen('php://temp', 'wb+');
+        fwrite($stream, $data);
+        fseek($stream, 0, SEEK_SET);
+
+        parent::__construct($stream);
+    }
+
+
 }

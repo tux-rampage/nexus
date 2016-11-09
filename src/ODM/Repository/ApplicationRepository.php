@@ -20,24 +20,22 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus;
+namespace Rampage\Nexus\ODM\Repository;
 
-use GuzzleHttp\ClientInterface as HttpClientInterface;
-use Zend\Crypt\Password\PasswordInterface;
-use Zend\Crypt\Password\Bcrypt as BcryptPasswordStrategy;
+use Rampage\Nexus\Repository\ApplicationRepositoryInterface;
+use Rampage\Nexus\Entities\Application;
 
-
-return [
-    'di' => [
-        'preferences' => [
-            PasswordInterface::class => BcryptPasswordStrategy::class,
-        ],
-        'instances' => [
-            Deployment\NodeStrategy\Rampage::class => [
-                'preferences' => [
-                    HttpClientInterface::class => Api\RestClient::class,
-                ]
-            ],
-        ]
-    ],
-];
+/**
+ * Implements the appication repo
+ */
+final class ApplicationRepository extends AbstractRepository implements ApplicationRepositoryInterface
+{
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\ODM\Repository\AbstractRepository::getEntityClass()
+     */
+    protected function getEntityClass()
+    {
+        return Application::class;
+    }
+}

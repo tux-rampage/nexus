@@ -20,24 +20,24 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus;
+namespace Rampage\Nexus\ODM\ServiceFactory;
 
-use GuzzleHttp\ClientInterface as HttpClientInterface;
-use Zend\Crypt\Password\PasswordInterface;
-use Zend\Crypt\Password\Bcrypt as BcryptPasswordStrategy;
+use Doctrine\MongoDB\Connection;
+use Interop\Container\ContainerInterface;
+use Zend\ServiceManager\Factory\FactoryInterface;
 
-
-return [
-    'di' => [
-        'preferences' => [
-            PasswordInterface::class => BcryptPasswordStrategy::class,
-        ],
-        'instances' => [
-            Deployment\NodeStrategy\Rampage::class => [
-                'preferences' => [
-                    HttpClientInterface::class => Api\RestClient::class,
-                ]
-            ],
-        ]
-    ],
-];
+/**
+ * Connection service factory
+ */
+class ConnectionFactory implements FactoryInterface
+{
+    /**
+     * {@inheritDoc}
+     * @see \Zend\ServiceManager\Factory\FactoryInterface::__invoke()
+     */
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
+    {
+        $connection = new Connection(/* TODO: Parameters */);
+        return $connection;
+    }
+}

@@ -22,7 +22,6 @@
 
 namespace Rampage\Nexus\Deployment;
 
-use Rampage\Nexus\Entities\ApplicationInstance;
 use Rampage\Nexus\Entities\VHost;
 use Rampage\Nexus\Entities\Api\ArrayExchangeInterface;
 use Rampage\Nexus\Exception\RuntimeException;
@@ -31,25 +30,14 @@ use Rampage\Nexus\Exception\LogicException;
 
 /**
  * Interface for deployment target implementations
+ * @deprecated
  */
 interface DeployTargetInterface extends ArrayExchangeInterface
 {
     /**
-     * @return string
-     */
-    public function getId();
-
-    /**
      * @return bool
      */
     public function canManageVHosts();
-
-    /**
-     * Returns all defined vhosts
-     *
-     * @return VHost[]
-     */
-    public function getVHosts();
 
     /**
      * Adds a vhost definition
@@ -70,56 +58,6 @@ interface DeployTargetInterface extends ArrayExchangeInterface
      *                          removed
      */
     public function removeVHost(VHost $host);
-
-    /**
-     * Returns the vhost for the given id
-     *
-     * @param string $id
-     * @return VHost
-     */
-    public function getVHost($id);
-
-    /**
-     * @return string
-     */
-    public function getName();
-
-    /**
-     * Returns all nodes in the deploy target
-     *
-     * @return NodeInterface[]
-     */
-    public function getNodes();
-
-    /**
-     * Returns all application instances for this target
-     *
-     * @return ApplicationInstance
-     */
-    public function getApplications();
-
-    /**
-     * Add an application instance
-     *
-     * @param ApplicationInstance $application
-     * @return self
-     */
-    public function addApplication(ApplicationInstance $application);
-
-    /**
-     * Removes an application instance from this tartget
-     *
-     * @param ApplicationInstance $instance
-     */
-    public function removeApplication(ApplicationInstance $instance);
-
-    /**
-     * Find an application instance by its identifier
-     *
-     * @param string $id
-     * @return ApplicationInstance|null
-     */
-    public function findApplication($id);
 
     /**
      * Refresh the deployment target status

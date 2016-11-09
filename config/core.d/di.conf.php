@@ -41,7 +41,7 @@ return [
             Api\RequestSignatureInterface::class => Api\PublicKeySignature::class,
             Api\SignRequestInterface::class => Api\PublicKeySignature::class,
 
-            Deployment\NodeProviderInterface::class => Deployment\NodeProvider::class,
+            Deployment\NodeStrategyProviderInterface::class => Deployment\NodeStrategyProvider::class,
 
             PasswordInterface::class => BcryptPasswordStrategy::class,
             Config\PropertyConfigInterface::class => 'RuntimeConfig',

@@ -20,36 +20,44 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Ansible\MongoDB;
+namespace Rampage\Nexus\ODM\Repository;
 
 use Rampage\Nexus\Repository\NodeRepositoryInterface;
-use Rampage\Nexus\Ansible\Repository\HostRepositoryInterface;
-use Rampage\Nexus\Exception\LogicException;
+use Rampage\Nexus\Deployment\NodeStrategyProviderInterface;
+use Rampage\Nexus\Exception\InvalidArgumentException;
+
 use Rampage\Nexus\Entities\Node;
 use Rampage\Nexus\Entities\DeployTarget;
 
-class NodeRepository implements NodeRepositoryInterface
+use Doctrine\Common\Persistence\ObjectManager;
+
+/**
+ * Implements the node repository
+ */
+class NodeRepository extends AbstractRepository implements NodeRepositoryInterface
 {
     /**
-     * The original decorated repo
-     *
-     * @var NodeRepositoryInterface
+     * @var NodeStrategyProviderInterface
      */
-    private $decorated;
+    private $nodeStrategyProvider;
 
     /**
-     * @var HostRepositoryInterface
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\ODM\Repository\AbstractRepository::__construct()
      */
-    private $hostRepository;
-
-    /**
-     * @param NodeRepositoryInterface $decorated
-     * @param HostRepositoryInterface $hostRepository
-     */
-    public function __construct(NodeRepositoryInterface $decorated, HostRepositoryInterface $hostRepository)
+    public function __construct(ObjectManager $objectManager, NodeStrategyProviderInterface $nodeStrategyProvider)
     {
-        $this->decorated = $decorated;
-        $this->hostRepository = $hostRepository;
+        parent::__construct($objectManager);
+        $this->nodeStrategyProvider = $nodeStrategyProvider;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\ODM\Repository\AbstractRepository::getEntityClass()
+     */
+    protected function getEntityClass()
+    {
+        return Node::class;
     }
 
     /**
@@ -58,7 +66,11 @@ class NodeRepository implements NodeRepositoryInterface
      */
     public function findByTarget(DeployTarget $target)
     {
-        $this->decorated->findByTarget($target);
+        $repo = $this->objectManager->getRepository($this->entityClass);
+
+        return $repo->findBy([
+            'deployTarget' => $target->getId()
+        ]);
     }
 
     /**
@@ -67,11 +79,8 @@ class NodeRepository implements NodeRepositoryInterface
      */
     public function remove(Node $node)
     {
-        if ($this->hostRepository->isNodeAttached($node)) {
-            throw new LogicException('Cannot remove nodes in an ansible repository individually');
-        }
-
-        return $this->decorated->remove($node);
+        $this->removeAndFlush($node);
+        return $this;
     }
 
     /**
@@ -80,7 +89,8 @@ class NodeRepository implements NodeRepositoryInterface
      */
     public function save(Node $node)
     {
-        return $this->decorated->save($node);
+        $this->persistAndFlush($node);
+        return $this;
     }
 
     /**
@@ -89,24 +99,13 @@ class NodeRepository implements NodeRepositoryInterface
      */
     public function getPrototypeByData($data)
     {
-        return $this->decorated->getPrototypeByData($data);
-    }
+        if (!isset($data['type'])) {
+            throw new InvalidArgumentException('Invalid node data: A type id must be set');
+        }
 
-    /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Repository\RepositoryInterface::findAll()
-     */
-    public function findAll()
-    {
-        return new Hydration\NodeCursor($this->hostRepository->findDeployableHosts());
-    }
+        $node = new Node($data['type']);
+        $node->setStrategyProvider($this->nodeStrategyProvider);
 
-    /**
-     * {@inheritDoc}
-     * @see \Rampage\Nexus\Repository\NodeRepositoryInterface::findOne($id)
-     */
-    public function findOne($id)
-    {
-        return $this->decorated->findOne($id);
+        return $node;
     }
 }

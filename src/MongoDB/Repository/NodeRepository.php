@@ -25,8 +25,8 @@ namespace Rampage\Nexus\MongoDB\Repository;
 use Rampage\Nexus\Repository\NodeRepositoryInterface;
 use Rampage\Nexus\MongoDB\Driver\DriverInterface;
 use Rampage\Nexus\Deployment\DeployTargetInterface;
-use Rampage\Nexus\Entities\AbstractNode;
-use Rampage\Nexus\Deployment\NodeProviderInterface;
+use Rampage\Nexus\Entities\Node;
+use Rampage\Nexus\Deployment\NodeStrategyProviderInterface;
 use Rampage\Nexus\Exception\LogicException;
 use Rampage\Nexus\MongoDB\Hydration\EntityHydrator\NodeHydrator;
 use Rampage\Nexus\Repository\DeployTargetRepositoryInterface;
@@ -50,7 +50,7 @@ final class NodeRepository extends AbstractRepository implements NodeRepositoryI
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\AbstractRepository::__construct()
      */
-    public function __construct(DriverInterface $driver, NodeProviderInterface $nodeProvider, DeployTargetRepositoryInterface $deployTargetRepository)
+    public function __construct(DriverInterface $driver, NodeStrategyProviderInterface $nodeProvider, DeployTargetRepositoryInterface $deployTargetRepository)
     {
         if (!$deployTargetRepository instanceof ReferenceProviderInterface) {
             throw new InvalidArgumentException('The deployment target repository must implement the reference provider interface');
@@ -105,7 +105,7 @@ final class NodeRepository extends AbstractRepository implements NodeRepositoryI
     /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\Repository\ReferenceProviderInterface::getReference()
-     * @param AbstractNode $object
+     * @param Node $object
      */
     public function getReference($object)
     {
@@ -116,7 +116,7 @@ final class NodeRepository extends AbstractRepository implements NodeRepositoryI
      * {@inheritDoc}
      * @see \Rampage\Nexus\Repository\NodeRepositoryInterface::remove()
      */
-    public function remove(AbstractNode $node)
+    public function remove(Node $node)
     {
         $this->doRemove($node);
     }
@@ -125,7 +125,7 @@ final class NodeRepository extends AbstractRepository implements NodeRepositoryI
      * {@inheritDoc}
      * @see \Rampage\Nexus\Repository\NodeRepositoryInterface::save()
      */
-    public function save(AbstractNode $node)
+    public function save(Node $node)
     {
         $this->doPersist($node);
     }
