@@ -20,7 +20,7 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\OAuth2\MongoDB\Repository;
+namespace Rampage\Nexus\OAuth2\ODM\Repository;
 
 use Rampage\Nexus\OAuth2\Entities\AccessToken;
 
@@ -35,11 +35,11 @@ final class AccessTokenRepository extends AbstractTokenRepository implements Acc
 {
     /**
      * {@inheritDoc}
-     * @see \Rampage\Nexus\OAuth2\MongoDB\Repository\AbstractTokenRepository::getCollectionName()
+     * @see \Rampage\Nexus\OAuth2\ODM\Repository\AbstractTokenRepository::getEntityClass()
      */
-    protected function getCollectionName()
+    protected function getEntityClass()
     {
-        return 'OAuth2AccessTokens';
+        return AccessToken::class;
     }
 
     /**
@@ -72,15 +72,8 @@ final class AccessTokenRepository extends AbstractTokenRepository implements Acc
      */
     public function persistNewAccessToken(AccessTokenEntityInterface $accessTokenEntity)
     {
-        $data = [
-            '_id' => $accessTokenEntity->getIdentifier(),
-            'expires' => $this->dateStrategy->extract($accessTokenEntity->getExpiryDateTime()),
-            'revoked' => false,
-            'userId' => $accessTokenEntity->getUserIdentifier(),
-            'client' => $accessTokenEntity->getClient()->getIdentifier()
-        ];
-
-        $this->collection->insert($data);
+        $this->objectManager->persist($accessTokenEntity);
+        $this->objectManager->flush($accessTokenEntity);
     }
 
     /**

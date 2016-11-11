@@ -41,12 +41,12 @@ return [
     ],
     'di' => [
         'preferences' => [
-            AccessTokenRepositoryInterface::class => MongoDB\Repository\AccessTokenRepository::class,
-            RefreshTokenRepositoryInterface::class => MongoDB\Repository\RefreshTokenRepository::class,
+            AccessTokenRepositoryInterface::class => ODM\Repository\AccessTokenRepository::class,
+            RefreshTokenRepositoryInterface::class => ODM\Repository\RefreshTokenRepository::class,
             ClientRepositoryInterface::class => Repository\UIClientRepository::class,
             ScopeRepositoryInterface::class => Repository\ScopeRepository::class,
-            Repository\UserRepositoryInterface::class => MongoDB\Repository\UserRepository::class,
-            OAuthUserRepoInterface::class => MongoDB\Repository\UserRepository::class
+            Repository\UserRepositoryInterface::class => ODM\Repository\UserRepository::class,
+            OAuthUserRepoInterface::class => ODM\Repository\UserRepository::class
         ],
         'instances' => [
             Repository\UIClientRepository::class => [

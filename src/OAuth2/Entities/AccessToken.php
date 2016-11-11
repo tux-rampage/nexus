@@ -36,6 +36,7 @@ class AccessToken implements AccessTokenEntityInterface
     use AccessTokenTrait;
     use TokenEntityTrait;
     use EntityTrait;
+    use RevokableTokenTrait;
 
     /**
      * @param ClientEntityInterface $client

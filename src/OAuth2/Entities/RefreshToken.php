@@ -33,4 +33,5 @@ class RefreshToken implements RefreshTokenEntityInterface
 {
     use EntityTrait;
     use RefreshTokenTrait;
+    use RevokableTokenTrait;
 }

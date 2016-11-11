@@ -22,12 +22,16 @@
 
 namespace Rampage\Nexus\ODM\ServiceFactory;
 
+use Rampage\Nexus\ODM\EventSubscriber;
+
+use Doctrine\Common\EventManager;
+use Doctrine\MongoDB\Connection;
+use Doctrine\ODM\MongoDB\DocumentManager;
+use Doctrine\ODM\MongoDB\Configuration;
+
 use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\Factory\FactoryInterface;
-use Doctrine\ODM\MongoDB\DocumentManager;
-use Doctrine\MongoDB\Connection;
-use Doctrine\Common\EventManager;
-use Doctrine\ODM\MongoDB\Configuration;
+
 
 /**
  * Document Manager Factory
@@ -45,6 +49,7 @@ class DocumentManagerFactory implements FactoryInterface
         $config = isset($options['eventManager'])? $options['eventManager'] : $container->get(Configuration::class);
 
         $documentManager = DocumentManager::create($connection, $config, $eventManager);
+        $documentManager->getEventManager()->addEventSubscriber($container->get(EventSubscriber::class));
 
         return $documentManager;
     }

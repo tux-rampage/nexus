@@ -20,62 +20,31 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\MongoDB;
+namespace Rampage\Nexus\OAuth2\Entities;
 
-/**
- * Implements an empty cursor
- */
-final class EmptyCursor implements CursorInterface
+trait RevokableTokenTrait
 {
     /**
-     * {@inheritDoc}
-     * @see Countable::count()
+     * @var bool
      */
-    public function count($mode = null)
+    private $revoked = false;
+
+    /**
+     * @return boolean
+     */
+    public function isRevoked()
     {
-        return 0;
+        return $this->revoked;
     }
 
     /**
-     * {@inheritDoc}
-     * @see Iterator::current()
+     * Revoke this token
+     *
+     * @return self
      */
-    public function current()
+    public function revoke()
     {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see Iterator::key()
-     */
-    public function key()
-    {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see Iterator::next()
-     */
-    public function next()
-    {
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see Iterator::rewind()
-     */
-    public function rewind()
-    {
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see Iterator::valid()
-     */
-    public function valid()
-    {
-        return false;
+        $this->revoked = true;
+        return $this;
     }
 }

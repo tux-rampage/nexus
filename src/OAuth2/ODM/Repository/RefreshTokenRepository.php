@@ -20,40 +20,42 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\OAuth2\MongoDB\Repository;
+namespace Rampage\Nexus\OAuth2\ODM\Repository;
 
 use Rampage\Nexus\OAuth2\Entities\RefreshToken;
-use Rampage\Nexus\MongoDB\Driver\DriverInterface;
 
 use League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
 use League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
+use Doctrine\ODM\MongoDB\DocumentManager;
 use League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface;
 
-
+/**
+ * Refresh token repo
+ */
 class RefreshTokenRepository extends AbstractTokenRepository implements RefreshTokenRepositoryInterface
 {
     /**
      * @var AccessTokenRepositoryInterface
      */
-    private $accessTokenReposiotry;
+    private $accessTokenRepository;
 
     /**
-     * @param DriverInterface $driver
-     * @param AccessTokenRepositoryInterface $accessTokenRepository
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\OAuth2\ODM\Repository\AbstractTokenRepository::__construct()
      */
-    public function __construct(DriverInterface $driver, AccessTokenRepositoryInterface $accessTokenRepository)
+    public function __construct(DocumentManager $objectManager, AccessTokenRepositoryInterface $accessTokenRepository)
     {
-        parent::__construct($driver);
-        $this->accessTokenReposiotry = $accessTokenRepository;
+        parent::__construct($objectManager);
+        $this->accessTokenRepository = $accessTokenRepository;
     }
 
     /**
      * {@inheritDoc}
-     * @see \Rampage\Nexus\OAuth2\MongoDB\Repository\AbstractTokenRepository::getCollectionName()
+     * @see \Rampage\Nexus\OAuth2\ODM\Repository\AbstractTokenRepository::getEntityClass()
      */
-    protected function getCollectionName()
+    protected function getEntityClass()
     {
-        return 'OAuth2RefreshTokens';
+        return RefreshToken::class;
     }
 
     /**
@@ -80,14 +82,8 @@ class RefreshTokenRepository extends AbstractTokenRepository implements RefreshT
      */
     public function persistNewRefreshToken(RefreshTokenEntityInterface $refreshTokenEntity)
     {
-        $data = [
-            '_id' => $refreshTokenEntity->getIdentifier(),
-            'expires' => $this->dateStrategy->extract($refreshTokenEntity->getExpiryDateTime()),
-            'revoked' => false,
-            'accessTokenId' => $refreshTokenEntity->getAccessToken()->getIdentifier()
-        ];
-
-        $this->collection->insert($data);
+        $this->objectManager->persist($refreshTokenEntity);
+        $this->objectManager->flush($refreshTokenEntity);
     }
 
     /**
@@ -98,8 +94,15 @@ class RefreshTokenRepository extends AbstractTokenRepository implements RefreshT
      */
     public function getAccessTokenId($tokenId)
     {
-        $data = $this->collection->findOne(['_id' => $tokenId]);
-        return ($data && isset($data['accessTokenId']))? $data['accessTokenId'] : null;
+        /** @var RefreshToken $token */
+        $token = $this->objectManager->find($this->getEntityClass(), $tokenId);
+
+        $this->objectManager->detach($token);
+        if ($token && $token->getAccessToken()) {
+            return $token->getAccessToken()->getIdentifier();
+        }
+
+        return null;
     }
 
     /**
@@ -109,9 +112,10 @@ class RefreshTokenRepository extends AbstractTokenRepository implements RefreshT
     public function revokeRefreshToken($tokenId)
     {
         $this->revokeById($tokenId);
+        $accessTokenId = $this->getAccessTokenId($tokenId);
 
-        if (null !== ($accessTokenId = $this->getAccessTokenId($tokenId))) {
-            $this->accessTokenReposiotry->revokeAccessToken($accessTokenId);
+        if ($accessTokenId) {
+            $this->accessTokenRepository->revokeAccessToken($accessTokenId);
         }
     }
 }

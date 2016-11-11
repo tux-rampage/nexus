@@ -20,11 +20,12 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\OAuth2\MongoDB\Repository;
+namespace Rampage\Nexus\OAuth2\ODM\Repository;
 
-use Rampage\Nexus\MongoDB\Driver\DriverInterface;
-use Rampage\Nexus\MongoDB\Driver\CollectionInterface;
-use Zend\Hydrator\Strategy\StrategyInterface;
+use Rampage\Nexus\ODM\Repository\AbstractRepository;
+
+use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\ODM\MongoDB\DocumentManager;
 
 /**
  * Abstract token repository implementation
@@ -32,30 +33,31 @@ use Zend\Hydrator\Strategy\StrategyInterface;
 abstract class AbstractTokenRepository
 {
     /**
-     * @var CollectionInterface
+     * @var DocumentManager
      */
-    protected $collection;
+    protected $objectManager = null;
 
     /**
-     * @var StrategyInterface
+     * @param DocumentManager $objectManager
      */
-    protected $dateStrategy;
-
-    /**
-     * @param DriverInterface $driver
-     */
-    public function __construct(DriverInterface $driver)
+    public function __construct(DocumentManager $objectManager)
     {
-        $this->collection = $driver->getCollection($this->getCollectionName());
-        $this->dateStrategy = $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_DATE);
+        $this->objectManager = $objectManager;
     }
 
     /**
-     * Must return the mongo db collection name
-     *
-     * @return string
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\ODM\Repository\AbstractRepository::getEntityClass()
      */
-    abstract protected function getCollectionName();
+    abstract protected function getEntityClass();
+
+    /**
+     * @return \Doctrine\MongoDB\Collection
+     */
+    protected function getCollection()
+    {
+        return $this->objectManager->getDocumentCollection($this->getEntityClass());
+    }
 
     /**
      * Revoke the given token id
@@ -64,7 +66,7 @@ abstract class AbstractTokenRepository
      */
     protected function revokeById($id)
     {
-        $this->collection->update(['_id' => $id], [
+        $this->getCollection()->update(['_id' => $id], [
             '$set' => [
                 'revoked' => true
             ]
@@ -79,7 +81,7 @@ abstract class AbstractTokenRepository
      */
     protected function isRevoked($id)
     {
-        $data = $this->collection->findOne(['_id' => $id]);
-        return ($data && $data['revoked']);
+        $token = $this->objectManager->find($this->getEntityClass(), $id);
+        return ($token && $token->isRevoked());
     }
 }

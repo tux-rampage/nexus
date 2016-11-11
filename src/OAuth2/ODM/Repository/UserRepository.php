@@ -20,18 +20,16 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\OAuth2\MongoDB\Repository;
+namespace Rampage\Nexus\OAuth2\ODM\Repository;
 
-use Rampage\Nexus\MongoDB\Repository\AbstractRepository;
-use Rampage\Nexus\MongoDB\Driver\DriverInterface;
+use Rampage\Nexus\ODM\Repository\AbstractRepository;
 
 use Rampage\Nexus\OAuth2\Entities\User;
 use Rampage\Nexus\OAuth2\Entities\UIClient;
 use Rampage\Nexus\OAuth2\Repository\UserRepositoryInterface;
-use Rampage\Nexus\OAuth2\MongoDB\Hydration\UserHydrator;
 
+use Doctrine\Common\Persistence\ObjectManager;
 use League\OAuth2\Server\Entities\ClientEntityInterface;
-
 use Zend\Crypt\Password\PasswordInterface;
 
 
@@ -40,8 +38,6 @@ use Zend\Crypt\Password\PasswordInterface;
  */
 class UserRepository extends AbstractRepository implements UserRepositoryInterface
 {
-    const COLLECTION = 'users';
-
     /**
      * @var PasswordInterface
      */
@@ -51,20 +47,19 @@ class UserRepository extends AbstractRepository implements UserRepositoryInterfa
      * {@inheritDoc}
      * @see \Rampage\Nexus\MongoDB\Repository\AbstractRepository::__construct()
      */
-    public function __construct(DriverInterface $driver, PasswordInterface $passwordStrategy)
+    public function __construct(ObjectManager $objectManager, PasswordInterface $passwordStrategy)
     {
-        parent::__construct($driver, new UserHydrator($driver), self::COLLECTION);
+        parent::__construct($objectManager);
         $this->passwordStrategy = $passwordStrategy;
-        $this->idStrategy = $driver->getTypeHydrationStrategy(DriverInterface::STRATEGY_STRING);
     }
 
     /**
      * {@inheritDoc}
-     * @see \Rampage\Nexus\MongoDB\Repository\AbstractRepository::newEntityInstance()
+     * @see \Rampage\Nexus\ODM\Repository\AbstractRepository::getEntityClass()
      */
-    protected function newEntityInstance(array &$data)
+    protected function getEntityClass()
     {
-        return new User($this->passwordStrategy, null);
+        return User::class;
     }
 
     /**
@@ -73,11 +68,8 @@ class UserRepository extends AbstractRepository implements UserRepositoryInterfa
      */
     public function getPrototypeByData($data)
     {
-        if (!is_array($data)) {
-            $data = [];
-        }
-
-        return $this->newEntityInstance($data);
+        $id = isset($data['id'])? $data['id'] : null;
+        return new User($id, $this->passwordStrategy);
     }
 
     /**
@@ -87,7 +79,7 @@ class UserRepository extends AbstractRepository implements UserRepositoryInterfa
      */
     public function save(User $user)
     {
-        $this->doPersist($user);
+        $this->persistAndFlush($user);
         return $this;
     }
 
@@ -98,7 +90,7 @@ class UserRepository extends AbstractRepository implements UserRepositoryInterfa
      */
     public function remove(User $user)
     {
-        $this->doRemove($user);
+        $this->removeAndFlush($user);
         return $this;
     }
 
@@ -113,12 +105,13 @@ class UserRepository extends AbstractRepository implements UserRepositoryInterfa
         }
 
         /** @var User $user */
-        $user = $this->findOne($username);
+        $user = $this->getEntityRepository()->find($username);
 
-        if (!$user || !$user->verifyPassword($password)) {
+        if (!$user) {
             return null;
         }
 
-        return $user;
+        $user->setPasswordStrategy($this->passwordStrategy);
+        return $user->verifyPassword($password);
     }
 }
