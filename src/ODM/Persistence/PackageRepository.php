@@ -20,30 +20,24 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\ODM\Mapping;
+namespace Rampage\Nexus\ODM\Persistence;
 
-use Doctrine\Common\Persistence\Mapping\Driver\FileDriver;
-use Doctrine\Common\Persistence\Mapping\ClassMetadata;
+use Doctrine\ODM\MongoDB\DocumentRepository;
+use Rampage\Nexus\Entities\Application;
 
-class ArrayDriver extends FileDriver
+/**
+ * Package repository
+ */
+class PackageRepository extends DocumentRepository
 {
     /**
-     * {@inheritDoc}
-     * @see \Doctrine\Common\Persistence\Mapping\Driver\FileDriver::loadMappingFile()
+     * @param Application $application
+     * @return mixed|\Doctrine\MongoDB\CursorInterface|\Doctrine\MongoDB\Cursor|NULL|boolean|object
      */
-    protected function loadMappingFile($file)
+    public function findByApplication(Application $application)
     {
-        return include $file;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @see \Doctrine\Common\Persistence\Mapping\Driver\MappingDriver::loadMetadataForClass()
-     */
-    public function loadMetadataForClass($className, ClassMetadata $metadata)
-    {
-        /** @var \Doctrine\ODM\MongoDB\Mapping\ClassMetadataInfo $metadata */
-        // TODO Auto-generated method stub
-
+        return $this->createQueryBuilder()
+            ->field('name')->equals($application->getId())
+            ->getQuery()->execute();
     }
 }

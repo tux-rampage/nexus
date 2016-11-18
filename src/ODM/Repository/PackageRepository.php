@@ -70,7 +70,7 @@ class PackageRepository extends AbstractRepository implements PackageRepositoryI
 
     /**
      * {@inheritDoc}
-     * @see \Rampage\Nexus\Repository\PackageRepositoryInterface::addSubscriber()
+     * @see \Rampage\Nexus\Repository\PackageRepository::addSubscriber()
      */
     public function addSubscriber(PackageRepositorySubscriberInterface $subscriber)
     {
