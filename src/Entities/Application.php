@@ -26,6 +26,7 @@ namespace Rampage\Nexus\Entities;
 use Rampage\Nexus\Package\PackageInterface;
 use Zend\Stdlib\Parameters;
 use Psr\Http\Message\StreamInterface;
+use Doctrine\Common\Collections\ArrayCollection;
 
 
 /**
@@ -63,9 +64,18 @@ class Application implements Api\ArrayExchangeInterface
     protected $icon = null;
 
     /**
-     * @var ApplicationPackage[]
+     * @var ApplicationPackage[]|ArrayCollection
      */
     protected $packages = [];
+
+    /**
+     * Construct
+     */
+    public function __construct($id)
+    {
+        $this->id = (string)$id;
+        $this->packages = new ArrayCollection();
+    }
 
     /**
      * Returns the unique identifier of this application

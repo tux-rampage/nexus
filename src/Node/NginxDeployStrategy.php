@@ -39,6 +39,7 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
     const TYPE = 'nginx';
 
     const TEMPLATE_SERVER = 'server';
+    const TEMPLATE_SERVER_SSL = 'server-ssl';
     const TEMPLATE_LOCATION = 'location';
     const TEMPLATE_ROOT_LOCATION = 'root-location';
     const TEMPLATE_MAINTENANCE = 'maintenance';
@@ -464,14 +465,15 @@ class NginxDeployStrategy extends AbstractDeployStrategy implements DeployStrate
         }
 
         $configPath = $this->getVHostConfigPath($vhost);
-        $template = new ConfigTemplate\TemplateProcessor($this->templateLocator->getConfigTemplate(self::TYPE, self::TEMPLATE_SERVER, $vhost->getFlavor()), $configPath);
+        $templateName = $vhost->isSslEnabled()? self::TEMPLATE_SERVER_SSL : self::TEMPLATE_SERVER;
+        $template = new ConfigTemplate\TemplateProcessor($this->templateLocator->getConfigTemplate(self::TYPE, $templateName, $vhost->getFlavor()), $configPath);
         $name = $vhost->getName();
 
         $params = [
             'global_configs' => sprintf('%s/%s/global.d/*.conf', $this->configsPath, $name),
             'location_configs' => sprintf('%s/%s/locations.d/*conf', $this->configsPath, $name),
             'servername' => $vhost->getName(),
-            'server_aliases' => $this->getVHostAliasDirectives($vhost),
+            'server_aliases' => $this->getVHostAliasDirectives($vhost)
         ];
 
         $template->process($params);

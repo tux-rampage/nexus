@@ -26,6 +26,7 @@ use Rampage\Nexus\Package\PackageInterface;
 use Rampage\Nexus\Package\ParameterInterface;
 use Rampage\Nexus\Package\ArrayExportableTrait as ArrayExportablePackageTrait;
 use Rampage\Nexus\Exception\UnexpectedValueException;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * Application Package Entity
@@ -72,9 +73,9 @@ class ApplicationPackage implements PackageInterface
     protected $documentRoot = null;
 
     /**
-     * @var ParameterInterface[]
+     * @var ParameterInterface[]|ArrayCollection
      */
-    protected $parameters = [];
+    protected $parameters;
 
     /**
      * @var array
@@ -86,6 +87,7 @@ class ApplicationPackage implements PackageInterface
      */
     public function __construct(PackageInterface $package = null)
     {
+        $this->parameters = new ArrayCollection();
         if ($package) {
             $this->copy($package);
         }
@@ -184,7 +186,7 @@ class ApplicationPackage implements PackageInterface
      */
     public function getParameters()
     {
-        return $this->parameters;
+        return $this->parameters->toArray();
     }
 
     /**

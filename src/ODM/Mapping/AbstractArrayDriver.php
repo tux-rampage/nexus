@@ -156,4 +156,90 @@ abstract class AbstractArrayDriver implements MappingDriverInterface
             $this->addIndex($metadata, $name, $index);
         }
     }
+
+    /**
+     * Create a reference mapping
+     *
+     * @param string $type
+     * @param unknown $targetDocument
+     * @param unknown $mappedBy
+     * @return boolean[]|string[]|unknown[]
+     */
+    protected function ref($type, $targetDocument, $mappedBy = null)
+    {
+        return [
+            'reference' => true,
+            'type' => $type,
+            'targetDocument' => $targetDocument,
+            'mappedBy' => $mappedBy
+        ];
+    }
+
+    /**
+     * Create a n:1 reference
+     *
+     * @param string $targetDocument
+     * @param string $mappedBy
+     * @return array
+     */
+    protected function referenceOne($targetDocument, $mappedBy = null)
+    {
+        return $this->ref('one', $targetDocument, $mappedBy);
+    }
+
+    /**
+     * Create a *:n reference
+     *
+     * @param string $targetDocument
+     * @param string $mappedBy
+     * @return array
+     */
+    protected function referenceMany($targetDocument, $mappedBy = null)
+    {
+        return $this->ref('many', $targetDocument, $mappedBy);
+    }
+
+    /**
+     * Create a embed mapping
+     *
+     * @param string $targetDocument
+     * @param string $mappedBy
+     * @return boolean[]|string[]|unknown[]
+     */
+    protected function embed($targetDocument, $many = false, array $options = [])
+    {
+        return array_merge($options, [
+            'embedded' => true,
+            'type' => $many? 'many' : 'one',
+            'targetDocument' => $targetDocument,
+        ]);
+    }
+
+    /**
+     * Create an identifier mapping
+     *
+     * @param string $type
+     * @param string $strategy
+     * @return boolean[]|string[]
+     */
+    protected function identifier($type = null, $strategy = 'AUTO')
+    {
+        return $this->field($type, [
+            'id' => true,
+            'strategy' => $strategy
+        ]);
+    }
+
+    /**
+     * Create a generic field mapping
+     *
+     * @param   string  $type       The field type
+     * @param   array   $options    Additional mapping options
+     * @return  array
+     */
+    protected function field($type = null, array $options = [])
+    {
+        $options['type'] = $type;
+        return $options;
+    }
 }

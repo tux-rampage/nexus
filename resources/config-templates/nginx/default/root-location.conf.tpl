@@ -1,2 +1,4 @@
-root ${document_root};
-include fastcgi.conf;
+location / {
+    root ${document_root};
+    include includes/deployment/php-fastcgi.conf;
+}

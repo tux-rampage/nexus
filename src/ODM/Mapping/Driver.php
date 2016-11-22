@@ -24,85 +24,13 @@ namespace Rampage\Nexus\ODM\Mapping;
 
 use Rampage\Nexus\Entities;
 use Rampage\Nexus\ODM\Persistence\PackageRepository;
+use Doctrine\ODM\MongoDB\Mapping\ClassMetadataInfo;
 
 /**
  * Entity driver
  */
 class Driver extends AbstractArrayDriver
 {
-    /**
-     * @param unknown $targetDocument
-     * @param unknown $mappedBy
-     * @return boolean[]|string[]|unknown[]
-     */
-    private function ref($type, $targetDocument, $mappedBy = null)
-    {
-        return [
-            'reference' => true,
-            'type' => $type,
-            'targetDocument' => $targetDocument,
-            'mappedBy' => $mappedBy
-        ];
-    }
-
-    /**
-     * @param unknown $targetDocument
-     * @param unknown $mappedBy
-     * @return \Rampage\Nexus\ODM\Mapping\boolean[]|\Rampage\Nexus\ODM\Mapping\string[]|\Rampage\Nexus\ODM\Mapping\unknown[]
-     */
-    private function referenceOne($targetDocument, $mappedBy = null)
-    {
-        return $this->ref('one', $targetDocument, $mappedBy);
-    }
-
-    /**
-     * @param unknown $targetDocument
-     * @param unknown $mappedBy
-     * @return \Rampage\Nexus\ODM\Mapping\boolean[]|\Rampage\Nexus\ODM\Mapping\string[]|\Rampage\Nexus\ODM\Mapping\unknown[]
-     */
-    private function referenceMany($targetDocument, $mappedBy = null)
-    {
-        return $this->ref('many', $targetDocument, $mappedBy);
-    }
-
-    /**
-     * @param unknown $targetDocument
-     * @param unknown $mappedBy
-     * @return boolean[]|string[]|unknown[]
-     */
-    private function embed($targetDocument, $many = false)
-    {
-        return [
-            'embedded' => true,
-            'type' => $many? 'many' : 'one',
-            'targetDocument' => $targetDocument,
-        ];
-    }
-
-    /**
-     * @param unknown $type
-     * @param unknown $strategy
-     * @return boolean[]|string[]
-     */
-    private function identifier($type = null, $strategy = 'AUTO')
-    {
-        return $this->field($type, [
-            'id' => true,
-            'strategy' => $strategy
-        ]);
-    }
-
-    /**
-     * @param string $type
-     * @param array $options
-     * @return unknown
-     */
-    private function field($type = null, array $options = [])
-    {
-        $options['type'] = $type;
-        return $options;
-    }
-
     /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\ODM\Mapping\AbstractArrayDriver::loadData()
@@ -152,7 +80,9 @@ class Driver extends AbstractArrayDriver
                     'isStable' => $this->field('boolean'),
                     'type' => $this->field('string'),
                     'documentRoot' => $this->field('string'),
-                    'parameters' => $this->embed(Entities\PackageParameter::class, true),
+                    'parameters' => $this->embed(Entities\PackageParameter::class, true, [
+                        'strategy' => ClassMetadataInfo::STORAGE_STRATEGY_ATOMIC_SET
+                    ]),
                     'extra' => $this->field('hash'),
                 ]
             ],
