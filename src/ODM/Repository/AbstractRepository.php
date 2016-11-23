@@ -24,6 +24,7 @@ namespace Rampage\Nexus\ODM\Repository;
 
 use Rampage\Nexus\Repository\RepositoryInterface;
 use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\ODM\MongoDB\DocumentManager;
 
 /**
  * Abstract repository implementation
@@ -31,7 +32,7 @@ use Doctrine\Common\Persistence\ObjectManager;
 abstract class AbstractRepository implements RepositoryInterface
 {
     /**
-     * @var ObjectManager
+     * @var DocumentManager
      */
     protected $objectManager;
 
@@ -41,9 +42,9 @@ abstract class AbstractRepository implements RepositoryInterface
     protected $entityClass;
 
     /**
-     * @param ObjectManager $objectManager
+     * @param DocumentManager $objectManager
      */
-    public function __construct(ObjectManager $objectManager)
+    public function __construct(DocumentManager $objectManager)
     {
         $this->objectManager = $objectManager;
         $this->entityClass = $this->getEntityClass();
@@ -59,7 +60,7 @@ abstract class AbstractRepository implements RepositoryInterface
     /**
      * Returns the underlying entity repository
      *
-     * @return \Doctrine\Common\Persistence\ObjectRepository
+     * @return \Doctrine\ODM\MongoDB\DocumentRepository
      */
     protected function getEntityRepository()
     {

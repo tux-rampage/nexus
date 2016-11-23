@@ -166,7 +166,7 @@ class ZpkInstaller extends AbstractInstaller implements StageSubscriberInterface
      * @param string  $name
      * @param array   $params
      */
-    protected function runHookScript($name, $params)
+    protected function runHookScript($name, array $params)
     {
         $this->extractScriptsDir();
 
@@ -176,7 +176,8 @@ class ZpkInstaller extends AbstractInstaller implements StageSubscriberInterface
             return;
         }
 
-        $invoker = new Zpk\StageScript($path, $this->config, $params, $this->targetDirectory->getPathname(), $this->getPackage()->getVersion());
+        $variables = $this->package->getVariables();
+        $invoker = new Zpk\StageScript($path, $this->config, $params, $this->targetDirectory->getPathname(), $this->getPackage()->getVersion(), $variables);
 
         if (!$invoker->execute(true)) {
             throw new Exception\StageScriptException(sprintf('Stage script "%s" failed.', $name));

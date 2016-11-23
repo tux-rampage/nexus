@@ -20,12 +20,24 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Entities;
+namespace Rampage\Nexus\ODM\Persistence;
 
-use Countable;
-use Traversable;
+use Doctrine\ODM\MongoDB\DocumentRepository;
+use Rampage\Nexus\Entities\Application;
 
-
-interface CollectionInterface extends Countable, Traversable
+/**
+ * Package repository
+ */
+class PackageDocumentRepository extends DocumentRepository
 {
+    /**
+     * @param Application $application
+     * @return mixed|\Doctrine\MongoDB\CursorInterface|\Doctrine\MongoDB\Cursor|NULL|boolean|object
+     */
+    public function findByApplication(Application $application)
+    {
+        return $this->createQueryBuilder()
+            ->field('name')->equals($application->getId())
+            ->getQuery()->execute();
+    }
 }

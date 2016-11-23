@@ -35,7 +35,7 @@ trait ArrayExportableTrait
      */
     public function toArray()
     {
-        /* @var $this PackageInterface */
+        /** @var PackageInterface $this */
         if (!$this instanceof PackageInterface) {
             throw new LogicException('This trait can only act on PackageInterface implementations');
         }
@@ -47,6 +47,7 @@ trait ArrayExportableTrait
             'name' => $this->getName(),
             'type' => $this->getType(),
             'version' => $this->getVersion(),
+            'variables' => $this->getVariables(),
             'parameters' => [],
         ];
 

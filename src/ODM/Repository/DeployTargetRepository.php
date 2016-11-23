@@ -24,6 +24,8 @@ namespace Rampage\Nexus\ODM\Repository;
 
 use Rampage\Nexus\Repository\DeployTargetRepositoryInterface;
 use Rampage\Nexus\Entities\DeployTarget;
+use Rampage\Nexus\Entities\Application;
+use Rampage\Nexus\Entities\ApplicationPackage;
 
 /**
  * Implements the deploy target repo
@@ -57,5 +59,33 @@ class DeployTargetRepository extends AbstractRepository implements DeployTargetR
     {
         $this->persistAndFlush($target);
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Repository\DeployTargetRepositoryInterface::findByApplication()
+     */
+    public function findByApplication(Application $application)
+    {
+        $qb = $this->getEntityRepository()->createQueryBuilder();
+
+        $qb->field('applications.application')
+            ->equals($application->getId());
+
+        return $qb->getQuery()->execute();
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Repository\DeployTargetRepositoryInterface::findByPackage()
+     */
+    public function findByPackage(ApplicationPackage $package)
+    {
+        $qb = $this->getEntityRepository()->createQueryBuilder();
+
+        return $qb->addOr($qb->expr()->field('applications.package')->equals($package->getId()))
+            ->addOr($qb->expr()->field('applications.previousPackage')->equals($package->getId()))
+            ->getQuery()
+            ->execute();
     }
 }

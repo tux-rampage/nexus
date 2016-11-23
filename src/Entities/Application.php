@@ -142,13 +142,11 @@ class Application implements Api\ArrayExchangeInterface
      */
     public function findPackage($packageId)
     {
-        foreach ($this->packages as $package) {
-            if ($package->getId() == $packageId) {
-                return $package;
-            }
-        }
+        $filter = function(PackageInterface $item) use ($packageId) {
+            return ($item->getId() == $packageId);
+        };
 
-        return null;
+        return $this->packages->filter($filter)->first();
     }
 
     /**
@@ -159,7 +157,9 @@ class Application implements Api\ArrayExchangeInterface
      */
     public function hasPackage(PackageInterface $package)
     {
-        return (isset($this->packages[$package->getId()]));
+        return $this->packages->exists(function(PackageInterface $item) use ($package) {
+            return ($item->getId() == $package->getId());
+        });
     }
 
     /**

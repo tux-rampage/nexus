@@ -20,24 +20,33 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\ODM\Persistence;
+namespace Rampage\Nexus\Package;
 
-use Doctrine\ODM\MongoDB\DocumentRepository;
-use Rampage\Nexus\Entities\Application;
+use Zend\Filter\FilterInterface;
 
 /**
- * Package repository
+ * Implements a filter for package names
  */
-class PackageRepository extends DocumentRepository
+class PackageNameFilter implements FilterInterface
 {
     /**
-     * @param Application $application
-     * @return mixed|\Doctrine\MongoDB\CursorInterface|\Doctrine\MongoDB\Cursor|NULL|boolean|object
+     * {@inheritDoc}
+     * @see \Zend\Filter\FilterInterface::filter()
      */
-    public function findByApplication(Application $application)
+    public function filter($value)
     {
-        return $this->createQueryBuilder()
-            ->field('name')->equals($application->getId())
-            ->getQuery()->execute();
+        $value = strtolower((string)$value);
+        $value = strtr($value, [
+            '/' => '.',
+            '\\' => '',
+            ' ' => '-'
+        ]);
+
+        $value = preg_replace('~[^a-z0-9\._-]+~', '', $value);
+        $value = preg_replace('~(\.|-)\1+~', '$1', $value);
+
+        return $value;
     }
+
+
 }

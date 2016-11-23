@@ -98,11 +98,11 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
     private $previousPackage = null;
 
     /**
-     * The vhost within the teploy target
+     * The vhost within the deploy target
      *
-     * @var VHost
+     * @var string
      */
-    private $vhost = null;
+    protected $vhost = null;
 
     /**
      * The target path within the vhost
@@ -138,12 +138,17 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
     private $isRemoved = false;
 
     /**
+     * @var DeployTarget
+     */
+    private $deployTarget = null;
+
+    /**
      * Construct
      *
      * @param   string  $id     The instance identifier
      * @param   string  $path   The location path within the vhost
      */
-    public function __construct(Application $application, $id, $path = null)
+    public function __construct(Application $application, $id, VHost $vhost = null, $path = null)
     {
         if (!preg_match('~^[a-z0-9-_]+$~i', $id)) {
             throw new InvalidArgumentException('Bad application instance identifier: ' . $id);
@@ -160,6 +165,16 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
         $this->application = $application;
         $this->id = $id;
         $this->path = $path? : '/';
+        $this->vhost = $vhost? $vhost->getId() : null;
+    }
+
+    /**
+     * @param DeployTarget $target
+     */
+    public function setDeployTarget(DeployTarget $target)
+    {
+        $this->deployTarget = $target;
+        return $this;
     }
 
     /**
@@ -187,7 +202,11 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
      */
     public function getVHost()
     {
-        return $this->vhost;
+        if (!$this->deployTarget) {
+            throw new LogicException('Cannot retrieve vhost instance without deploy target');
+        }
+
+        return $this->deployTarget->getVHost($this->vhost);
     }
 
     /**
@@ -366,7 +385,7 @@ class ApplicationInstance implements Api\ArrayExchangeInterface
                 throw new UnexpectedValueException(sprintf(
                     'The package id %s does not exist for Application %s',
                     $packageId,
-                    $this->application->getName()
+                    $this->application->getId()
                 ));
             }
 

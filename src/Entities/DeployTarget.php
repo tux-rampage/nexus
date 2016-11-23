@@ -24,6 +24,8 @@ namespace Rampage\Nexus\Entities;
 
 use Rampage\Nexus\Exception\LogicException;
 use Rampage\Nexus\Deployment\NodeInterface;
+
+use Doctrine\Common\Collections\ArrayCollection;
 use Zend\Stdlib\Parameters;
 
 /**
@@ -48,9 +50,9 @@ class DeployTarget
     /**
      * Collection of VHosts
      *
-     * @var VHost[]
+     * @var VHost[]|ArrayCollection
      */
-    protected $vhosts = [];
+    protected $vhosts;
 
     /**
      * @var VHost
@@ -60,16 +62,16 @@ class DeployTarget
     /**
      * Collection of attached deployment nodes
      *
-     * @var NodeInterface[]
+     * @var NodeInterface[]|ArrayCollection
      */
     protected $nodes;
 
     /**
      * Collection of applications for this target
      *
-     * @var ApplicationInstance[]
+     * @var ApplicationInstance[]|ArrayCollection
      */
-    protected $applications = [];
+    protected $applications;
 
     /**
      * Maps the application status levels
@@ -78,8 +80,8 @@ class DeployTarget
      */
     protected $statusAggregationLevels = [
         ApplicationInstance::STATE_PENDING => 1,
-        ApplicationInstance::STATE_INACTIVE => 2,
-        ApplicationInstance::STATE_REMOVED => 4,
+        ApplicationInstance::STATE_REMOVED => 2,
+        ApplicationInstance::STATE_INACTIVE => 4,
         ApplicationInstance::STATE_DEPLOYED => 8,
         ApplicationInstance::STATE_ERROR => 16,
         'working' => 32,
@@ -103,6 +105,8 @@ class DeployTarget
     public function __construct()
     {
         $this->nodes = new ArrayCollection();
+        $this->vhosts = new ArrayCollection();
+        $this->applications = new ArrayCollection();
         $this->defaultVhost = new VHost(VHost::DEFAULT_VHOST);
     }
 
@@ -143,17 +147,17 @@ class DeployTarget
             throw new LogicException('Cannot add another default VHost');
         }
 
-        $this->vhosts[$host->getName()] = $host;
+        $this->vhosts[$host->getId()] = $host;
         return $this;
     }
 
     /**
-     * @param string $id
+     * @param string|null $id
      * @return \Rampage\Nexus\Entities\VHost|NULL
      */
     public function getVHost($id)
     {
-        if ($id == VHost::DEFAULT_VHOST) {
+        if (!$id || ($id == VHost::DEFAULT_VHOST)) {
             return $this->defaultVhost;
         }
 
@@ -169,7 +173,7 @@ class DeployTarget
      */
     public function getVHosts()
     {
-        return $this->vhosts;
+        return $this->vhosts->toArray();
     }
 
     /**
@@ -183,7 +187,7 @@ class DeployTarget
             throw new LogicException('Cannot remove the default vhost');
         }
 
-        unset($this->vhosts[$host->getName()]);
+        unset($this->vhosts[$host->getId()]);
         return $this;
     }
 
@@ -240,27 +244,57 @@ class DeployTarget
             $node->refresh();
         }
 
-        foreach ($this->applications as $key => $application) {
-            $state = ApplicationInstance::STATE_UNKNOWN;
-            $level = 0;
+        $this->updateApplicationStates();
+    }
 
-            foreach ($this->nodes as $node) {
-                $nodeState = $node->getApplicationState($application);
-                $mappedState = $this->mapState($nodeState);
-                $nodeLevel = $this->mapStateAggregationLevel($mappedState);
+    /**
+     * Updates all application states from nodes
+     */
+    public function updateApplicationStates()
+    {
+        foreach ($this->applications as $application) {
+            $this->updateApplicationState($application);
+        }
+    }
 
-                if ($level < $nodeLevel) {
-                    $state = $mappedState;
-                    $level = $nodeLevel;
-                }
-            }
+    /**
+     * Update the state of a single application
+     *
+     * @param string|ApplicationInstance $application
+     * @return self
+     */
+    public function updateApplicationState($application)
+    {
+        if (!$application instanceof ApplicationInstance) {
+            $application = $this->findApplication($application);
 
-            $application->setState($state);
-
-            if ($application->isRemoved() && ($application->getState() == ApplicationInstance::STATE_REMOVED)) {
-                unset($this->applications[$key]);
+            if (!$application) {
+                return $this;
             }
         }
+
+        $state = ApplicationInstance::STATE_UNKNOWN;
+        $level = 0;
+
+        foreach ($this->nodes as $node) {
+            $nodeState = $node->getApplicationState($application);
+            $mappedState = $this->mapState($nodeState);
+            $nodeLevel = $this->mapStateAggregationLevel($mappedState);
+
+            if ($level < $nodeLevel) {
+                $state = $mappedState;
+                $level = $nodeLevel;
+            }
+        }
+
+        $application->setState($state);
+
+        if ($application->isRemoved() && ($application->getState() == ApplicationInstance::STATE_REMOVED)) {
+            $key = (string)$application->getId();
+            unset($this->applications[$key]);
+        }
+
+        return $this;
     }
 
     /**
@@ -268,20 +302,34 @@ class DeployTarget
      */
     public function addApplication(ApplicationInstance $application)
     {
-        $this->applications[$application->getId()] = $application;
+        $id = (string)$application->getId();
+        $this->applications[$id] = $application;
     }
 
     /**
      * @param unknown $id
      * @return NULL|\Rampage\Nexus\Entities\ApplicationInstance
      */
-    public function findApplication($id)
+    public function findApplicationInstance($id)
     {
-        if (!isset($this->applications[$id])) {
-            return null;
-        }
+        $predicate = function(ApplicationInstance $item) use ($id) {
+            return ($item->getId() == $id);
+        };
 
-        return $this->applications[$id];
+        return $this->applications->filter($predicate)->first();
+    }
+
+    /**
+     * @param Application $application
+     * @return ApplicationInstance[]
+     */
+    public function findInstanceByApplication(Application $application)
+    {
+        $predicate = function(ApplicationInstance $instance) use ($application) {
+            return ($instance->getApplication()->getId() == $application->getId());
+        };
+
+        return $this->applications->filter($predicate)->toArray();
     }
 
     /**
@@ -289,7 +337,7 @@ class DeployTarget
      */
     public function getApplications()
     {
-        return $this->applications;
+        return $this->applications->toArray();
     }
 
     /**
@@ -308,12 +356,12 @@ class DeployTarget
     public function canSync()
     {
         foreach ($this->nodes as $node) {
-            if (!$node->canSync()) {
-                return false;
+            if ($node->canSync()) {
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 
     /**
@@ -326,7 +374,9 @@ class DeployTarget
         }
 
         foreach ($this->nodes as $node) {
-            $node->sync();
+            if ($node->canSync()) {
+                $node->sync();
+            }
         }
     }
 

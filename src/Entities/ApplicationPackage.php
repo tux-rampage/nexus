@@ -80,6 +80,11 @@ class ApplicationPackage implements PackageInterface
     /**
      * @var array
      */
+    protected $variables = [];
+
+    /**
+     * @var array
+     */
     protected $extra = [];
 
     /**
@@ -141,6 +146,7 @@ class ApplicationPackage implements PackageInterface
         $this->type = $package->getType();
         $this->version = $package->getVersion();
         $this->isStable = $package->isStable();
+        $this->variables = $package->getVariables();
 
         foreach ($package->getParameters() as $param) {
             $this->parameters[$param->getName()] = new PackageParameter($param);
@@ -187,6 +193,15 @@ class ApplicationPackage implements PackageInterface
     public function getParameters()
     {
         return $this->parameters->toArray();
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Package\PackageInterface::getVariables()
+     */
+    public function getVariables()
+    {
+        return $this->variables;
     }
 
     /**

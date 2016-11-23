@@ -26,6 +26,8 @@ use Rampage\Nexus\Exception\InvalidArgumentException;
 use Rampage\Nexus\Exception\UnexpectedValueException;
 use Rampage\Nexus\Entities\PackageParameter;
 
+use Zend\Stdlib\Parameters;
+
 
 /**
  * Implementation for composer packages
@@ -42,11 +44,23 @@ class ComposerPackage implements PackageInterface
     const TYPE_COMPOSER = 'composer';
 
     /**
-     * Data of composer.json
+     * @var PackageNameFilter
+     */
+    private $nameFilter;
+
+    /**
+     * Deployment section within composer.json
      *
-     * @var array
+     * @var Parameters
      */
     protected $data;
+
+    /**
+     * Content of composer.json
+     *
+     * @var Parameters
+     */
+    protected $composer;
 
     /**
      * @var PackageParameter[]
@@ -71,8 +85,10 @@ class ComposerPackage implements PackageInterface
             throw new InvalidArgumentException('The composer.json must be an array or a string containing valid json');
         }
 
-        $this->data = $json;
+        $this->nameFilter = new PackageNameFilter();
+        $this->composer = new Parameters($json);
         $this->validate();
+        $this->data = new Parameters($this->composer['extra']['deployment']);
     }
 
     /**
@@ -83,12 +99,12 @@ class ComposerPackage implements PackageInterface
         $requiredFields = ['name', 'version'];
 
         foreach ($requiredFields as $field) {
-            if (!isset($this->data[$field]) || ($this->data[$field] == '')) {
+            if (!isset($this->composer[$field]) || ($this->composer[$field] == '')) {
                 throw new UnexpectedValueException('Missing field in composer.json: ' . $field);
             }
         }
 
-        if (!isset($this->data['extra']['deployment'])) {
+        if (!isset($this->composer['extra']['deployment']) || !is_array($this->composer['extra']['deployment'])) {
             throw new UnexpectedValueException('Missing deployment section in composer.json');
         }
     }
@@ -130,11 +146,7 @@ class ComposerPackage implements PackageInterface
      */
     public function getDocumentRoot()
     {
-        if (!isset($this->data['extra']['deployment']['docroot'])) {
-            return null;
-        }
-
-        return (string)$this->data['extra']['deployment']['docroot'];
+        return $this->data->get('docroot');
     }
 
     /**
@@ -143,15 +155,10 @@ class ComposerPackage implements PackageInterface
      */
     public function getExtra($name = null)
     {
-        if (!isset($this->data['extra'])) {
-            return null;
-        }
+        $extra = $this->composer->get('extra', []);
+        unset($extra['deployment']);
 
-        if ($name !== null) {
-            return isset($this->data['extra'][$name])? $this->data['extra'][$name] : null;
-        }
-
-        return $this->data['extra'];
+        return $extra;
     }
 
     /**
@@ -161,7 +168,7 @@ class ComposerPackage implements PackageInterface
      */
     public function getName()
     {
-        return $this->composer->get('name');
+        return $this->nameFilter->filter($this->composer->get('name'));
     }
 
     /**
@@ -171,12 +178,12 @@ class ComposerPackage implements PackageInterface
     {
         $this->parameters = [];
 
-        if (!isset($this->data['extra']['deployment']['parameters'])
-            || !is_array($this->data['extra']['deployment']['parameters'])) {
+        if (!isset($this->data['parameters'])
+            || !is_array($this->data['parameters'])) {
             return;
         }
 
-        foreach ($this->data['extra']['deployment']['parameters'] as $name => $param) {
+        foreach ($this->data['parameters'] as $name => $param) {
             if (!is_string($name) || ($name == '')) {
                 continue;
             }
@@ -206,6 +213,19 @@ class ComposerPackage implements PackageInterface
     }
 
     /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Package\PackageInterface::getVariables()
+     */
+    public function getVariables()
+    {
+        if (isset($this->data['variables']) && is_array($this->data['variables'])) {
+            return $this->data['variables'];
+        }
+
+        return [];
+    }
+
+    /**
      * @see \rampage\nexus\PackageInterface::getType()
      */
     public function getType()
@@ -218,7 +238,7 @@ class ComposerPackage implements PackageInterface
      */
     public function getVersion()
     {
-        $version = $this->data['version'];
+        $version = $this->composer->get('version');
 
         if ($this->buildId !== null) {
             $version .= '+' . $this->buildId;

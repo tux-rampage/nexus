@@ -80,6 +80,13 @@ interface PackageInterface extends ArrayExportableInterface
     public function getParameters();
 
     /**
+     * A variables hash
+     *
+     * @return string[string]
+     */
+    public function getVariables();
+
+    /**
      * Returns extra package information
      *
      * @param   string          $name   The property name. Omit to return all extra options

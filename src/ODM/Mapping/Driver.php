@@ -23,8 +23,11 @@
 namespace Rampage\Nexus\ODM\Mapping;
 
 use Rampage\Nexus\Entities;
-use Rampage\Nexus\ODM\Persistence\PackageRepository;
+use Rampage\Nexus\ODM\Types\StreamType;
+use Rampage\Nexus\ODM\Persistence\PackageDocumentRepository;
+
 use Doctrine\ODM\MongoDB\Mapping\ClassMetadataInfo;
+
 
 /**
  * Entity driver
@@ -37,12 +40,16 @@ class Driver extends AbstractArrayDriver
      */
     protected function loadData()
     {
+        $optionsAtomicSet = [
+            'strategy' => ClassMetadataInfo::STORAGE_STRATEGY_ATOMIC_SET,
+        ];
+
         return [
             Entities\Application::class => [
                 'fields' => [
                     'id' => $this->identifier('string', 'NONE'),
                     'label' => $this->field('string'),
-                    'icon' => $this->field('binary'),
+                    'icon' => $this->field(StreamType::BIN_STREAM),
                     'packages' => [
                         'type' => 'many',
                         'reference' => true,
@@ -71,7 +78,7 @@ class Driver extends AbstractArrayDriver
             ],
 
             Entities\ApplicationPackage::class => [
-                'repository' => PackageRepository::class,
+                'repository' => PackageDocumentRepository::class,
                 'fields' => [
                     'id' => $this->identifier('string', 'NONE'),
                     'archive' => $this->field('string'),
@@ -80,9 +87,7 @@ class Driver extends AbstractArrayDriver
                     'isStable' => $this->field('boolean'),
                     'type' => $this->field('string'),
                     'documentRoot' => $this->field('string'),
-                    'parameters' => $this->embed(Entities\PackageParameter::class, true, [
-                        'strategy' => ClassMetadataInfo::STORAGE_STRATEGY_ATOMIC_SET
-                    ]),
+                    'parameters' => $this->embed(Entities\PackageParameter::class, true, $optionsAtomicSet),
                     'extra' => $this->field('hash'),
                 ]
             ],
@@ -91,10 +96,10 @@ class Driver extends AbstractArrayDriver
                 'fields' => [
                     'id' => $this->identifier(),
                     'name' => $this->field('string'),
-                    'vhosts' => $this->embed(Entities\VHost::class, true),
+                    'vhosts' => $this->embed(Entities\VHost::class, true, $optionsAtomicSet),
                     'defaultVhost' => $this->embed(Entities\VHost::class, false),
                     'nodes' => $this->referenceMany(Entities\Node::class, 'deployTarget'),
-                    'applications' => $this->embed(Entities\ApplicationInstance::class, true),
+                    'applications' => $this->embed(Entities\ApplicationInstance::class, true, $optionsAtomicSet),
                 ]
             ],
 

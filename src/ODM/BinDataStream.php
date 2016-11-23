@@ -82,7 +82,7 @@ final class BinDataStream implements StreamInterface
     private function wrap()
     {
         if (! $this->stream) {
-            $fp = fopen('php://temp', 'r+');
+            $fp = fopen('php://temp', 'rb+');
             fwrite($fp, $this->binData->__toString());
             $this->stream = new Stream($fp);
         }

@@ -44,7 +44,11 @@ class StageScript extends Executable
             ->addArg($file);
 
         foreach ($variables as $name => $value) {
-            $this->setEnv($this->prepareParamName($name, false), $value);
+            if (!is_string($name) || !is_scalar($value)) {
+                continue;
+            }
+
+            $this->setEnv($name, (string)$value);
         }
 
         foreach ($params as $param => $value) {

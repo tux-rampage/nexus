@@ -46,6 +46,11 @@ class ZpkPackage implements PackageInterface
     const EXTRA_SCRIPTS_DIR = 'scripts-dir';
 
     /**
+     * @var PackageNameFilter
+     */
+    private $nameFilter;
+
+    /**
      * @var SimpleXMLElement
      */
     protected $descriptor;
@@ -54,6 +59,11 @@ class ZpkPackage implements PackageInterface
      * @var PackageParameter[]
      */
     protected $parameters = null;
+
+    /**
+     * @var array
+     */
+    protected $variables = [];
 
     /**
      * @var string
@@ -65,6 +75,7 @@ class ZpkPackage implements PackageInterface
      */
     public function __construct(SimpleXMLElement $descriptor)
     {
+        $this->nameFilter = new PackageNameFilter();
         $this->descriptor = $descriptor;
         $this->validate();
 
@@ -142,7 +153,7 @@ class ZpkPackage implements PackageInterface
      */
     public function getName()
     {
-        return (string)$this->descriptor->name;
+        return $this->nameFilter->filter($this->descriptor->name);
     }
 
     /**
@@ -204,6 +215,33 @@ class ZpkPackage implements PackageInterface
         }
 
         return $this->parameters;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \Rampage\Nexus\Package\PackageInterface::getVariables()
+     */
+    public function getVariables()
+    {
+        if ($this->variables === null) {
+            $this->variables = [];
+
+            if (!isset($this->descriptor->variables->variable)) {
+                return $this->variables;
+            }
+
+            foreach ($this->descriptor->variables->variable as $variable) {
+                $key = (string)$variable['name'];
+
+                if ($key == '') {
+                    continue;
+                }
+
+                $this->variables[$key] = (string)$variable['value'];
+            }
+        }
+
+        return $this->variables;
     }
 
     /**

@@ -26,8 +26,13 @@ use Doctrine\ODM\MongoDB\Types\Type;
 use Psr\Http\Message\StreamInterface;
 use Rampage\Nexus\ODM\BinDataStream;
 
+/**
+ * Implements a PSR-7 binary stream mapper
+ */
 class StreamType extends Type
 {
+    const BIN_STREAM = 'bin_stream';
+
     /**
      * {@inheritDoc}
      * @see \Doctrine\ODM\MongoDB\Types\Type::closureToPHP()
@@ -43,7 +48,12 @@ class StreamType extends Type
      */
     public function closureToMongo()
     {
-        return '$return = ($value instanceof \Psr\Http\Message\StreamInterface)? new \MongoBinData($value->getContents()) : null;';
+        return '
+            if ($value instanceof ' . BinDataStream::class . ') {
+                $return = $value->getBinData();
+            } else {
+                $return = ($value instanceof \Psr\Http\Message\StreamInterface)? new \MongoBinData($value->getContents()) : null;
+            }';
     }
 
     /**
@@ -54,6 +64,10 @@ class StreamType extends Type
     {
         if (!$value instanceof StreamInterface) {
             return null;
+        }
+
+        if ($value instanceof BinDataStream) {
+            return $value->getBinData();
         }
 
         return new \MongoBinData($value->getContents());

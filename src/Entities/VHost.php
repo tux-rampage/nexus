@@ -42,6 +42,15 @@ class VHost implements Api\ArrayExchangeInterface
     const VALID_NAME_REGEX = '~^[a-z0-9_-]+(\.[a-z0-9_-]+)*$~';
 
     /**
+     * The VHost identifier
+     *
+     * Once persisted this must be considerd immutable
+     *
+     * @var string
+     */
+    private $id;
+
+    /**
      * @var string
      */
     protected $name;
@@ -74,7 +83,16 @@ class VHost implements Api\ArrayExchangeInterface
      */
     public function __construct($name)
     {
+        $this->id = ($name != self::DEFAULT_VHOST)? sha1(uniqid('VHOST.', true)) : self::DEFAULT_VHOST;
         $this->setName($name);
+    }
+
+    /**
+     * @return string
+     */
+    public function getId()
+    {
+        return $this->id;
     }
 
     /**
@@ -105,7 +123,7 @@ class VHost implements Api\ArrayExchangeInterface
             throw new UnexpectedValueException('The VHost name must not be empty');
         }
 
-        if (!preg_match(self::VALID_NAME_REGEX, $name) && ($name != self::DEFAULT_VHOST)) {
+        if (!preg_match(self::VALID_NAME_REGEX, $name) || ($name == self::DEFAULT_VHOST)) {
             throw new UnexpectedValueException(sprintf('Invalid vhost name: "%s"', $name));
         }
 
@@ -231,8 +249,9 @@ class VHost implements Api\ArrayExchangeInterface
     public function toArray()
     {
         return [
+            'id' => $this->isDefault()? null : $this->id,
             'name' => $this->name,
-            'isDefault' => ($this->name == self::DEFAULT_VHOST),
+            'isDefault' => $this->isDefault(),
             'flavor' => $this->flavor,
             'aliases' => $this->aliases,
             'enableSsl' => $this->enableSsl

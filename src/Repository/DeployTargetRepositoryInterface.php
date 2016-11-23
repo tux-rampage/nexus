@@ -24,12 +24,30 @@ namespace Rampage\Nexus\Repository;
 
 use Rampage\Nexus\Repository\RepositoryInterface;
 use Rampage\Nexus\Entities\DeployTarget;
+use Rampage\Nexus\Entities\Application;
+use Rampage\Nexus\Entities\ApplicationPackage;
 
 /**
  * Repository for deploy targets
  */
 interface DeployTargetRepositoryInterface extends RepositoryInterface
 {
+    /**
+     * Find deploy targets where the given application is deployed
+     *
+     * @param Application $application
+     * @return DeployTarget[]
+     */
+    public function findByApplication(Application $application);
+
+    /**
+     * Find deploy targets where the given application package is (or was previously) deployed
+     *
+     * @param ApplicationPackage $application
+     * @return DeployTarget[]
+     */
+    public function findByPackage(ApplicationPackage $application);
+
     /**
      * {@inheritDoc}
      * @see \Rampage\Nexus\Repository\RepositoryInterface::save()
