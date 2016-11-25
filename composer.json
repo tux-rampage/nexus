@@ -1,6 +1,6 @@
 {
     "name" : "tuxrampage/nexus",
-    "description" : "Nexus PHP Deployment Bundle",
+    "description" : "Nexus PHP Deployment Bundle / Project Template",
     "repositories" : [
         { "type" : "git", "url" : "git@github.com:tux-rampage/nexus-common.git" },
         { "type" : "git", "url" : "git@github.com:tux-rampage/nexus-master.git" },
@@ -35,7 +35,7 @@
             "Rampage\\Nexus\\Build\\" : "src/"
         }
     },
-    "type" : "library",
+    "type" : "project",
     "config" : {
         "discard-changes" : true
     },
