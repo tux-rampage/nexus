@@ -20,7 +20,18 @@
  * @license   http://www.gnu.org/licenses/gpl-3.0.txt GNU General Public License
  */
 
-namespace Rampage\Nexus\Ansible;
+namespace Rampage\Nexus;
 
-// This file can be used to enable ansible inventory management
-return (new ConfigProvider())->getConfig();
+// You may specify defaults for the runtime configuration
+// They can be overwritten by the configuration files (which are ini syntax) in "config_dir".
+
+return [
+    ServiceFactory\RuntimeConfigFactory::KEY => [
+        'odm' => [
+            'mongodb' => [
+                'server' => 'localhost',
+                'database' => 'deployment'
+            ],
+        ],
+    ]
+];
